@@ -9,18 +9,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: List files
-        run: ls -la
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - run: ls -la
+      - run: cat fetch.py
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Run fetch
-        run: python3 fetch.py
-      - name: Commit and push
-        run: |
+      - run: python fetch.py
+      - run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add docs/index.html
