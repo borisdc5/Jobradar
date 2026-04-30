@@ -97,6 +97,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--txt3);}
 .afjv-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#1A1A2E;color:#C0C0FF;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .afjv-dot{width:5px;height:5px;border-radius:50%;background:#7B7FFF;flex-shrink:0;}
+.ft-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#005B98;color:#D6EBFA;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.ft-dot{width:5px;height:5px;border-radius:50%;background:#74B9E8;flex-shrink:0;}
+.src-chip{cursor:pointer;transition:all .15s;}
+.src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -112,9 +116,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     <div class="sb-body">
       <div class="fs">
         <div class="fs-label">Sources</div>
-        <div class="src-chip"><div class="src-dot" style="background:#1A1A2E"></div><span class="src-name">AFJV</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-afjv" onclick="toggleSource('afjv')"><div class="src-dot" style="background:#1A1A2E"></div><span class="src-name">AFJV</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-ft" onclick="toggleSource('ft')"><div class="src-dot" style="background:#005B98"></div><span class="src-name">France Travail</span><span class="src-badge live">live</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
-        <div class="src-chip dim"><div class="src-dot" style="background:#005B98"></div><span class="src-name">France Travail</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#2164F3"></div><span class="src-name">Indeed</span><span class="src-badge soon">bient&ocirc;t</span></div>
       </div>
@@ -197,6 +201,7 @@ var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, saved = {}, view = 'list';
+var activeSources = ['afjv','ft'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -207,6 +212,12 @@ function daysLabel(d) {
   if(d===0) return 'auj.'; if(d===1) return 'hier';
   if(d<7) return d+'j'; if(d<30) return Math.floor(d/7)+'sem.';
   return Math.floor(d/30)+'mois';
+}
+function toggleSource(src) {
+  var idx=activeSources.indexOf(src);
+  if(idx!==-1){activeSources.splice(idx,1);document.getElementById('src-'+src).className='src-chip';}
+  else{activeSources.push(src);document.getElementById('src-'+src).className='src-chip active';}
+  renderJobs();
 }
 function toggleESN() {
   hideESN=!hideESN;
@@ -257,6 +268,9 @@ function resetAll() {
   document.getElementById('esn-btn').className='esn-btn';
   document.getElementById('esn-check').textContent='';
   document.getElementById('esn-lbl').textContent='Masquer ESN & cabinets';
+  activeSources=['afjv','ft'];
+  document.getElementById('src-afjv').className='src-chip active';
+  document.getElementById('src-ft').className='src-chip active';
   renderJobs();
 }
 function renderJobs() {
@@ -266,6 +280,7 @@ function renderJobs() {
   var jobs=[];
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
+    if(activeSources.indexOf(j.source)===-1) continue;
     if(hideESN&&j.isESN) continue;
     if(search&&(j.title+' '+j.company+' '+j.desc).toLowerCase().indexOf(search)===-1) continue;
     if(kw){var hay=(j.title+' '+j.desc).toLowerCase(),parts=kw.split(','),ok=false;for(var t=0;t<parts.length;t++){var tp=parts[t].trim();if(tp&&hay.indexOf(tp)!==-1){ok=true;break;}}if(!ok)continue;}
@@ -317,7 +332,7 @@ function renderJobs() {
         '<div class="jmeta">'+locPill+
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
-          '<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>' +
+          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
     '</div>';
