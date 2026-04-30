@@ -106,33 +106,50 @@ def ft_normalize_location(lieu):
     if dept == '06' or 'nice' in city: return 'Nice'
     return parts[1].strip() if len(parts) == 2 else raw.strip()
 
+FT_KEYWORDS = [
+    'développeur',
+    'devops',
+    'cloud',
+    'data',
+    'cybersécurité',
+    'product manager',
+]
+
 def fetch_ft():
     if not FT_CLIENT_ID or not FT_CLIENT_SECRET:
         print('  Credentials FT absents, ignoré')
         return []
     token = ft_get_token()
-    # Fetch 150 most recent CDI
-    url = f'{FT_API_URL}?typeContrat=CDI&range=0-149'
-    req = urllib.request.Request(url, headers={
-        'Authorization': f'Bearer {token}',
-        'Accept': 'application/json',
-    })
-    data = json.loads(urllib.request.urlopen(req, context=ctx, timeout=20).read())
-    jobs = []
-    for i, o in enumerate(data.get('resultats', [])):
-        company = (o.get('entreprise') or {}).get('nom') or 'Entreprise'
-        jobs.append({
-            'id': 200000 + i,
-            'title': o.get('intitule', ''),
-            'company': company,
-            'link': (o.get('origineOffre') or {}).get('urlOrigine', '#'),
-            'desc': o.get('description', '')[:200],
-            'location': ft_normalize_location(o.get('lieuTravail') or {}),
-            'category': o.get('secteurActiviteLibelle', ''),
-            'daysAgo': days_ago(o.get('dateCreation', '')),
-            'isESN': is_esn(company),
-            'source': 'ft',
-        })
+    headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
+    seen, jobs = set(), []
+    for kw in FT_KEYWORDS:
+        enc = urllib.parse.quote(kw)
+        url = f'{FT_API_URL}?typeContrat=CDI&motsCles={enc}&range=0-149'
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            data = json.loads(urllib.request.urlopen(req, context=ctx, timeout=20).read())
+        except Exception as e:
+            print(f'  [{kw}] erreur: {e}')
+            continue
+        for o in data.get('resultats', []):
+            job_id = o.get('id', '')
+            if job_id in seen:
+                continue
+            seen.add(job_id)
+            company = (o.get('entreprise') or {}).get('nom') or 'Entreprise'
+            jobs.append({
+                'id': 200000 + len(jobs),
+                'title': o.get('intitule', ''),
+                'company': company,
+                'link': (o.get('origineOffre') or {}).get('urlOrigine', '#'),
+                'desc': o.get('description', '')[:200],
+                'location': ft_normalize_location(o.get('lieuTravail') or {}),
+                'category': o.get('secteurActiviteLibelle', ''),
+                'daysAgo': days_ago(o.get('dateCreation', '')),
+                'isESN': is_esn(company),
+                'source': 'ft',
+            })
+        print(f'  [{kw}] +{len(data.get("resultats",[]))} → {len(jobs)} uniques')
     return jobs
 
 # ── Main ───────────────────────────────────────────────────────────────────────
