@@ -170,6 +170,39 @@ def fetch_ft():
         print(f'  [{kw}] +{len(data.get("resultats",[]))} → {len(jobs)} uniques')
     return jobs
 
+# ── Sport Jobs Hunter ─────────────────────────────────────────────────────────
+
+SJH_RSS = 'https://www.sportjobshunter.com/?feed=job_feed&job_types=cdi&posts_per_page=100'
+
+def parse_sjh(xml):
+    jobs = []
+    for i, item in enumerate(re.findall(r'<item>(.*?)</item>', xml, re.DOTALL)):
+        def g(tag, _item=item):
+            m = re.search(r'<' + tag + r'[^>]*>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</' + tag + r'>', _item, re.DOTALL)
+            return m.group(1).strip() if m else ''
+        title   = g('title')
+        company = g('job_listing:company')
+        location_raw = g('job_listing:location')
+        link    = g('link')
+        pub     = g('pubDate')
+        if not company:
+            continue
+        # Normalize location — format "City, France" or "City, Country"
+        city = location_raw.split(',')[0].strip()
+        jobs.append({
+            'id': 400000 + i,
+            'title': title,
+            'company': company,
+            'link': link,
+            'desc': '',
+            'location': ms_normalize_location(city, '') if city else 'France',
+            'category': '',
+            'daysAgo': days_ago(pub),
+            'isESN': is_esn(company),
+            'source': 'sjh',
+        })
+    return jobs
+
 # ── Makesense ─────────────────────────────────────────────────────────────────
 
 MS_SITEMAP = 'https://jobs.makesense.org/sitemap-jobs.xml'
@@ -268,6 +301,14 @@ if __name__ == '__main__':
         print(f'  {len(ft)} CDI France Travail')
     except Exception as e:
         print(f'  France Travail erreur: {e}')
+
+    print('Fetch Sport Jobs Hunter...')
+    try:
+        sjh = parse_sjh(http_get(SJH_RSS).decode('utf-8'))
+        jobs += sjh
+        print(f'  {len(sjh)} CDI Sport Jobs Hunter')
+    except Exception as e:
+        print(f'  Sport Jobs Hunter erreur: {e}')
 
     print('Fetch Makesense...')
     try:
