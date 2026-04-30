@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobRadar — Offres AFJV</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --accent:#1D9E75;--accent-bg:#E1F5EE;--accent-txt:#085041;
+  --warn:#BA7517;--warn-bg:#FAEEDA;--warn-txt:#633806;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-txt:#0C447C;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-txt:#791F1F;
+  --purple-bg:#EEEDFE;--purple-txt:#3C3489;
+  --bg:#FAFAF9;--bg2:#F4F3F0;--bg3:#ECEAE5;
+  --txt:#1A1A18;--txt2:#6B6A66;--txt3:#9B9A97;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --radius:10px;--radius-lg:14px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;}
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:268px;min-width:268px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.sb-head{padding:18px 16px 14px;border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:2px;}
+.logo-mark{width:28px;height:28px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:14px;height:14px;fill:white;}
+.logo-text{font-size:16px;font-weight:600;letter-spacing:-0.4px;}
+.logo-sub{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;margin-top:2px;}
+.sb-body{flex:1;overflow-y:auto;padding:12px 14px;}
+.sb-body::-webkit-scrollbar{width:3px;}
+.sb-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.fs{margin-bottom:16px;}
+.fs-label{font-size:9px;font-weight:600;color:var(--txt3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;}
+.fs-clear{font-size:10px;color:var(--accent);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:5px;}
+.tag{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:white;color:var(--txt2);transition:all .12s;user-select:none;}
+.tag:hover{border-color:var(--accent);color:var(--accent-txt);}
+.tag.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent-txt);font-weight:500;}
+.esn-btn{width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:white;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--txt);transition:all .15s;font-family:'DM Sans',sans-serif;}
+.esn-btn:hover,.esn-btn.on{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.esn-check{width:16px;height:16px;border-radius:4px;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;}
+.src-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);border:1px solid var(--border);background:white;margin-bottom:5px;}
+.src-chip.dim{opacity:.4;}
+.src-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.src-name{font-size:12px;font-weight:500;flex:1;}
+.src-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;}
+.src-badge.live{background:var(--accent-bg);color:var(--accent-txt);}
+.src-badge.soon{background:var(--bg3);color:var(--txt3);}
+.hr{height:1px;background:var(--border);margin:4px 0 14px;}
+.topbar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:white;}
+.search-wrap{flex:1;position:relative;}
+.search-wrap input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg2);font-size:13px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;transition:all .15s;}
+.search-wrap input:focus{border-color:var(--accent);background:white;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--txt3);pointer-events:none;font-size:14px;}
+.sort-sel{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg2);font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;}
+.view-btns{display:flex;gap:4px;}
+.vbtn{width:32px;height:32px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:13px;transition:all .1s;}
+.vbtn.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+.stats-bar{padding:8px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;background:white;align-items:center;}
+.stat{display:flex;flex-direction:column;align-items:center;padding:5px 12px;border-radius:8px;background:var(--bg2);}
+.stat-n{font-size:16px;font-weight:600;font-family:'DM Mono',monospace;}
+.stat-l{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;}
+.last-update{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;margin-left:auto;}
+.results-bar{padding:8px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:white;flex-wrap:wrap;min-height:38px;}
+.rcount{font-size:12px;color:var(--txt2);white-space:nowrap;}
+.rcount strong{color:var(--txt);font-weight:500;}
+.active-chips{display:flex;gap:5px;flex-wrap:wrap;flex:1;}
+.achip{padding:3px 8px;background:var(--accent-bg);color:var(--accent-txt);border-radius:20px;font-size:10px;cursor:pointer;}
+.achip-red{background:var(--red-bg);color:var(--red-txt);}
+.reset-all{font-size:11px;color:var(--red);cursor:pointer;white-space:nowrap;font-weight:500;}
+.jobs-wrap{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
+.jobs-wrap.grid-mode{flex-direction:row;flex-wrap:wrap;align-content:flex-start;}
+.jobs-wrap::-webkit-scrollbar{width:4px;}
+.jobs-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.job-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;background:white;cursor:pointer;transition:all .15s;display:flex;gap:12px;}
+.job-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.job-card.saved{border-left:3px solid var(--accent);}
+.job-card.half{width:calc(50% - 4px);}
+.co-logo{width:40px;height:40px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--txt2);flex-shrink:0;}
+.jbody{flex:1;min-width:0;}
+.jtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px;}
+.jtitle{font-size:13px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.jco{font-size:11px;color:var(--txt2);margin-bottom:7px;}
+.jmeta{display:flex;flex-wrap:wrap;gap:5px;}
+.pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--txt2);border:1px solid var(--border);}
+.p-green{background:var(--accent-bg);color:var(--accent-txt);border-color:var(--accent);}
+.p-blue{background:var(--blue-bg);color:var(--blue-txt);border-color:#B5D4F4;}
+.p-purple{background:var(--purple-bg);color:var(--purple-txt);border-color:#CECBF6;}
+.p-red{background:var(--red-bg);color:var(--red-txt);border-color:#F7C1C1;}
+.jright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.jdate{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;white-space:nowrap;}
+.save-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:14px;line-height:1;transition:all .12s;}
+.save-btn:hover,.save-btn.on{border-color:var(--accent);color:var(--accent);}
+.save-btn.on{background:var(--accent-bg);}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--txt3);}
+.afjv-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#1A1A2E;color:#C0C0FF;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.afjv-dot{width:5px;height:5px;border-radius:50%;background:#7B7FFF;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-head">
+      <div class="logo">
+        <div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z"/></svg></div>
+        <div class="logo-text">JobRadar</div>
+      </div>
+      <div class="logo-sub">CDI &middot; Jeux vid&eacute;o &middot; AFJV</div>
+    </div>
+    <div class="sb-body">
+      <div class="fs">
+        <div class="fs-label">Sources</div>
+        <div class="src-chip"><div class="src-dot" style="background:#1A1A2E"></div><span class="src-name">AFJV</span><span class="src-badge live">live</span></div>
+        <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
+        <div class="src-chip dim"><div class="src-dot" style="background:#005B98"></div><span class="src-name">France Travail</span><span class="src-badge soon">bient&ocirc;t</span></div>
+        <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
+        <div class="src-chip dim"><div class="src-dot" style="background:#2164F3"></div><span class="src-name">Indeed</span><span class="src-badge soon">bient&ocirc;t</span></div>
+      </div>
+      <div class="hr"></div>
+      <div class="fs">
+        <div class="fs-label">Filtrage entreprises</div>
+        <button class="esn-btn" id="esn-btn" onclick="toggleESN()">
+          <span class="esn-check" id="esn-check"></span>
+          <span id="esn-lbl">Masquer ESN &amp; cabinets</span>
+        </button>
+      </div>
+      <div class="hr"></div>
+      <div class="fs">
+        <div class="fs-label">Cat&eacute;gorie <span class="fs-clear" onclick="clearF('category')">reset</span></div>
+        <div class="tag-wrap" id="filter-category">
+          <span class="tag" data-v="Programmation" onclick="toggleTag(this,'category')">Programmation</span>
+          <span class="tag" data-v="Conception" onclick="toggleTag(this,'category')">Game Design</span>
+          <span class="tag" data-v="Infographie" onclick="toggleTag(this,'category')">Art / 3D</span>
+          <span class="tag" data-v="Production" onclick="toggleTag(this,'category')">Production</span>
+          <span class="tag" data-v="Commercial / Marketing" onclick="toggleTag(this,'category')">Marketing</span>
+          <span class="tag" data-v="Musique / Son" onclick="toggleTag(this,'category')">Audio</span>
+          <span class="tag" data-v="Management" onclick="toggleTag(this,'category')">Management</span>
+          <span class="tag" data-v="Test / QA" onclick="toggleTag(this,'category')">Test / QA</span>
+          <span class="tag" data-v="Data / Gestion de donn&#233;es" onclick="toggleTag(this,'category')">Data</span>
+        </div>
+      </div>
+      <div class="fs">
+        <div class="fs-label">Ville <span class="fs-clear" onclick="clearF('location')">reset</span></div>
+        <div class="tag-wrap" id="filter-location">
+          <span class="tag" data-v="Paris" onclick="toggleTag(this,'location')">Paris</span>
+          <span class="tag" data-v="Lyon" onclick="toggleTag(this,'location')">Lyon</span>
+          <span class="tag" data-v="Bordeaux" onclick="toggleTag(this,'location')">Bordeaux</span>
+          <span class="tag" data-v="Rennes" onclick="toggleTag(this,'location')">Rennes</span>
+          <span class="tag" data-v="Nantes" onclick="toggleTag(this,'location')">Nantes</span>
+          <span class="tag" data-v="Montpellier" onclick="toggleTag(this,'location')">Montpellier</span>
+          <span class="tag" data-v="Toulouse" onclick="toggleTag(this,'location')">Toulouse</span>
+          <span class="tag" data-v="Remote" onclick="toggleTag(this,'location')">T&eacute;l&eacute;travail</span>
+          <span class="tag" data-v="ALL" onclick="toggleTag(this,'location')">France enti&egrave;re</span>
+        </div>
+      </div>
+      <div class="fs">
+        <div class="fs-label">Mots-cl&eacute;s <span class="fs-clear" onclick="document.getElementById('kw').value='';renderJobs()">reset</span></div>
+        <input id="kw" type="text" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;" placeholder="Unity, Unreal, C++..." oninput="renderJobs()">
+      </div>
+      <div class="fs">
+        <div class="fs-label">Publi&eacute;e depuis <span class="fs-clear" onclick="clearF('age')">reset</span></div>
+        <div class="tag-wrap" id="filter-age">
+          <span class="tag" data-v="3" onclick="toggleTag(this,'age')">3j</span>
+          <span class="tag" data-v="7" onclick="toggleTag(this,'age')">7j</span>
+          <span class="tag" data-v="14" onclick="toggleTag(this,'age')">14j</span>
+          <span class="tag" data-v="30" onclick="toggleTag(this,'age')">30j</span>
+          <span class="tag" data-v="60" onclick="toggleTag(this,'age')">60j</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <div class="search-wrap">
+        <span class="search-icon">&#8981;</span>
+        <input type="text" id="search-input" placeholder="Rechercher poste, studio..." oninput="renderJobs()">
+      </div>
+      <select class="sort-sel" id="sort-sel" onchange="renderJobs()">
+        <option value="date">Plus r&eacute;cent</option>
+        <option value="company">Entreprise A&#8211;Z</option>
+        <option value="title">Poste A&#8211;Z</option>
+      </select>
+      <div class="view-btns">
+        <button class="vbtn on" id="vlist" onclick="setView('list')">&#9776;</button>
+        <button class="vbtn" id="vgrid" onclick="setView('grid')">&#8862;</button>
+      </div>
+    </div>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="results-bar" id="results-bar"></div>
+    <div class="jobs-wrap" id="jobs-wrap"></div>
+  </main>
+</div>
+<script>
+var ALL_JOBS = [{"id": 0, "title": "Game Designer Senior Tactical RPG", "company": "Smart Tale", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1207-28820", "desc": "Smart Tale recrute un(e) Game Designer Senior Tactical RPG. Poste basé à Montpellier (34)", "location": "Montpellier", "category": "Conception", "daysAgo": 0, "isESN": false}, {"id": 3, "title": "Lead Game Designer", "company": "Runes Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1868-28862", "desc": "Runes Studio recrute un(e) Lead Game Designer. Poste basé à Caen (14)", "location": "Caen", "category": "Conception", "daysAgo": 1, "isESN": false}, {"id": 6, "title": "Senior Gameplay Programmer (H/F)", "company": "Evil Empire", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV1697-28852", "desc": "Evil Empire recrute un(e) Senior Gameplay Programmer (H/F). Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Programmation", "daysAgo": 2, "isESN": false}, {"id": 7, "title": "Lead Animation Developer", "company": "Virtuos France", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV108-28883", "desc": "Virtuos France recrute un(e) Lead Animation Developer. Poste basé à Lyon (69)", "location": "Lyon", "category": "Programmation", "daysAgo": 2, "isESN": false}, {"id": 9, "title": "Studio Art Director (H/F)", "company": "Old Skull Games", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF1123-28765", "desc": "Old Skull Games recrute un(e) Studio Art Director (H/F). Poste basé à Villeurbanne (69)", "location": "Lyon", "category": "Infographie", "daysAgo": 2, "isESN": false}, {"id": 10, "title": "Game Director", "company": "Old Skull Games", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1123-28813", "desc": "Old Skull Games recrute un(e) Game Director. Poste basé à Villeurbanne (69)", "location": "Lyon", "category": "Conception", "daysAgo": 2, "isESN": false}, {"id": 14, "title": "Technical Character Artist (F/H)", "company": "Arkane Studios", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF176-28878", "desc": "Arkane Studios recrute un(e) Technical Character Artist (F/H). Poste basé à Lyon (69)", "location": "Lyon", "category": "Infographie", "daysAgo": 6, "isESN": false}, {"id": 15, "title": "Economic Game Designer W/M/NB", "company": "Million Victories", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1515-28877", "desc": "Million Victories recrute un(e) Economic Game Designer W/M/NB. Poste basé à Lyon (69)", "location": "Lyon", "category": "Conception", "daysAgo": 7, "isESN": false}, {"id": 18, "title": "Camera Technical Designer", "company": "Ocellus Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV1734-28874", "desc": "Ocellus Studio recrute un(e) Camera Technical Designer. Poste basé à Lyon (69)", "location": "Lyon", "category": "Programmation", "daysAgo": 8, "isESN": false}, {"id": 19, "title": "Gamefeel Prototyper", "company": "Ocellus Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV1734-28873", "desc": "Ocellus Studio recrute un(e) Gamefeel Prototyper. Poste basé à Lyon (69)", "location": "Lyon", "category": "Programmation", "daysAgo": 8, "isESN": false}, {"id": 20, "title": "Développeur.se C++/C# Mobile / Web (F/H/X)", "company": "Celsius Online", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV568-28872", "desc": "Celsius Online recrute un(e) Développeur.se C++/C# Mobile / Web (F/H/X). Poste basé à Paris - Télétravail (75)", "location": "Remote", "category": "Programmation", "daysAgo": 9, "isESN": false}, {"id": 25, "title": "Mid / Senior Gameplay Programmer H/F (Flight Sim)", "company": "Asobo Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV181-28751", "desc": "Asobo Studio recrute un(e) Mid / Senior Gameplay Programmer H/F (Flight Sim). Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Programmation", "daysAgo": 14, "isESN": false}, {"id": 29, "title": "R&amp;D Lead Programmer", "company": "Virtuos", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV108-28818", "desc": "Virtuos recrute un(e) R&amp;D Lead Programmer. Poste basé à Montpellier (34)", "location": "Montpellier", "category": "Programmation", "daysAgo": 15, "isESN": false}, {"id": 31, "title": "Game Designer Confirmé(e) en CDI", "company": "Ludogram", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1825-28864", "desc": "Ludogram recrute un(e) Game Designer Confirmé(e) en CDI. Poste basé à Lille (59)", "location": "Lille", "category": "Conception", "daysAgo": 15, "isESN": false}, {"id": 32, "title": "Développeur·se Unity (jeux mobiles)", "company": "Big Time Labs", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV2278-28837", "desc": "Big Time Labs recrute un(e) Développeur·se Unity (jeux mobiles). Poste basé à Montrouge (92)", "location": "Paris", "category": "Programmation", "daysAgo": 15, "isESN": false}, {"id": 33, "title": "Senior Sound Designer", "company": "Grit Games", "link": "https://emploi.afjv.com/emploi-jeux-video/ESND2290-28762", "desc": "Grit Games recrute un(e) Senior Sound Designer. Poste basé à Lyon (69)", "location": "Lyon", "category": "Musique / Son", "daysAgo": 16, "isESN": false}, {"id": 34, "title": "Lead Technical Artist", "company": "Virtuos", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF108-28861", "desc": "Virtuos recrute un(e) Lead Technical Artist. Poste basé à Cergy (95)", "location": "Paris", "category": "Infographie", "daysAgo": 17, "isESN": false}, {"id": 39, "title": "Référent Pédagogique - Game Programming (H/F)", "company": "Rubika", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV2253-28856", "desc": "Rubika recrute un(e) Référent Pédagogique - Game Programming (H/F). Poste basé à Valenciennes (59)", "location": "Lille", "category": "Programmation", "daysAgo": 20, "isESN": false}, {"id": 41, "title": "3D Artist Environment (H/F)", "company": "Shiro Games", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF741-28854", "desc": "Shiro Games recrute un(e) 3D Artist Environment (H/F). Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Infographie", "daysAgo": 22, "isESN": false}, {"id": 43, "title": "Mid / Senior UE5 Programmer H/F/NB", "company": "Tacty Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV2333-28849", "desc": "Tacty Studio recrute un(e) Mid / Senior UE5 Programmer H/F/NB. Poste basé à Toulouse (proche) (31)", "location": "France", "category": "Programmation", "daysAgo": 28, "isESN": false}, {"id": 44, "title": "Game Designer", "company": "Shiro Games", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP741-28848", "desc": "Shiro Games recrute un(e) Game Designer. Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Conception", "daysAgo": 29, "isESN": false}, {"id": 46, "title": "Experienced Programmer - Automatization, Unity", "company": "Playrion - A Paradox Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV472-28846", "desc": "Playrion - A Paradox Studio recrute un(e) Experienced Programmer - Automatization, Unity. Poste basé à Paris (75)", "location": "Paris", "category": "Programmation", "daysAgo": 30, "isESN": false}, {"id": 48, "title": "Game Director (H/F)", "company": "Shiro Games", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP741-28758", "desc": "Shiro Games recrute un(e) Game Director (H/F). Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Conception", "daysAgo": 31, "isESN": false}, {"id": 49, "title": "Senior Game Programmer ( H / F )", "company": "Shiro Games", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV741-28771", "desc": "Shiro Games recrute un(e) Senior Game Programmer ( H / F ). Poste basé à Bordeaux (33)", "location": "Bordeaux", "category": "Programmation", "daysAgo": 31, "isESN": false}, {"id": 53, "title": "Lead 3D Character Artist", "company": "Tactical Adventures", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF1629-28749", "desc": "Tactical Adventures recrute un(e) Lead 3D Character Artist. Poste basé à Paris (75)", "location": "Paris", "category": "Infographie", "daysAgo": 36, "isESN": false}, {"id": 54, "title": "Financial Lead W/M/NB", "company": "Million Victories", "link": "https://emploi.afjv.com/emploi-jeux-video/EADM1515-28833", "desc": "Million Victories recrute un(e) Financial Lead W/M/NB. Poste basé à Lyon (69)", "location": "Lyon", "category": "Administratif", "daysAgo": 41, "isESN": false}, {"id": 58, "title": "Technical UI/Motion Designer W/M/NB", "company": "Million Victories", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF1515-28828", "desc": "Million Victories recrute un(e) Technical UI/Motion Designer W/M/NB. Poste basé à Lyon (69)", "location": "Lyon", "category": "Infographie", "daysAgo": 43, "isESN": false}, {"id": 59, "title": "UX Designer W/M/NB", "company": "Million Victories", "link": "https://emploi.afjv.com/emploi-jeux-video/ECEP1515-28827", "desc": "Million Victories recrute un(e) UX Designer W/M/NB. Poste basé à Lyon (69)", "location": "Lyon", "category": "Conception", "daysAgo": 43, "isESN": false}, {"id": 60, "title": "Customer Success Manager (F/H/X)", "company": "Plug In Digital", "link": "https://emploi.afjv.com/emploi-jeux-video/ECOM801-28821", "desc": "Plug In Digital recrute un(e) Customer Success Manager (F/H/X). Poste basé à Montpellier (34)", "location": "Montpellier", "category": "Commercial / Marketing", "daysAgo": 48, "isESN": false}, {"id": 62, "title": "Real Time Rendering R&amp;D Engineer", "company": "Nintendo European R&amp;D", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV352-28808", "desc": "Nintendo European R&amp;D recrute un(e) Real Time Rendering R&amp;D Engineer. Poste basé à Paris (75)", "location": "Paris", "category": "Programmation", "daysAgo": 54, "isESN": false}, {"id": 63, "title": "Senior Data Scientist W/M/D", "company": "Million Victories", "link": "https://emploi.afjv.com/emploi-jeux-video/EDAT1515-28807", "desc": "Million Victories recrute un(e) Senior Data Scientist W/M/D. Poste basé à Lyon (69)", "location": "Lyon", "category": "Data / Gestion de données", "daysAgo": 54, "isESN": false}, {"id": 69, "title": "Ingénieur C++ - 100% télétravail", "company": "Eugen Systems", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV198-28786", "desc": "Eugen Systems recrute un(e) Ingénieur C++ - 100% télétravail. Poste basé à Télétravail (00)", "location": "Remote", "category": "Programmation", "daysAgo": 61, "isESN": false}, {"id": 70, "title": "Senior Brand Manager", "company": "Twin Sails Interactive", "link": "https://emploi.afjv.com/emploi-jeux-video/ECOM838-28785", "desc": "Twin Sails Interactive recrute un(e) Senior Brand Manager. Poste basé à Paris (75)", "location": "Paris", "category": "Commercial / Marketing", "daysAgo": 62, "isESN": false}, {"id": 74, "title": "Lead Art 3D (H/F)", "company": "Blue Twelve Studio", "link": "https://emploi.afjv.com/emploi-jeux-video/EINF1455-28777", "desc": "Blue Twelve Studio recrute un(e) Lead Art 3D (H/F). Poste basé à Montpellier (34)", "location": "Montpellier", "category": "Infographie", "daysAgo": 65, "isESN": false}, {"id": 75, "title": "Développeur.euse &amp; Chargé.e de coordination - CDI", "company": "Diversion", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV2328-28775", "desc": "Diversion recrute un(e) Développeur.euse &amp; Chargé.e de coordination - CDI. Poste basé à Paris (75)", "location": "Paris", "category": "Programmation", "daysAgo": 69, "isESN": false}, {"id": 77, "title": "Lead Développeur Web &amp; Unity (H/F/NB)", "company": "World Game", "link": "https://emploi.afjv.com/emploi-jeux-video/EDEV2125-28748", "desc": "World Game recrute un(e) Lead Développeur Web &amp; Unity (H/F/NB). Poste basé à Paris (75)", "location": "Paris", "category": "Programmation", "daysAgo": 69, "isESN": false}, {"id": 80, "title": "Business Developer (H/F/N)", "company": "World Game", "link": "https://emploi.afjv.com/emploi-jeux-video/ECOM2125-28772", "desc": "World Game recrute un(e) Business Developer (H/F/N). Poste basé à Paris (75)", "location": "Paris", "category": "Commercial / Marketing", "daysAgo": 71, "isESN": false}, {"id": 86, "title": "Chargé-e de gestion et d&#039;administration", "company": "Ikigai - Games for Citizens", "link": "https://emploi.afjv.com/emploi-jeux-video/EADM1654-28736", "desc": "Ikigai - Games for Citizens recrute un(e) Chargé-e de gestion et d&#039;administration. Poste basé à Paris (75)", "location": "Paris", "category": "Administratif", "daysAgo": 86, "isESN": false}, {"id": 87, "title": "Growth Marketing Manager Mid / Senior (H/F/X)", "company": "N-Zone", "link": "https://emploi.afjv.com/emploi-jeux-video/ECOM1330-28734", "desc": "N-Zone recrute un(e) Growth Marketing Manager Mid / Senior (H/F/X). Poste basé à Liege (Belgique)", "location": "France", "category": "Commercial / Marketing", "daysAgo": 86, "isESN": false}];
+var UPDATED = "30/04/2026 08:35 UTC";
+var filters = {category:[],location:[],age:[]};
+var hideESN = false, saved = {}, view = 'list';
+
+function initials(c) {
+  var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
+  var r=''; for(var i=0;i<Math.min(p.length,2);i++) r+=p[i][0];
+  return (r.toUpperCase()||'?').slice(0,2);
+}
+function daysLabel(d) {
+  if(d===0) return 'auj.'; if(d===1) return 'hier';
+  if(d<7) return d+'j'; if(d<30) return Math.floor(d/7)+'sem.';
+  return Math.floor(d/30)+'mois';
+}
+function toggleESN() {
+  hideESN=!hideESN;
+  document.getElementById('esn-btn').className='esn-btn'+(hideESN?' on':'');
+  document.getElementById('esn-check').textContent=hideESN?'\u2715':'';
+  document.getElementById('esn-lbl').textContent=hideESN?'ESN & cabinets masqu\u00e9s':'Masquer ESN & cabinets';
+  renderJobs();
+}
+function toggleTag(el,group) {
+  var v=el.getAttribute('data-v'),idx=filters[group].indexOf(v);
+  if(idx!==-1){filters[group].splice(idx,1);el.className='tag';}
+  else{filters[group].push(v);el.className='tag on';}
+  renderJobs();
+}
+function clearF(group) {
+  filters[group]=[];
+  document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){t.className='tag';});
+  renderJobs();
+}
+function setView(v) {
+  view=v;
+  document.getElementById('vlist').className='vbtn'+(v==='list'?' on':'');
+  document.getElementById('vgrid').className='vbtn'+(v==='grid'?' on':'');
+  renderJobs();
+}
+function locMatch(j) {
+  if(!filters.location.length) return true;
+  for(var i=0;i<filters.location.length;i++) {
+    var l=filters.location[i];
+    if(l==='ALL') return true;
+    if(l==='Remote') return j.location==='Remote';
+    if((j.location||'').toLowerCase().indexOf(l.toLowerCase())!==-1) return true;
+  }
+  return false;
+}
+function removeFilter(group,val) {
+  if(group==='esn'){hideESN=false;document.getElementById('esn-btn').className='esn-btn';document.getElementById('esn-check').textContent='';document.getElementById('esn-lbl').textContent='Masquer ESN & cabinets';}
+  else if(group==='kw'){document.getElementById('kw').value='';}
+  else{var idx=filters[group].indexOf(val);if(idx!==-1)filters[group].splice(idx,1);document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){if(t.getAttribute('data-v')===val)t.className='tag';});}
+  renderJobs();
+}
+function resetAll() {
+  filters.category=[];filters.location=[];filters.age=[];
+  document.querySelectorAll('.tag.on').forEach(function(t){t.className='tag';});
+  document.getElementById('search-input').value='';
+  document.getElementById('kw').value='';
+  hideESN=false;
+  document.getElementById('esn-btn').className='esn-btn';
+  document.getElementById('esn-check').textContent='';
+  document.getElementById('esn-lbl').textContent='Masquer ESN & cabinets';
+  renderJobs();
+}
+function renderJobs() {
+  var search=(document.getElementById('search-input').value||'').toLowerCase();
+  var kw=(document.getElementById('kw').value||'').toLowerCase().trim();
+  var sort=document.getElementById('sort-sel').value||'date';
+  var jobs=[];
+  for(var i=0;i<ALL_JOBS.length;i++) {
+    var j=ALL_JOBS[i];
+    if(hideESN&&j.isESN) continue;
+    if(search&&(j.title+' '+j.company+' '+j.desc).toLowerCase().indexOf(search)===-1) continue;
+    if(kw){var hay=(j.title+' '+j.desc).toLowerCase(),parts=kw.split(','),ok=false;for(var t=0;t<parts.length;t++){var tp=parts[t].trim();if(tp&&hay.indexOf(tp)!==-1){ok=true;break;}}if(!ok)continue;}
+    if(filters.category.length&&filters.category.indexOf(j.category)===-1) continue;
+    if(!locMatch(j)) continue;
+    if(filters.age.length){var ma=Math.min.apply(null,filters.age.map(Number));if(j.daysAgo>ma)continue;}
+    jobs.push(j);
+  }
+  jobs.sort(function(a,b){
+    if(sort==='date') return a.daysAgo-b.daysAgo;
+    if(sort==='company') return (a.company||'').localeCompare(b.company||'');
+    return a.title.localeCompare(b.title);
+  });
+  var activeF=[];
+  ['category','location','age'].forEach(function(g){filters[g].forEach(function(v){activeF.push({group:g,val:v});});});
+  var kv=document.getElementById('kw').value.trim();
+  if(kv) activeF.push({group:'kw',val:kv});
+  if(hideESN) activeF.push({group:'esn',val:'sans ESN/cabinets'});
+  var remC=0,recC=0,savC=0;
+  for(var i=0;i<jobs.length;i++){if(jobs[i].location==='Remote')remC++;if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
+  document.getElementById('stats-bar').innerHTML=
+    '<div class="stat"><span class="stat-n">'+jobs.length+'</span><span class="stat-l">CDI</span></div>'+
+    '<div class="stat"><span class="stat-n" style="color:var(--accent)">'+remC+'</span><span class="stat-l">Remote</span></div>'+
+    '<div class="stat"><span class="stat-n" style="color:var(--blue)">'+recC+'</span><span class="stat-l">3 derniers jours</span></div>'+
+    '<div class="stat"><span class="stat-n" style="color:var(--warn)">'+savC+'</span><span class="stat-l">Sauvegard\u00e9s</span></div>'+
+    '<span class="last-update">Mis \u00e0 jour : '+UPDATED+'</span>';
+  var chips='';
+  for(var i=0;i<Math.min(activeF.length,6);i++){var f=activeF[i];chips+='<span class="achip'+(f.group==='esn'?' achip-red':'')+'" onclick="removeFilter(\''+f.group+'\',\''+f.val+'\')">'+f.val+' \u00d7</span>';}
+  document.getElementById('results-bar').innerHTML=
+    '<span class="rcount"><strong>'+jobs.length+'</strong> CDI &nbsp;<span style="font-size:10px;color:var(--txt3);font-family:\'DM Mono\',monospace;">AFJV live</span></span>'+
+    '<div class="active-chips">'+chips+'</div>'+
+    (activeF.length?'<span class="reset-all" onclick="resetAll()">Tout effacer</span>':'');
+  var wrap=document.getElementById('jobs-wrap');
+  wrap.className=view==='grid'?'jobs-wrap grid-mode':'jobs-wrap';
+  if(!jobs.length){wrap.innerHTML='<div class="empty"><span style="font-size:32px;opacity:.2">&#9711;</span><span style="font-size:13px;">Aucun CDI ne correspond</span></div>';return;}
+  var html='';
+  for(var i=0;i<jobs.length;i++){
+    var j=jobs[i],sv=!!saved[j.id],gc=view==='grid'?' half':'';
+    var locPill=j.location==='Remote'?'<span class="pill p-green">T\u00e9l\u00e9travail</span>':'<span class="pill p-blue">'+j.location+'</span>';
+    html+='<div class="job-card'+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
+      '<div class="co-logo">'+initials(j.company)+'</div>' +
+      '<div class="jbody">' +
+        '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
+          '<div class="jright"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
+            '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="jco">'+j.company+'</div>' +
+        '<div class="jmeta">'+locPill+
+          (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
+          (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
+          '<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  wrap.innerHTML=html;
+}
+function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
+function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];renderJobs();}
+renderJobs();
+</script>
+</body>
+</html>
