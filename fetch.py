@@ -1,5 +1,6 @@
 import urllib.request, urllib.parse, ssl, json, re, os
 from datetime import datetime, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
@@ -169,6 +170,84 @@ def fetch_ft():
         print(f'  [{kw}] +{len(data.get("resultats",[]))} → {len(jobs)} uniques')
     return jobs
 
+# ── Makesense ─────────────────────────────────────────────────────────────────
+
+MS_SITEMAP = 'https://jobs.makesense.org/sitemap-jobs.xml'
+
+def ms_normalize_location(city, postal):
+    c, d = city.lower(), postal[:2] if postal else ''
+    if any(x in c for x in ['remote','télétravail','teletravail']): return 'Remote'
+    if d in ['75','92','93','94','95','77','78','91'] or any(x in c for x in ['paris','nanterre','boulogne','montrouge','issy','cergy']): return 'Paris'
+    if d == '69' or any(x in c for x in ['lyon','villeurbanne']): return 'Lyon'
+    if d == '33' or 'bordeaux' in c: return 'Bordeaux'
+    if d == '35' or 'rennes' in c: return 'Rennes'
+    if d == '44' or 'nantes' in c: return 'Nantes'
+    if d == '34' or 'montpellier' in c: return 'Montpellier'
+    if d == '31' or 'toulouse' in c: return 'Toulouse'
+    if d == '59' or any(x in c for x in ['lille','valenciennes']): return 'Lille'
+    if d == '13' or any(x in c for x in ['marseille','aix']): return 'Marseille'
+    if d == '67' or 'strasbourg' in c: return 'Strasbourg'
+    return city.strip() or 'France'
+
+def _fetch_ms_job(args):
+    idx, url = args
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = urllib.request.urlopen(req, context=ctx, timeout=10).read().decode('utf-8', 'replace')
+        scripts = re.findall(r'application/ld\+json[^>]*>([\s\S]*?)</script>', html)
+        if not scripts:
+            return None
+        d = json.loads(scripts[0])
+        if d.get('@type') != 'JobPosting':
+            return None
+        company = (d.get('hiringOrganization') or {}).get('name', '').strip()
+        if not company:
+            return None
+        title = d.get('title', '')
+        loc_data = d.get('jobLocation', [{}])
+        if isinstance(loc_data, dict):
+            loc_data = [loc_data]
+        addr = (loc_data[0] if loc_data else {}).get('address', {})
+        location = ms_normalize_location(addr.get('addressLocality', ''), addr.get('postalCode', ''))
+        date_posted = d.get('datePosted', '')
+        try:
+            dp = datetime.fromisoformat(date_posted)
+            if dp.tzinfo is None:
+                dp = dp.replace(tzinfo=timezone.utc)
+            age = max(0, (datetime.now(timezone.utc) - dp).days)
+        except Exception:
+            age = 99
+        desc = re.sub(r'<[^>]+>', ' ', d.get('description', '')).strip()[:200]
+        return {
+            'id': 300000 + idx,
+            'title': title,
+            'company': company,
+            'link': url,
+            'desc': desc,
+            'location': location,
+            'category': ft_category(title, ''),
+            'daysAgo': age,
+            'isESN': is_esn(company),
+            'source': 'ms',
+        }
+    except Exception:
+        return None
+
+def fetch_makesense(max_jobs=200):
+    req = urllib.request.Request(MS_SITEMAP, headers={'User-Agent': 'Mozilla/5.0'})
+    xml = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode()
+    entries = re.findall(r'<loc>(https://jobs\.makesense\.org/fr/jobs/[^<]+)</loc>\s*<lastmod>([^<]+)</lastmod>', xml)
+    entries.sort(key=lambda x: x[1], reverse=True)
+    entries = entries[:max_jobs]
+    jobs = []
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        futures = {ex.submit(_fetch_ms_job, (i, url)): i for i, (url, _) in enumerate(entries)}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                jobs.append(result)
+    return sorted(jobs, key=lambda j: j['daysAgo'])
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -190,7 +269,15 @@ if __name__ == '__main__':
     except Exception as e:
         print(f'  France Travail erreur: {e}')
 
-    print(f'Total: {len(jobs)} CDI')
+    print('Fetch Makesense...')
+    try:
+        ms = fetch_makesense(max_jobs=200)
+        jobs += ms
+        print(f'  {len(ms)} offres Makesense')
+    except Exception as e:
+        print(f'  Makesense erreur: {e}')
+
+    print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     template = open('template.html', encoding='utf-8').read()
     html = (template

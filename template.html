@@ -99,6 +99,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .afjv-dot{width:5px;height:5px;border-radius:50%;background:#7B7FFF;flex-shrink:0;}
 .ft-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#005B98;color:#D6EBFA;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .ft-dot{width:5px;height:5px;border-radius:50%;background:#74B9E8;flex-shrink:0;}
+.ms-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#1A4D3A;color:#A8E6CF;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.ms-dot{width:5px;height:5px;border-radius:50%;background:#52C68A;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
 </style>
@@ -118,6 +120,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="fs-label">Sources</div>
         <div class="src-chip active" id="src-afjv" onclick="toggleSource('afjv')"><div class="src-dot" style="background:#1A1A2E"></div><span class="src-name">AFJV</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-ft" onclick="toggleSource('ft')"><div class="src-dot" style="background:#005B98"></div><span class="src-name">France Travail</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-ms" onclick="toggleSource('ms')"><div class="src-dot" style="background:#1A4D3A"></div><span class="src-name">Makesense</span><span class="src-badge live">live</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#2164F3"></div><span class="src-name">Indeed</span><span class="src-badge soon">bient&ocirc;t</span></div>
@@ -204,7 +207,7 @@ var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, saved = {}, view = 'list';
-var activeSources = ['afjv','ft'];
+var activeSources = ['afjv','ft','ms'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -271,9 +274,10 @@ function resetAll() {
   document.getElementById('esn-btn').className='esn-btn';
   document.getElementById('esn-check').textContent='';
   document.getElementById('esn-lbl').textContent='Masquer ESN & cabinets';
-  activeSources=['afjv','ft'];
+  activeSources=['afjv','ft','ms'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
+  document.getElementById('src-ms').className='src-chip active';
   renderJobs();
 }
 function renderJobs() {
@@ -335,7 +339,7 @@ function renderJobs() {
         '<div class="jmeta">'+locPill+
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
-          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
+          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
     '</div>';
