@@ -14,7 +14,8 @@ FT_CLIENT_SECRET = os.getenv('FT_CLIENT_SECRET', '')
 
 ESN = ['capgemini','atos','sopra','accenture','michael page','hays','robert half','manpower',
        'adecco','randstad','sqli','altran','alten','aubay','devoteam','wavestone','kpmg',
-       'deloitte','pwc','umaneer','experis','modis']
+       'deloitte','pwc','umaneer','experis','modis','itekway','alteca','informatis',
+       'start people','groupe open']
 
 def is_esn(company):
     c = (company or '').lower()
@@ -106,6 +107,19 @@ def ft_normalize_location(lieu):
     if dept == '06' or 'nice' in city: return 'Nice'
     return parts[1].strip() if len(parts) == 2 else raw.strip()
 
+def ft_category(title, rome):
+    t = (title + ' ' + rome).lower()
+    if any(x in t for x in ['data','machine learning','intelligence artificielle',' ia ','analyst','business intel','big data','dataops','mlops']): return 'Data / Gestion de données'
+    if any(x in t for x in ['développeur','développeuse','software','fullstack','full-stack','front','back','mobile','python','java','.net','php','react','angular','programmeur','ingénieur logiciel']): return 'Programmation'
+    if any(x in t for x in ['devops','cloud','infrastructure','sre','système','réseau','administrateur sys','ops','kubernetes','docker','ansible']): return 'DevOps / Cloud'
+    if any(x in t for x in ['cybersécurité','cyber sécurité','sécurité informatique','rssi','pentest','soc ','vulnerability']): return 'Cybersécurité'
+    if any(x in t for x in ['product manager','product owner',' po ','chef de projet','scrum','agile','program manager','project manager']): return 'Product / Projet'
+    if any(x in t for x in ['ux','ui ','designer','design','expérience utilisateur','ergonome']): return 'UX / Design'
+    if any(x in t for x in ['test','qa ','qualité logiciel','recette','assurance qualité']): return 'Test / QA'
+    if any(x in t for x in ['manager','management','directeur','responsable','dsi','cto','cio','head of']): return 'Management'
+    if any(x in t for x in ['commercial','marketing','vente','business dev','account manager','growth']): return 'Commercial / Marketing'
+    return ''
+
 FT_KEYWORDS = [
     'développeur',
     'devops',
@@ -135,16 +149,19 @@ def fetch_ft():
             job_id = o.get('id', '')
             if job_id in seen:
                 continue
+            company = (o.get('entreprise') or {}).get('nom', '').strip()
+            if not company:
+                continue
             seen.add(job_id)
-            company = (o.get('entreprise') or {}).get('nom') or 'Entreprise'
+            title = o.get('intitule', '')
             jobs.append({
                 'id': 200000 + len(jobs),
-                'title': o.get('intitule', ''),
+                'title': title,
                 'company': company,
                 'link': (o.get('origineOffre') or {}).get('urlOrigine', '#'),
                 'desc': o.get('description', '')[:200],
                 'location': ft_normalize_location(o.get('lieuTravail') or {}),
-                'category': o.get('secteurActiviteLibelle', ''),
+                'category': ft_category(title, o.get('romeLibelle', '')),
                 'daysAgo': days_ago(o.get('dateCreation', '')),
                 'isESN': is_esn(company),
                 'source': 'ft',
