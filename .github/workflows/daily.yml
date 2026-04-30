@@ -56,7 +56,7 @@ jobs:
           items = re.findall(r'<item>(.*?)</item>', xml, re.DOTALL)
           jobs = []
           for i, item in enumerate(items):
-              def g(tag):
+              def g(tag): 
                   m = re.search(r'<'+tag+r'[^>]*>(.*?)</'+tag+r'>', item, re.DOTALL)
                   return m.group(1).strip() if m else ''
               cats = re.findall(r'<category>(.*?)</category>', item)
