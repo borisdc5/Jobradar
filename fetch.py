@@ -343,20 +343,32 @@ def _fetch_hw_job(args):
         pass
     return None
 
-def fetch_hellowork(pages=5):
+HW_KEYWORDS = [
+    'développeur',
+    'data',
+    'devops',
+    'cloud',
+    'cybersécurité',
+    'product manager',
+    'designer',
+    'ingénieur logiciel',
+]
+
+def fetch_hellowork(pages_per_kw=2):
     seen_ids = []
-    for p in range(1, pages + 1):
-        url = f'{HW_SEARCH}?c=CDI&p={p}'
-        try:
-            req = urllib.request.Request(url, headers=HW_HEADERS)
-            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
-            ids = re.findall(r'/fr-fr/emplois/(\d+)\.html', html)
-            for jid in ids:
-                if jid not in seen_ids:
-                    seen_ids.append(jid)
-        except Exception as e:
-            print(f'  [HW page {p}] erreur: {e}')
-    print(f'  {len(seen_ids)} IDs HelloWork collectés')
+    for kw in HW_KEYWORDS:
+        enc = urllib.parse.quote(kw)
+        for p in range(1, pages_per_kw + 1):
+            url = f'{HW_SEARCH}?k={enc}&c=CDI&p={p}'
+            try:
+                req = urllib.request.Request(url, headers=HW_HEADERS)
+                html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
+                ids = re.findall(r'/fr-fr/emplois/(\d+)\.html', html)
+                new = [jid for jid in ids if jid not in seen_ids]
+                seen_ids += new
+            except Exception as e:
+                print(f'  [HW {kw} p{p}] erreur: {e}')
+        print(f'  [HW] "{kw}" → {len(seen_ids)} IDs uniques cumulés')
     jobs = []
     with ThreadPoolExecutor(max_workers=8) as ex:
         futures = {ex.submit(_fetch_hw_job, (i, jid)): jid for i, jid in enumerate(seen_ids)}
@@ -405,7 +417,7 @@ if __name__ == '__main__':
 
     print('Fetch HelloWork...')
     try:
-        hw = fetch_hellowork(pages=5)
+        hw = fetch_hellowork(pages_per_kw=2)
         jobs += hw
         print(f'  {len(hw)} CDI HelloWork')
     except Exception as e:
