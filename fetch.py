@@ -175,6 +175,8 @@ def fetch_ft():
 SJH_RSS  = 'https://www.sportjobshunter.com/?feed=job_feed&job_types=cdi&posts_per_page=100'
 HW_BASE  = 'https://www.hellowork.com'
 HW_SEARCH = HW_BASE + '/fr-fr/emploi/recherche.html'
+LIR_BASE  = 'https://www.lindustrie-recrute.fr'
+LIR_SEARCH = LIR_BASE + '/candidat/recherche/?contract_types%5B%5D=1&salary_min=0&distance=5&query_string=%22informatique%22&sort=date%7Cdesc'
 
 def parse_sjh(xml):
     jobs = []
@@ -378,6 +380,80 @@ def fetch_hellowork(pages_per_kw=2):
                 jobs.append(result)
     return sorted(jobs, key=lambda j: j['daysAgo'])
 
+# ── L'Industrie Recrute ───────────────────────────────────────────────────────
+
+def lir_parse_age(text):
+    """Convert 'il y a X jours/semaines/heures' to integer days."""
+    t = text.lower().strip()
+    if any(x in t for x in ['aujourd', 'heure', 'minute']): return 0
+    m = re.search(r'il y a (\d+)\s*(jour|semaine|mois)', t)
+    if not m: return 99
+    n = int(m.group(1))
+    unit = m.group(2)
+    if 'semaine' in unit: return n * 7
+    if 'mois' in unit: return n * 30
+    return n
+
+def fetch_lir(max_pages=6):
+    jobs, seen_ids = [], set()
+    for p in range(1, max_pages + 1):
+        url = f'{LIR_SEARCH}&page={p}'
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
+        except Exception as e:
+            print(f'  [LIR page {p}] erreur: {e}')
+            break
+        # Split by offer containers
+        chunks = re.split(r'<div class="offer-container"', html)[1:]
+        page_count = 0
+        for chunk in chunks:
+            # Job ID
+            id_m = re.search(r'data-offer-id="(\d+)"', chunk)
+            if not id_m:
+                continue
+            job_id = id_m.group(1)
+            if job_id in seen_ids:
+                continue
+            # Title
+            tm = re.search(r'<h3[^>]*class="offer-card__title"[^>]*>([\s\S]*?)</h3>', chunk)
+            if not tm:
+                continue
+            title = re.sub(r'<[^>]+>', '', tm.group(1)).strip()
+            # Company
+            cm = re.search(r'<span[^>]*class="company[^"]*"[^>]*>([\s\S]*?)</span>', chunk)
+            company = re.sub(r'<[^>]+>', '', cm.group(1)).strip() if cm else ''
+            if not company:
+                continue
+            # Location: after company span "- City (PostalCode)"
+            loc_m = re.search(r'</span>\s*-\s*([\w\s\-éèêàùîôœç]+?)\s*\((\d{5})\)', chunk)
+            city   = loc_m.group(1).strip() if loc_m else ''
+            postal = loc_m.group(2) if loc_m else ''
+            # Date
+            date_m = re.search(r'(il y a [\d]+ \w+|aujourd)', chunk)
+            age = lir_parse_age(date_m.group(1)) if date_m else 99
+            # Link
+            link_m = re.search(r'href="(/candidat/offre/\d+)"', chunk)
+            link = LIR_BASE + link_m.group(1) if link_m else '#'
+            seen_ids.add(job_id)
+            page_count += 1
+            jobs.append({
+                'id': 600000 + len(jobs),
+                'title': title,
+                'company': company,
+                'link': link,
+                'desc': '',
+                'location': ms_normalize_location(city, postal),
+                'category': ft_category(title, ''),
+                'daysAgo': age,
+                'isESN': is_esn(company),
+                'source': 'lir',
+            })
+        print(f'  [LIR page {p}] {page_count} offres → {len(jobs)} total')
+        if page_count == 0:
+            break
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -422,6 +498,14 @@ if __name__ == '__main__':
         print(f'  {len(hw)} CDI HelloWork')
     except Exception as e:
         print(f'  HelloWork erreur: {e}')
+
+    print("Fetch L'Industrie Recrute...")
+    try:
+        lir = fetch_lir(max_pages=6)
+        jobs += lir
+        print(f"  {len(lir)} CDI L'Industrie Recrute")
+    except Exception as e:
+        print(f"  L'Industrie Recrute erreur: {e}")
 
     print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
