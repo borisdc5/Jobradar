@@ -172,7 +172,9 @@ def fetch_ft():
 
 # ── Sport Jobs Hunter ─────────────────────────────────────────────────────────
 
-SJH_RSS = 'https://www.sportjobshunter.com/?feed=job_feed&job_types=cdi&posts_per_page=100'
+SJH_RSS  = 'https://www.sportjobshunter.com/?feed=job_feed&job_types=cdi&posts_per_page=100'
+HW_BASE  = 'https://www.hellowork.com'
+HW_SEARCH = HW_BASE + '/fr-fr/emploi/recherche.html'
 
 def parse_sjh(xml):
     jobs = []
@@ -281,6 +283,89 @@ def fetch_makesense(max_jobs=200):
                 jobs.append(result)
     return sorted(jobs, key=lambda j: j['daysAgo'])
 
+# ── HelloWork ─────────────────────────────────────────────────────────────────
+
+HW_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.5',
+}
+
+def _fetch_hw_job(args):
+    idx, job_id = args
+    url = f'{HW_BASE}/fr-fr/emplois/{job_id}.html'
+    try:
+        req = urllib.request.Request(url, headers=HW_HEADERS)
+        html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
+        scripts = re.findall(r'application/ld\+json[^>]*>([\s\S]*?)</script>', html)
+        for raw in scripts:
+            try:
+                d = json.loads(raw)
+            except Exception:
+                continue
+            if d.get('@type') != 'JobPosting':
+                continue
+            if d.get('employmentType') not in ('FULL_TIME', 'CDI'):
+                return None
+            company = (d.get('hiringOrganization') or {}).get('name', '').strip()
+            if not company:
+                return None
+            title = d.get('title', '')
+            loc_data = d.get('jobLocation', {})
+            if isinstance(loc_data, list):
+                loc_data = loc_data[0] if loc_data else {}
+            addr = loc_data.get('address', {})
+            city   = addr.get('addressLocality', '')
+            postal = addr.get('postalCode', '')
+            location = ms_normalize_location(city, postal)
+            date_posted = d.get('datePosted', '')
+            try:
+                dp = datetime.fromisoformat(date_posted.replace('Z', '+00:00'))
+                if dp.tzinfo is None:
+                    dp = dp.replace(tzinfo=timezone.utc)
+                age = max(0, (datetime.now(timezone.utc) - dp).days)
+            except Exception:
+                age = 99
+            desc = re.sub(r'<[^>]+>', ' ', d.get('description', '')).strip()[:200]
+            return {
+                'id': 500000 + idx,
+                'title': title,
+                'company': company,
+                'link': url,
+                'desc': desc,
+                'location': location,
+                'category': ft_category(title, ''),
+                'daysAgo': age,
+                'isESN': is_esn(company),
+                'source': 'hw',
+            }
+    except Exception:
+        pass
+    return None
+
+def fetch_hellowork(pages=5):
+    seen_ids = []
+    for p in range(1, pages + 1):
+        url = f'{HW_SEARCH}?c=CDI&p={p}'
+        try:
+            req = urllib.request.Request(url, headers=HW_HEADERS)
+            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
+            ids = re.findall(r'/fr-fr/emplois/(\d+)\.html', html)
+            for jid in ids:
+                if jid not in seen_ids:
+                    seen_ids.append(jid)
+        except Exception as e:
+            print(f'  [HW page {p}] erreur: {e}')
+    print(f'  {len(seen_ids)} IDs HelloWork collectés')
+    jobs = []
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        futures = {ex.submit(_fetch_hw_job, (i, jid)): jid for i, jid in enumerate(seen_ids)}
+        for future in as_completed(futures):
+            result = future.result()
+            if result:
+                jobs.append(result)
+    return sorted(jobs, key=lambda j: j['daysAgo'])
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -317,6 +402,14 @@ if __name__ == '__main__':
         print(f'  {len(ms)} offres Makesense')
     except Exception as e:
         print(f'  Makesense erreur: {e}')
+
+    print('Fetch HelloWork...')
+    try:
+        hw = fetch_hellowork(pages=5)
+        jobs += hw
+        print(f'  {len(hw)} CDI HelloWork')
+    except Exception as e:
+        print(f'  HelloWork erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
