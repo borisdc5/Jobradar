@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, ssl, json, re, os
+import urllib.request, urllib.parse, ssl, json, re, os, gzip, http.cookiejar
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -12,6 +12,8 @@ FT_API_URL   = 'https://api.francetravail.io/partenaire/offresdemploi/v2/offres/
 
 FT_CLIENT_ID     = os.getenv('FT_CLIENT_ID', '')
 FT_CLIENT_SECRET = os.getenv('FT_CLIENT_SECRET', '')
+APEC_EMAIL       = os.getenv('APEC_EMAIL', '')
+APEC_PASSWORD    = os.getenv('APEC_PASSWORD', '')
 
 ESN = ['capgemini','atos','sopra','accenture','michael page','hays','robert half','manpower',
        'adecco','randstad','sqli','altran','alten','aubay','devoteam','wavestone','kpmg',
@@ -454,6 +456,145 @@ def fetch_lir(max_pages=6):
             break
     return jobs
 
+# ── APEC ─────────────────────────────────────────────────────────────────────
+
+APEC_BASE   = 'https://www.apec.fr'
+APEC_LOGIN  = APEC_BASE + '/.apec-login.do'
+APEC_SEARCH = APEC_BASE + '/cms/webservices/rechercheOffre'
+APEC_BASE_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept-Language': 'fr-FR,fr;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+}
+
+def apec_login():
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=ctx),
+        urllib.request.HTTPCookieProcessor(cj),
+    )
+    # Seed cookies with homepage visit
+    opener.open(urllib.request.Request(APEC_BASE + '/', headers=APEC_BASE_HEADERS), timeout=10)
+    # POST login
+    payload = urllib.parse.urlencode({
+        'source': 'loginApec',
+        'username': APEC_EMAIL,
+        'password': APEC_PASSWORD,
+    }).encode()
+    h = dict(APEC_BASE_HEADERS)
+    h.update({
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'cache-control': 'no-cache',
+        'Origin': APEC_BASE,
+        'Referer': APEC_BASE + '/',
+    })
+    opener.open(urllib.request.Request(APEC_LOGIN, data=payload, headers=h), timeout=15)
+    return opener
+
+def _apec_decode(resp):
+    raw = resp.read()
+    enc = resp.headers.get('Content-Encoding', '')
+    if enc == 'gzip':
+        raw = gzip.decompress(raw)
+    elif enc == 'br':
+        try:
+            import brotli
+            raw = brotli.decompress(raw)
+        except Exception:
+            pass
+    try:
+        return json.loads(raw.decode('utf-8'))
+    except Exception:
+        return json.loads(raw.decode('latin-1'))
+
+def fetch_apec(max_results=200):
+    if not APEC_EMAIL or not APEC_PASSWORD:
+        print('  Credentials APEC absents, ignoré')
+        return []
+    try:
+        opener = apec_login()
+    except Exception as e:
+        print(f'  APEC login erreur: {e}')
+        return []
+
+    h2 = dict(APEC_BASE_HEADERS)
+    h2.update({
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': APEC_BASE + '/candidat/recherche-emploi.html/emploi',
+        'Origin': APEC_BASE,
+    })
+
+    jobs, start, batch = [], 0, 50
+    while len(jobs) < max_results:
+        body = json.dumps({
+            'typesConvention': [143684],   # CDI
+            'fonctions': [101833],          # Informatique
+            'secteursActivite': [],
+            'motsCles': '',
+            'lieux': [],
+            'pagination': {'startIndex': start, 'range': batch},
+        }).encode('utf-8')
+        req = urllib.request.Request(APEC_SEARCH, data=body, headers=h2, method='POST')
+        try:
+            resp = opener.open(req, timeout=20)
+            data = _apec_decode(resp)
+        except Exception as e:
+            print(f'  APEC search erreur (start={start}): {e}')
+            break
+
+        results = data.get('resultats', [])
+        if not results:
+            break
+
+        for r in results:
+            # Company from logo URL
+            company = 'Confidentiel'
+            logo = r.get('urlLogo', '')
+            if logo:
+                m = re.search(r'/logo_(.+?)_\d+_\d+\.', logo)
+                if m:
+                    company = m.group(1).replace('_', ' ').replace('-', ' ').title()
+
+            # Location
+            lieu = r.get('lieuTexte', '')
+            lm = re.match(r'(.+?)\s*-\s*(\d+)', lieu)
+            if lm:
+                location = ms_normalize_location(lm.group(1).strip(), lm.group(2))
+            else:
+                location = lieu.strip() or 'France'
+
+            # Age
+            date_str = r.get('datePublication', '')
+            try:
+                dp = datetime.fromisoformat(date_str.replace('.000+0000', '+00:00'))
+                age = max(0, (datetime.now(timezone.utc) - dp).days)
+            except Exception:
+                age = 99
+
+            title = r.get('intitule', '')
+            jobs.append({
+                'id': 700000 + len(jobs),
+                'title': title,
+                'company': company,
+                'link': f'{APEC_BASE}/candidat/recherche-emploi.html/offre/{r.get("numeroOffre", "")}',
+                'desc': re.sub(r'<[^>]+>', ' ', r.get('texteOffre', '')).strip()[:200],
+                'location': location,
+                'category': ft_category(title, ''),
+                'daysAgo': age,
+                'isESN': is_esn(company),
+                'source': 'apec',
+            })
+
+        print(f'  [APEC] start={start} +{len(results)} → {len(jobs)} total')
+        start += batch
+        total = data.get('totalCount', 0)
+        if start >= total:
+            break
+
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -506,6 +647,14 @@ if __name__ == '__main__':
         print(f"  {len(lir)} CDI L'Industrie Recrute")
     except Exception as e:
         print(f"  L'Industrie Recrute erreur: {e}")
+
+    print('Fetch APEC...')
+    try:
+        apec = fetch_apec(max_results=200)
+        jobs += apec
+        print(f'  {len(apec)} CDI APEC')
+    except Exception as e:
+        print(f'  APEC erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')

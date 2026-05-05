@@ -17,6 +17,8 @@ jobs:
         env:
           FT_CLIENT_ID: ${{ secrets.FT_CLIENT_ID }}
           FT_CLIENT_SECRET: ${{ secrets.FT_CLIENT_SECRET }}
+          APEC_EMAIL: ${{ secrets.APEC_EMAIL }}
+          APEC_PASSWORD: ${{ secrets.APEC_PASSWORD }}
         run: python3 fetch.py
 
       - name: Push
