@@ -550,12 +550,14 @@ def fetch_apec(max_results=200):
 
         for r in results:
             # Company from logo URL
-            company = 'Confidentiel'
+            company = ''
             logo = r.get('urlLogo', '')
             if logo:
                 m = re.search(r'/logo_(.+?)_\d+_\d+\.', logo)
                 if m:
                     company = m.group(1).replace('_', ' ').replace('-', ' ').title()
+            if not company:
+                continue  # skip anonymous offers
 
             # Location
             lieu = r.get('lieuTexte', '')
