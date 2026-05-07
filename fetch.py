@@ -597,6 +597,118 @@ def fetch_apec(max_results=200):
 
     return jobs
 
+# ── FashionJobs ───────────────────────────────────────────────────────────────
+
+FJ_BASE   = 'https://fr.fashionjobs.com'
+FJ_SEARCH = (FJ_BASE + '/s/?categories%5B%5D=17'
+             '&metier%5B17%5D%5B%5D=248&metier%5B17%5D%5B%5D=263'
+             '&metier%5B17%5D%5B%5D=164&metier%5B17%5D%5B%5D=118'
+             '&metier%5B17%5D%5B%5D=264&metier%5B17%5D%5B%5D=247'
+             '&metier%5B17%5D%5B%5D=177&metier%5B17%5D%5B%5D=119'
+             '&contrats%5B%5D=1')
+FJ_EXTRA  = ('&categories%5B%5D=17'
+             '&metier%5B17%5D%5B%5D=248&metier%5B17%5D%5B%5D=263'
+             '&metier%5B17%5D%5B%5D=164&metier%5B17%5D%5B%5D=118'
+             '&metier%5B17%5D%5B%5D=264&metier%5B17%5D%5B%5D=247'
+             '&metier%5B17%5D%5B%5D=177&metier%5B17%5D%5B%5D=119'
+             '&contrats%5B%5D=1')
+
+def fetch_fashionjobs(max_pages=3):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print('  Playwright non disponible, FashionJobs ignoré')
+        return []
+
+    jobs, seen_ids = [], set()
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        bpage = browser.new_page(
+            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            locale='fr-FR',
+        )
+
+        for page_num in range(1, max_pages + 1):
+            url = FJ_SEARCH if page_num == 1 else f'{FJ_BASE}/s/?page={page_num}{FJ_EXTRA}'
+            try:
+                bpage.goto(url, wait_until='networkidle', timeout=30000)
+            except Exception as e:
+                print(f'  [FJ p{page_num}] erreur: {e}')
+                break
+
+            results = bpage.evaluate('''() => {
+                return Array.from(document.querySelectorAll('.js-job-item')).map(card => {
+                    const titleEl = card.querySelector('h3 span.tw-line-clamp-2');
+                    const title   = titleEl ? titleEl.textContent.trim() : '';
+
+                    const coEl   = card.querySelector('.tw-text-grey-default.tw-uppercase span');
+                    const company = coEl ? coEl.textContent.trim() : '';
+
+                    const linkEl = card.querySelector('[data-lien*="fashionjobs.com/redir/"]');
+                    const link   = linkEl ? linkEl.getAttribute('data-lien')
+                                 : (card.querySelector('a[href*="/emploi/"]')?.href || '#');
+
+                    const locIcon = card.querySelector('[data-icon="location_on"]');
+                    const location = locIcon && locIcon.nextElementSibling
+                                     ? locIcon.nextElementSibling.textContent.trim() : '';
+
+                    const dateEl  = card.querySelector('span.time-ago[data-value]');
+                    const dateVal = dateEl ? dateEl.getAttribute('data-value') : '';
+
+                    return { title, company, link, location, dateVal };
+                });
+            }''')
+
+            page_count = 0
+            for r in results:
+                if not r['title']:
+                    continue
+                # skip anonymous
+                co = r['company']
+                if not co or co.upper() == 'CONFIDENTIEL':
+                    continue
+                # deduplicate by link
+                link = r['link']
+                job_id = re.search(r'(\d{6,})', link)
+                job_id = job_id.group(1) if job_id else link
+                if job_id in seen_ids:
+                    continue
+                seen_ids.add(job_id)
+
+                # date
+                try:
+                    from datetime import datetime, timezone
+                    dp = datetime.fromisoformat(r['dateVal'])
+                    if dp.tzinfo is None:
+                        dp = dp.replace(tzinfo=timezone.utc)
+                    age = max(0, (datetime.now(timezone.utc) - dp).days)
+                except Exception:
+                    age = 99
+
+                location = ms_normalize_location(r['location'], '') if r['location'] else 'France'
+                page_count += 1
+                jobs.append({
+                    'id': 800000 + len(jobs),
+                    'title': r['title'],
+                    'company': co,
+                    'link': link,
+                    'desc': '',
+                    'location': location,
+                    'category': ft_category(r['title'], ''),
+                    'daysAgo': age,
+                    'isESN': is_esn(co),
+                    'source': 'fj',
+                })
+
+            print(f'  [FJ p{page_num}] {page_count} offres → {len(jobs)} total')
+            if page_count == 0:
+                break
+
+        browser.close()
+
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -657,6 +769,14 @@ if __name__ == '__main__':
         print(f'  {len(apec)} CDI APEC')
     except Exception as e:
         print(f'  APEC erreur: {e}')
+
+    print('Fetch FashionJobs...')
+    try:
+        fj = fetch_fashionjobs(max_pages=3)
+        jobs += fj
+        print(f'  {len(fj)} CDI FashionJobs')
+    except Exception as e:
+        print(f'  FashionJobs erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')

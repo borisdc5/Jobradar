@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Python deps
+        run: pip install playwright && python3 -m playwright install chromium --with-deps
+
       - name: Fetch RSS and generate site
         env:
           FT_CLIENT_ID: ${{ secrets.FT_CLIENT_ID }}
