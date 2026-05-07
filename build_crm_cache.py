@@ -1,5 +1,5 @@
 """
-Weekly job: fetches all companies from RecruitCRM and writes crm_cache.json.
+Weekly job: fetches all companies + all jobs from RecruitCRM and writes crm_cache.json.
 Run via GitHub Actions every Sunday, or manually:
   RECRUITCRM_API_KEY=xxx python3 build_crm_cache.py
 """
@@ -35,6 +35,7 @@ if not TOKEN:
     print('RECRUITCRM_API_KEY absent — abandon')
     exit(1)
 
+# ── 1. Fetch all companies ────────────────────────────────────────────────────
 print('Chargement de toutes les entreprises RecruitCRM...')
 companies = {}
 page = 1
@@ -62,7 +63,6 @@ while True:
         slug = c.get('slug') or str(c.get('id') or '')
         crm_link = f'{RCRM_APP}/{slug}' if slug else ''
 
-        # Status from custom_fields
         status = ''
         for cf in c.get('custom_fields', []):
             if cf.get('field_name') == 'Company Status':
@@ -74,8 +74,9 @@ while True:
             'crm_link':     crm_link,
             'status':       status,
             'is_client':    status == 'Active Account',
-            'numeric_id':   c.get('id'),      # for /jobs?company_id= queries
-            'owner_id':     c.get('owner'),   # fallback consultant ID
+            'slug':         slug,        # alphanumeric slug, matches job.company_slug
+            'numeric_id':   c.get('id'), # kept for reference
+            'owner_id':     c.get('owner'),
         }
 
     print(f'  Page {page:3d} → {len(items)} entrées (total {len(companies)})')
@@ -84,10 +85,55 @@ while True:
         break
 
     page += 1
-    # Respect 60 req/min rate limit: ~1s between pages is safe
     time.sleep(1.1)
 
-# Fetch users (consultants) for ID → name resolution
+# Build reverse index: slug → company key (for job matching)
+slug_to_key = {v['slug']: k for k, v in companies.items() if v['slug']}
+
+# ── 2. Fetch all jobs ─────────────────────────────────────────────────────────
+print('\nChargement de tous les jobs RecruitCRM...')
+# job_map: company_slug → {has_open: bool, owner_id: int|None}
+job_map = {}
+page = 1
+consecutive_errors = 0
+total_jobs = 0
+
+while True:
+    data = rcrm_get('/jobs', {'per_page': 100, 'page': page})
+    if not data:
+        consecutive_errors += 1
+        if consecutive_errors >= 3:
+            print(f'  3 erreurs consécutives — arrêt à la page {page}')
+            break
+        time.sleep(2)
+        continue
+    consecutive_errors = 0
+
+    items = data.get('data', [])
+    if not items:
+        break
+
+    for j in items:
+        co_slug = j.get('company_slug', '')
+        if not co_slug:
+            continue
+        is_open = (j.get('job_status') or {}).get('label') == 'Open'
+        if co_slug not in job_map:
+            job_map[co_slug] = {'has_open': False, 'owner_id': None}
+        if is_open and not job_map[co_slug]['has_open']:
+            job_map[co_slug]['has_open'] = True
+            job_map[co_slug]['owner_id'] = j.get('owner')
+
+    total_jobs += len(items)
+    print(f'  Page {page:3d} → {len(items)} jobs (total {total_jobs}, slugs uniques: {len(job_map)})')
+
+    if len(items) < 100:
+        break
+
+    page += 1
+    time.sleep(1.1)
+
+# ── 3. Fetch users (consultants) ──────────────────────────────────────────────
 print('\nChargement des consultants (users)...')
 users = {}
 udata = rcrm_get('/users?per_page=200')
@@ -102,6 +148,22 @@ if udata:
             users[str(uid)] = uname
     print(f'  {len(users)} consultants chargés')
 
+# ── 4. Enrich companies with job data ─────────────────────────────────────────
+print('\nEnrichissement des entreprises avec données jobs...')
+for company in companies.values():
+    slug = company['slug']
+    jd = job_map.get(slug)
+    company['has_tc']       = jd is not None          # any job (open or closed) = T&Cs
+    company['has_open_job'] = jd['has_open'] if jd else False
+    # Paternité: open job owner > company owner
+    consultant_id = (jd['owner_id'] if jd else None) or company.get('owner_id')
+    company['consultant'] = users.get(str(consultant_id), '') if consultant_id else ''
+
+with_tc   = sum(1 for v in companies.values() if v['has_tc'])
+with_open = sum(1 for v in companies.values() if v['has_open_job'])
+print(f'  {with_tc} entreprises avec T&Cs, {with_open} avec job ouvert')
+
+# ── 5. Write cache ────────────────────────────────────────────────────────────
 cache = {
     'updated':   datetime.now(timezone.utc).isoformat(),
     'total':     len(companies),
@@ -116,4 +178,5 @@ clients  = sum(1 for v in companies.values() if v['is_client'])
 prospect = sum(1 for v in companies.values() if v['status'] == 'Prospect')
 print(f'\nCache écrit : {len(companies)} entreprises '
       f'({clients} clients actifs, {prospect} prospects)')
+print(f'  {with_tc} T&Cs signés, {with_open} jobs ouverts')
 print(f'Fichier : {OUT}')

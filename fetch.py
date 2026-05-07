@@ -981,27 +981,12 @@ def _load_crm_lookup():
             break
     return lookup, {}
 
-def _fetch_company_jobs(numeric_id):
-    """Fetch jobs for one company. Returns (has_tc, has_open_job, open_job_owner_id).
-    has_tc = any job exists (open or closed) → T&Cs signed.
-    """
-    import time as _time
-    data = _rcrm_get('/jobs', {'company_id': numeric_id, 'per_page': 50})
-    if not data:
-        return None, None, None
-    jobs_list = data.get('data', [])
-    has_tc = len(jobs_list) > 0
-    open_jobs = [j for j in jobs_list if (j.get('job_status') or {}).get('label') == 'Open']
-    has_open = len(open_jobs) > 0
-    owner_id = open_jobs[0].get('owner') if open_jobs else None
-    return has_tc, has_open, owner_id
-
 def enrich_crm(jobs):
     """Add CRM fields to each job: crm_link, is_client, crm_status,
-    crm_tc (T&Cs signed), crm_open_job, crm_consultant (paternité)."""
-    import time as _time
+    crm_tc (T&Cs signed), crm_open_job, crm_consultant (paternité).
+    All data comes from the weekly cache — no live API calls."""
 
-    if not RECRUITCRM_TOKEN and not os.path.exists(CRM_CACHE_FILE):
+    if not os.path.exists(CRM_CACHE_FILE) and not RECRUITCRM_TOKEN:
         print('  Token RECRUITCRM absent et pas de cache, enrichissement CRM ignoré')
         for j in jobs:
             j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':''})
@@ -1026,28 +1011,6 @@ def enrich_crm(jobs):
                 None
             )
 
-    # Enrich matched clients + prospects with job details (T&Cs / job ouvert / consultant)
-    if RECRUITCRM_TOKEN:
-        to_enrich = {
-            co: rec for co, rec in match_map.items()
-            if rec and rec.get('numeric_id') and (rec.get('is_client') or rec.get('status') == 'Prospect')
-        }
-        if to_enrich:
-            print(f'  [CRM] Enrichissement jobs pour {len(to_enrich)} entreprises (clients + prospects)...')
-            _t0 = _time.time()
-            for i, (company, rec) in enumerate(to_enrich.items()):
-                has_tc, has_open, job_owner_id = _fetch_company_jobs(rec['numeric_id'])
-                rec['crm_tc']        = has_tc
-                rec['crm_open_job']  = has_open if has_open is not None else False
-                # Paternité: open job owner > company owner
-                consultant_id = job_owner_id or rec.get('owner_id')
-                rec['crm_consultant'] = users.get(str(consultant_id), '') if consultant_id else ''
-                # Rate limit: 60 req/min → 1 req/s
-                elapsed = _time.time() - _t0 - i
-                if elapsed < 1.0:
-                    _time.sleep(1.0 - elapsed)
-            print(f'  [CRM] Enrichissement terminé en {int(_time.time()-_t0)}s')
-
     matched = clients = prospects = 0
     for j in jobs:
         company = (j.get('company') or '').strip()
@@ -1056,12 +1019,12 @@ def enrich_crm(jobs):
             j['crm_link']       = res['crm_link']
             j['is_client']      = res['is_client']
             j['crm_status']     = res.get('status', '')
-            j['crm_tc']         = res.get('crm_tc', None)      # True/False/None
-            j['crm_open_job']   = res.get('crm_open_job', False)
-            j['crm_consultant'] = res.get('crm_consultant', '')
+            j['crm_tc']         = res.get('has_tc', None)
+            j['crm_open_job']   = res.get('has_open_job', False)
+            j['crm_consultant'] = res.get('consultant', '')
             matched += 1
-            if res['is_client']:      clients += 1
-            elif res.get('status') == 'Prospect': prospects += 1
+            if res['is_client']:                     clients += 1
+            elif res.get('status') == 'Prospect':    prospects += 1
         else:
             j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':''})
 
