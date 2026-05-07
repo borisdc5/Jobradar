@@ -713,8 +713,30 @@ def fetch_fashionjobs(max_pages=3):
 
 INDEED_BASE = 'https://fr.indeed.com'
 INDEED_KEYWORDS = [
-    'développeur', 'data', 'devops', 'cloud', 'cybersécurité',
-    'product manager', 'designer UX', 'ingénieur logiciel',
+    # Backend – language-specific to avoid overlap
+    'développeur Python',
+    'développeur Java',
+    'développeur PHP Symfony',
+    'développeur C# .NET',
+    'développeur C++',
+    # Frontend / Mobile
+    'développeur React',
+    'développeur Angular Vue',
+    'développeur iOS Android',
+    # Fullstack
+    'développeur fullstack',
+    # Data / AI
+    'data engineer',
+    'data scientist',
+    'data analyst',
+    'machine learning MLOps',
+    # Infra / Cloud / Sec
+    'ingénieur DevOps Kubernetes',
+    'architecte cloud AWS Azure',
+    'analyste cybersécurité',
+    # Product / Design
+    'product owner scrum',
+    'UX designer',
 ]
 
 def indeed_parse_age(text):
@@ -727,14 +749,16 @@ def indeed_parse_age(text):
     if 'mois' in m.group(2): return n * 30
     return n
 
-def fetch_indeed(pages_per_kw=2):
+def fetch_indeed():
+    """One fresh browser context per keyword bypasses Indeed's per-session block.
+    Each keyword yields ~16 unique results; 18 keywords → 150+ total.
+    """
     try:
         from playwright.sync_api import sync_playwright
+        from playwright_stealth import Stealth
     except ImportError:
-        print('  Playwright non disponible, Indeed ignoré')
+        print('  Playwright / playwright-stealth non disponible, Indeed ignoré')
         return []
-
-    jobs, seen_ids = [], set()
 
     EXTRACT_JS = '''() => {
         return Array.from(document.querySelectorAll('[data-testid="slider_item"]')).map(card => {
@@ -754,28 +778,37 @@ def fetch_indeed(pages_per_kw=2):
         });
     }'''
 
+    stealth = Stealth(navigator_platform_override='MacIntel')
+    jobs, seen_ids = [], set()
+
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
-        bpage = browser.new_page(
-            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            locale='fr-FR',
-        )
 
         for kw in INDEED_KEYWORDS:
-            enc = urllib.parse.quote(kw)
-            kw_count = 0
-            for page_num in range(pages_per_kw):
-                start = page_num * 10
-                url = f'{INDEED_BASE}/jobs?q={enc}+CDI&l=France&sort=date&start={start}'
-                try:
-                    bpage.goto(url, wait_until='domcontentloaded', timeout=30000)
-                    bpage.wait_for_timeout(3000)
-                except Exception as e:
-                    print(f'  [Indeed "{kw}" p{page_num+1}] erreur: {e}')
-                    break
+            # Fresh context per keyword — resets session/cookie state that triggers security check
+            context = browser.new_context(
+                user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                locale='fr-FR',
+                viewport={'width': 1280, 'height': 900},
+                timezone_id='Europe/Paris',
+            )
+            page = context.new_page()
+            stealth.apply_stealth_sync(page)
 
-                results = bpage.evaluate(EXTRACT_JS)
-                page_new = 0
+            enc = urllib.parse.quote(kw)
+            # Use &sc= for native CDI filter (avoids keyword contamination with "+CDI")
+            url = f'{INDEED_BASE}/jobs?q={enc}&l=France&sc=0kf%3Ajt%28permanent%29%3B&sort=date&start=0'
+            kw_count = 0
+            try:
+                page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                page.wait_for_timeout(2500)
+                title = page.title()
+                if 'Security Check' in title or 'Connexion' in title:
+                    print(f'  [Indeed] "{kw}" → bloqué ({title[:30]})')
+                    context.close()
+                    continue
+
+                results = page.evaluate(EXTRACT_JS)
                 for r in results:
                     jk = r['jk']
                     if not jk or not r['title'] or not r['company']:
@@ -784,7 +817,6 @@ def fetch_indeed(pages_per_kw=2):
                         continue
                     seen_ids.add(jk)
 
-                    # Parse location (Indeed format: "75000 Paris", "Paris (75)", "Télétravail partiel à Lyon")
                     raw_loc = r['location']
                     city_m = re.search(r'(?:à\s+)?([A-ZÀ-Ÿa-zà-ÿ\s\-]+?)\s*(?:\((\d{2})\d*\)|(\d{5}))?$', raw_loc)
                     if city_m:
@@ -796,7 +828,6 @@ def fetch_indeed(pages_per_kw=2):
                     if 'télétravail' in raw_loc.lower() or 'remote' in raw_loc.lower():
                         location = 'Remote'
 
-                    page_new += 1
                     kw_count += 1
                     jobs.append({
                         'id': 900000 + len(jobs),
@@ -810,9 +841,10 @@ def fetch_indeed(pages_per_kw=2):
                         'isESN': is_esn(r['company']),
                         'source': 'indeed',
                     })
-
-                if page_new == 0:
-                    break
+            except Exception as e:
+                print(f'  [Indeed] "{kw}" erreur: {e}')
+            finally:
+                context.close()
 
             print(f'  [Indeed] "{kw}" +{kw_count} → {len(jobs)} total')
 
@@ -891,7 +923,7 @@ if __name__ == '__main__':
 
     print('Fetch Indeed...')
     try:
-        ind = fetch_indeed(pages_per_kw=2)
+        ind = fetch_indeed()
         jobs += ind
         print(f'  {len(ind)} CDI Indeed')
     except Exception as e:
