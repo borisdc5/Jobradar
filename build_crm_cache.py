@@ -74,6 +74,8 @@ while True:
             'crm_link':     crm_link,
             'status':       status,
             'is_client':    status == 'Active Account',
+            'numeric_id':   c.get('id'),      # for /jobs?company_id= queries
+            'owner_id':     c.get('owner'),   # fallback consultant ID
         }
 
     print(f'  Page {page:3d} → {len(items)} entrées (total {len(companies)})')
@@ -85,10 +87,26 @@ while True:
     # Respect 60 req/min rate limit: ~1s between pages is safe
     time.sleep(1.1)
 
+# Fetch users (consultants) for ID → name resolution
+print('\nChargement des consultants (users)...')
+users = {}
+udata = rcrm_get('/users?per_page=200')
+if udata:
+    ulist = udata if isinstance(udata, list) else udata.get('data', [])
+    for u in ulist:
+        uid = u.get('id')
+        fname = (u.get('first_name') or '').strip()
+        lname = (u.get('last_name') or '').strip()
+        uname = f'{fname} {lname}'.strip()
+        if uid and uname:
+            users[str(uid)] = uname
+    print(f'  {len(users)} consultants chargés')
+
 cache = {
     'updated':   datetime.now(timezone.utc).isoformat(),
     'total':     len(companies),
     'companies': companies,
+    'users':     users,
 }
 
 with open(OUT, 'w', encoding='utf-8') as f:
