@@ -929,63 +929,106 @@ def _rcrm_get(path, params=None):
     except Exception:
         return None
 
-def _fetch_crm_company(company_name):
-    """Search RecruitCRM for one company. Returns (key, crm_dict or None)."""
-    key = company_name.lower().strip()
-    data = _rcrm_get('/companies', {'name': company_name, 'per_page': 5})
-    # API may wrap results under 'data', 'companies', or return list directly
-    if data is None:
-        return key, None
-    items = data if isinstance(data, list) else \
-            data.get('data') or data.get('companies') or []
-    for item in items:
-        name_field = item.get('name') or item.get('company_name') or ''
-        if _name_match(company_name, name_field):
-            # Build CRM app link — RecruitCRM uses slug or numeric id
-            slug = item.get('slug') or item.get('hash_id') or item.get('id') or ''
-            crm_link = f'{RCRM_APP}/company/{slug}' if slug else ''
-            # Client status: field may be 'status', 'client_status', 'type'
-            status_raw = (item.get('status') or item.get('client_status') or
-                          item.get('type') or '').lower()
-            is_client = any(w in status_raw for w in ['client', 'active', 'actif'])
-            return key, {
-                'crm_link': crm_link,
-                'is_client': is_client,
-                'crm_name': name_field,
-                '_raw': item,   # kept for debug, stripped before HTML output
+CRM_CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'crm_cache.json')
+
+def _load_crm_lookup():
+    """Load CRM company lookup from local cache file (built weekly by build_crm_cache.py).
+    Falls back to live API (first 25 pages) if cache is missing.
+    Returns dict: company_name.lower() → {crm_link, is_client, status, company_name}
+    """
+    if os.path.exists(CRM_CACHE_FILE):
+        try:
+            with open(CRM_CACHE_FILE, encoding='utf-8') as f:
+                cache = json.load(f)
+            companies = cache.get('companies', {})
+            print(f'  [CRM] Cache local : {len(companies)} entreprises (mis à jour {cache.get("updated","?")[:10]})')
+            return companies
+        except Exception as e:
+            print(f'  [CRM] Cache illisible ({e}), fallback API...')
+
+    if not RECRUITCRM_TOKEN:
+        return {}
+
+    # Fallback: live API, first 25 pages
+    print('  [CRM] Pas de cache — chargement API (25 pages max)...')
+    lookup = {}
+    for page in range(1, 26):
+        data = _rcrm_get('/companies', {'per_page': 100, 'page': page})
+        if not data:
+            break
+        items = data.get('data', [])
+        if not items:
+            break
+        for c in items:
+            name = (c.get('company_name') or '').strip()
+            if not name:
+                continue
+            slug = c.get('slug') or str(c.get('id') or '')
+            crm_link = f'{RCRM_APP}/companies/{slug}' if slug else ''
+            status = ''
+            for cf in c.get('custom_fields', []):
+                if cf.get('field_name') == 'Company Status':
+                    status = (cf.get('value') or '').strip()
+                    break
+            lookup[name.lower()] = {
+                'crm_link': crm_link, 'is_client': status == 'Active Account',
+                'status': status, 'company_name': name,
             }
-    return key, None
+        print(f'    [CRM] page {page} → {len(items)} (total {len(lookup)})')
+        if len(items) < 100:
+            break
+    return lookup
 
 def enrich_crm(jobs):
-    """Add crm_link / is_client fields to each job from RecruitCRM. Skips if no token."""
-    if not RECRUITCRM_TOKEN:
-        print('  Token RECRUITCRM absent, enrichissement CRM ignoré')
+    """Add crm_link / is_client / crm_status fields to each job. Skips if no token + no cache."""
+    if not RECRUITCRM_TOKEN and not os.path.exists(CRM_CACHE_FILE):
+        print('  Token RECRUITCRM absent et pas de cache, enrichissement CRM ignoré')
         for j in jobs:
             j['crm_link'] = ''
             j['is_client'] = False
+            j['crm_status'] = ''
         return jobs
 
-    unique = list({j['company'] for j in jobs if j.get('company')})
-    crm_map = {}
-    # 60 req/min limit → cap workers at 10 to stay safe
-    with ThreadPoolExecutor(max_workers=10) as ex:
-        for key, result in ex.map(_fetch_crm_company, unique):
-            crm_map[key] = result
-
-    matched  = sum(1 for v in crm_map.values() if v)
-    clients  = sum(1 for v in crm_map.values() if v and v.get('is_client'))
-    print(f'  CRM: {matched}/{len(unique)} entreprises trouvées, {clients} clients actifs')
-
-    for j in jobs:
-        res = crm_map.get((j.get('company') or '').lower().strip())
-        if res:
-            j['crm_link']  = res['crm_link']
-            j['is_client'] = res['is_client']
-            # remove internal debug key before JSON serialisation
-            res.pop('_raw', None)
-        else:
-            j['crm_link']  = ''
+    crm_lookup = _load_crm_lookup()
+    if not crm_lookup:
+        for j in jobs:
+            j['crm_link'] = ''
             j['is_client'] = False
+            j['crm_status'] = ''
+        return jobs
+
+    # Build match map on unique company names only
+    unique_companies = list({(j.get('company') or '').strip() for j in jobs if j.get('company')})
+    match_map = {}
+    for company in unique_companies:
+        key = company.lower()
+        if key in crm_lookup:
+            match_map[company] = crm_lookup[key]
+        else:
+            match_map[company] = next(
+                (v for v in crm_lookup.values() if _name_match(company, v['company_name'])),
+                None
+            )
+
+    matched = clients = prospects = 0
+    for j in jobs:
+        company = (j.get('company') or '').strip()
+        res = match_map.get(company)
+        if res:
+            j['crm_link']   = res['crm_link']
+            j['is_client']  = res['is_client']
+            j['crm_status'] = res.get('status', '')
+            matched += 1
+            if res['is_client']:
+                clients += 1
+            elif res.get('status') == 'Prospect':
+                prospects += 1
+        else:
+            j['crm_link']   = ''
+            j['is_client']  = False
+            j['crm_status'] = ''
+
+    print(f'  CRM: {matched}/{len(jobs)} offres matchées — {clients} clients actifs, {prospects} prospects')
     return jobs
 
 # ── Main ───────────────────────────────────────────────────────────────────────
