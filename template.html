@@ -90,11 +90,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .p-blue{background:var(--blue-bg);color:var(--blue-txt);border-color:#B5D4F4;}
 .p-purple{background:var(--purple-bg);color:var(--purple-txt);border-color:#CECBF6;}
 .p-red{background:var(--red-bg);color:var(--red-txt);border-color:#F7C1C1;}
-.jright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.jright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.jright-btm{display:flex;align-items:center;gap:6px;}
 .jdate{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;white-space:nowrap;}
 .save-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:14px;line-height:1;transition:all .12s;}
 .save-btn:hover,.save-btn.on{border-color:var(--accent);color:var(--accent);}
 .save-btn.on{background:var(--accent-bg);}
+.crm-indicators{display:flex;gap:4px;align-items:center;flex-wrap:nowrap;}
+.ci{padding:2px 7px;border-radius:4px;font-size:9px;font-family:'DM Mono',monospace;white-space:nowrap;font-weight:500;}
+.ci-tc-y{background:#052e16;color:#4ade80;border:1px solid #166534;}
+.ci-tc-n{background:#1c1c1c;color:#52525b;border:1px solid #3f3f46;}
+.ci-job{background:#0c1a2e;color:#60a5fa;border:1px solid #1d4ed8;}
+.ci-owner{background:#1e1b2e;color:#c4b5fd;border:1px solid #4c1d95;max-width:110px;overflow:hidden;text-overflow:ellipsis;}
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--txt3);}
 .afjv-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#1A1A2E;color:#C0C0FF;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .afjv-dot{width:5px;height:5px;border-radius:50%;background:#7B7FFF;flex-shrink:0;}
@@ -121,11 +128,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
 .crm-prospect{background:#2E1A00;color:#FFB347;border:1px solid #5C3A00;}
 .crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
-.crm-info{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
-.crm-tc-yes{background:#0A2B1A;color:#4ADE80;border:1px solid #166534;}
-.crm-tc-no{background:#1C1C1C;color:#6B7280;border:1px solid #374151;}
-.crm-job-open{background:#0C1F3A;color:#60A5FA;border:1px solid #1E3A5F;}
-.crm-owner{background:#1E1B2E;color:#C4B5FD;border:1px solid #3B2F6A;}
 </style>
 </head>
 <body>
@@ -368,8 +370,16 @@ function renderJobs() {
       '<div class="co-logo">'+logoHtml+'</div>' +
       '<div class="jbody">' +
         '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
-          '<div class="jright"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
-            '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
+          '<div class="jright">' +
+            (j.crm_link&&j.crm_tc!==null&&j.crm_tc!==undefined?
+              '<div class="crm-indicators">' +
+                (j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>') +
+                (j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'')+
+                (j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'')+
+              '</div>':'')+
+            '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
+              '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         '<div class="jco">'+j.company+'</div>' +
@@ -377,9 +387,6 @@ function renderJobs() {
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
           (j.crm_link?'<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ client actif':j.crm_status==='Prospect'?'◎ prospect':'📁 CRM')+'</a>':'')+
-          (j.crm_link&&j.crm_tc===true?'<span class="crm-info crm-tc-yes">T&amp;Cs ✓</span>':j.crm_link&&j.crm_tc===false?'<span class="crm-info crm-tc-no">T&amp;Cs —</span>':'')+
-          (j.crm_open_job?'<span class="crm-info crm-job-open">⬤ job ouvert</span>':'')+
-          (j.crm_consultant?'<span class="crm-info crm-owner">'+j.crm_consultant+'</span>':'')+
           (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
