@@ -116,6 +116,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .indeed-dot{width:5px;height:5px;border-radius:50%;background:#4A9EFF;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
+.crm-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;text-decoration:none;transition:opacity .12s;}
+.crm-badge:hover{opacity:.75;}
+.crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
+.crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
 </style>
 </head>
 <body>
@@ -366,6 +370,7 @@ function renderJobs() {
         '<div class="jmeta">'+locPill+
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
+          (j.crm_link&&j.is_client?'<a class="crm-badge crm-client" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">★ client</a>':j.crm_link?'<a class="crm-badge crm-known" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">📁 CRM</a>':'')+
           (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +

@@ -22,6 +22,7 @@ jobs:
           FT_CLIENT_SECRET: ${{ secrets.FT_CLIENT_SECRET }}
           APEC_EMAIL: ${{ secrets.APEC_EMAIL }}
           APEC_PASSWORD: ${{ secrets.APEC_PASSWORD }}
+          RECRUITCRM_API_KEY: ${{ secrets.RECRUITCRM_API_KEY }}
         run: python3 fetch.py
 
       - name: Push

@@ -14,6 +14,7 @@ FT_CLIENT_ID     = os.getenv('FT_CLIENT_ID', '')
 FT_CLIENT_SECRET = os.getenv('FT_CLIENT_SECRET', '')
 APEC_EMAIL       = os.getenv('APEC_EMAIL', '')
 APEC_PASSWORD    = os.getenv('APEC_PASSWORD', '')
+RECRUITCRM_TOKEN = os.getenv('RECRUITCRM_API_KEY', '')
 
 ESN = ['capgemini','atos','sopra','accenture','michael page','hays','robert half','manpower',
        'adecco','randstad','sqli','altran','alten','aubay','devoteam','wavestone','kpmg',
@@ -907,6 +908,86 @@ def enrich_logos(jobs):
         j['logo'] = logo_map.get((j.get('company') or '').lower().strip(), '')
     return jobs
 
+# ── RecruitCRM enrichment ─────────────────────────────────────────────────────
+
+RCRM_BASE = 'https://api.recruitcrm.io/v1'
+RCRM_APP  = 'https://app.recruitcrm.io'
+
+def _rcrm_get(path, params=None):
+    """Authenticated GET against RecruitCRM API. Returns parsed JSON or None."""
+    url = RCRM_BASE + path
+    if params:
+        url += '?' + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={
+        'Authorization': f'Bearer {RECRUITCRM_TOKEN}',
+        'Accept': 'application/json',
+        'User-Agent': 'JobRadar/1.0',
+    })
+    try:
+        resp = urllib.request.urlopen(req, context=ctx, timeout=10)
+        return json.loads(resp.read())
+    except Exception:
+        return None
+
+def _fetch_crm_company(company_name):
+    """Search RecruitCRM for one company. Returns (key, crm_dict or None)."""
+    key = company_name.lower().strip()
+    data = _rcrm_get('/companies', {'name': company_name, 'per_page': 5})
+    # API may wrap results under 'data', 'companies', or return list directly
+    if data is None:
+        return key, None
+    items = data if isinstance(data, list) else \
+            data.get('data') or data.get('companies') or []
+    for item in items:
+        name_field = item.get('name') or item.get('company_name') or ''
+        if _name_match(company_name, name_field):
+            # Build CRM app link — RecruitCRM uses slug or numeric id
+            slug = item.get('slug') or item.get('hash_id') or item.get('id') or ''
+            crm_link = f'{RCRM_APP}/company/{slug}' if slug else ''
+            # Client status: field may be 'status', 'client_status', 'type'
+            status_raw = (item.get('status') or item.get('client_status') or
+                          item.get('type') or '').lower()
+            is_client = any(w in status_raw for w in ['client', 'active', 'actif'])
+            return key, {
+                'crm_link': crm_link,
+                'is_client': is_client,
+                'crm_name': name_field,
+                '_raw': item,   # kept for debug, stripped before HTML output
+            }
+    return key, None
+
+def enrich_crm(jobs):
+    """Add crm_link / is_client fields to each job from RecruitCRM. Skips if no token."""
+    if not RECRUITCRM_TOKEN:
+        print('  Token RECRUITCRM absent, enrichissement CRM ignoré')
+        for j in jobs:
+            j['crm_link'] = ''
+            j['is_client'] = False
+        return jobs
+
+    unique = list({j['company'] for j in jobs if j.get('company')})
+    crm_map = {}
+    # 60 req/min limit → cap workers at 10 to stay safe
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        for key, result in ex.map(_fetch_crm_company, unique):
+            crm_map[key] = result
+
+    matched  = sum(1 for v in crm_map.values() if v)
+    clients  = sum(1 for v in crm_map.values() if v and v.get('is_client'))
+    print(f'  CRM: {matched}/{len(unique)} entreprises trouvées, {clients} clients actifs')
+
+    for j in jobs:
+        res = crm_map.get((j.get('company') or '').lower().strip())
+        if res:
+            j['crm_link']  = res['crm_link']
+            j['is_client'] = res['is_client']
+            # remove internal debug key before JSON serialisation
+            res.pop('_raw', None)
+        else:
+            j['crm_link']  = ''
+            j['is_client'] = False
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -992,6 +1073,16 @@ if __name__ == '__main__':
         print(f'  Logos erreur: {e}')
         for j in jobs:
             j.setdefault('logo', '')
+
+    print('Enrichissement CRM...')
+    try:
+        enrich_crm(jobs)
+    except Exception as e:
+        print(f'  CRM erreur: {e}')
+        for j in jobs:
+            j.setdefault('crm_link', '')
+            j.setdefault('is_client', False)
+
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     template = open('template.html', encoding='utf-8').read()
     html = (template
