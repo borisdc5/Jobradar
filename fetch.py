@@ -852,6 +852,61 @@ def fetch_indeed():
 
     return jobs
 
+# ── Logos (Clearbit Autocomplete) ────────────────────────────────────────────
+
+CLEARBIT_AC = 'https://autocomplete.clearbit.com/v1/companies/suggest?query='
+
+def _name_match(query, result_name):
+    """Return True if result_name is plausibly the same company as query.
+    Uses bidirectional token overlap: shared tokens must represent ≥50% of
+    BOTH the query and the result (prevents "Orange" → "Orange County Register").
+    """
+    STOP = {'sa', 'sas', 'srl', 'inc', 'ltd', 'group', 'groupe', 'france',
+            'the', 'de', 'du', 'le', 'la', 'les', 'et', 'and', 'co', 'corp'}
+    def tokens(s):
+        return set(re.sub(r'[^a-z0-9\s]', '', s.lower()).split()) - STOP
+    qt = tokens(query)
+    rt = tokens(result_name)
+    if not qt or not rt:
+        return False
+    shared = qt & rt
+    # Bidirectional: majority of BOTH sets must overlap
+    return (len(shared) / len(qt) >= 0.5) and (len(shared) / len(rt) >= 0.5)
+
+def _fetch_logo(company):
+    """Return (company_lower, logo_url) or (company_lower, '') on miss/error.
+    Strategy: Clearbit Autocomplete → name-similarity check → Google Favicon sz=128.
+    Only returns a URL when Clearbit's result plausibly matches the company name.
+    """
+    key = company.lower().strip()
+    if not key:
+        return key, ''
+    try:
+        url = CLEARBIT_AC + urllib.parse.quote(company)
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        data = json.loads(urllib.request.urlopen(req, context=ctx, timeout=8).read())
+        if data and data[0].get('domain'):
+            result_name = data[0].get('name', '')
+            domain = data[0]['domain']
+            if _name_match(company, result_name):
+                return key, f'https://www.google.com/s2/favicons?domain={domain}&sz=128'
+    except Exception:
+        pass
+    return key, ''
+
+def enrich_logos(jobs):
+    """Fetch Clearbit logos for all unique company names in parallel, add 'logo' field."""
+    unique = list({j['company'] for j in jobs if j.get('company')})
+    logo_map = {}
+    with ThreadPoolExecutor(max_workers=12) as ex:
+        for key, url in ex.map(_fetch_logo, unique):
+            logo_map[key] = url
+    found = sum(1 for v in logo_map.values() if v)
+    print(f'  Logos: {found}/{len(unique)} entreprises trouvées')
+    for j in jobs:
+        j['logo'] = logo_map.get((j.get('company') or '').lower().strip(), '')
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -930,6 +985,13 @@ if __name__ == '__main__':
         print(f'  Indeed erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
+    print('Enrichissement logos...')
+    try:
+        enrich_logos(jobs)
+    except Exception as e:
+        print(f'  Logos erreur: {e}')
+        for j in jobs:
+            j.setdefault('logo', '')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     template = open('template.html', encoding='utf-8').read()
     html = (template

@@ -78,7 +78,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .job-card:hover{border-color:var(--accent);transform:translateY(-1px);}
 .job-card.saved{border-left:3px solid var(--accent);}
 .job-card.half{width:calc(50% - 4px);}
-.co-logo{width:40px;height:40px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--txt2);flex-shrink:0;}
+.co-logo{width:40px;height:40px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--txt2);flex-shrink:0;overflow:hidden;}
+.co-logo img{width:100%;height:100%;object-fit:contain;padding:4px;}
 .jbody{flex:1;min-width:0;}
 .jtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px;}
 .jtitle{font-size:13px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -350,8 +351,11 @@ function renderJobs() {
   for(var i=0;i<jobs.length;i++){
     var j=jobs[i],sv=!!saved[j.id],gc=view==='grid'?' half':'';
     var locPill=j.location==='Remote'?'<span class="pill p-green">T\u00e9l\u00e9travail</span>':'<span class="pill p-blue">'+j.location+'</span>';
+    var logoHtml=j.logo
+      ?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">'
+      :initials(j.company);
     html+='<div class="job-card'+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
-      '<div class="co-logo">'+initials(j.company)+'</div>' +
+      '<div class="co-logo">'+logoHtml+'</div>' +
       '<div class="jbody">' +
         '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
           '<div class="jright"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
