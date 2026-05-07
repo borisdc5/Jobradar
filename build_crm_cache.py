@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 TOKEN = os.getenv('RECRUITCRM_API_KEY', '')
 BASE  = 'https://api.recruitcrm.io/v1'
-RCRM_APP = 'https://app.recruitcrm.io'
+RCRM_APP = 'https://app.recruitcrm.io/v1/company'
 OUT   = os.path.join(os.path.dirname(__file__), 'crm_cache.json')
 
 ctx = ssl.create_default_context()
@@ -60,7 +60,7 @@ while True:
         if not name:
             continue
         slug = c.get('slug') or str(c.get('id') or '')
-        crm_link = f'{RCRM_APP}/companies/{slug}' if slug else ''
+        crm_link = f'{RCRM_APP}/{slug}' if slug else ''
 
         # Status from custom_fields
         status = ''
