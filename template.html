@@ -111,6 +111,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .apec-dot{width:5px;height:5px;border-radius:50%;background:#FF7A40;flex-shrink:0;}
 .fj-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#4A0030;color:#FFB8E0;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .fj-dot{width:5px;height:5px;border-radius:50%;background:#FF5BAD;flex-shrink:0;}
+.indeed-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#003A6B;color:#A8CFFF;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.indeed-dot{width:5px;height:5px;border-radius:50%;background:#4A9EFF;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
 </style>
@@ -136,9 +138,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-lir" onclick="toggleSource('lir')"><div class="src-dot" style="background:#1B3A5C"></div><span class="src-name">L'Industrie Recrute</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-apec" onclick="toggleSource('apec')"><div class="src-dot" style="background:#7A1E00"></div><span class="src-name">APEC</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-fj" onclick="toggleSource('fj')"><div class="src-dot" style="background:#4A0030"></div><span class="src-name">FashionJobs</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-indeed" onclick="toggleSource('indeed')"><div class="src-dot" style="background:#003A6B"></div><span class="src-name">Indeed</span><span class="src-badge live">live</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
-        <div class="src-chip dim"><div class="src-dot" style="background:#2164F3"></div><span class="src-name">Indeed</span><span class="src-badge soon">bient&ocirc;t</span></div>
       </div>
       <div class="hr"></div>
       <div class="fs">
@@ -222,7 +224,7 @@ var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, saved = {}, view = 'list';
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -289,7 +291,7 @@ function resetAll() {
   document.getElementById('esn-btn').className='esn-btn';
   document.getElementById('esn-check').textContent='';
   document.getElementById('esn-lbl').textContent='Masquer ESN & cabinets';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
   document.getElementById('src-ms').className='src-chip active';
@@ -298,6 +300,7 @@ function resetAll() {
   document.getElementById('src-lir').className='src-chip active';
   document.getElementById('src-apec').className='src-chip active';
   document.getElementById('src-fj').className='src-chip active';
+  document.getElementById('src-indeed').className='src-chip active';
   renderJobs();
 }
 function renderJobs() {
@@ -359,7 +362,7 @@ function renderJobs() {
         '<div class="jmeta">'+locPill+
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-red">ESN/cabinet</span>':'')+
-          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
+          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
     '</div>';

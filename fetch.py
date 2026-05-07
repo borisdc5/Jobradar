@@ -709,6 +709,117 @@ def fetch_fashionjobs(max_pages=3):
 
     return jobs
 
+# ── Indeed ───────────────────────────────────────────────────────────────────
+
+INDEED_BASE = 'https://fr.indeed.com'
+INDEED_KEYWORDS = [
+    'développeur', 'data', 'devops', 'cloud', 'cybersécurité',
+    'product manager', 'designer UX', 'ingénieur logiciel',
+]
+
+def indeed_parse_age(text):
+    t = (text or '').lower()
+    if any(x in t for x in ['nouveau', 'aujourd', 'heure', 'minute', 'today']): return 0
+    m = re.search(r'il y a (\d+)\s*(jour|semaine|mois)', t)
+    if not m: return 0  # default recent (sorted by date)
+    n = int(m.group(1))
+    if 'semaine' in m.group(2): return n * 7
+    if 'mois' in m.group(2): return n * 30
+    return n
+
+def fetch_indeed(pages_per_kw=2):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print('  Playwright non disponible, Indeed ignoré')
+        return []
+
+    jobs, seen_ids = [], set()
+
+    EXTRACT_JS = '''() => {
+        return Array.from(document.querySelectorAll('[data-testid="slider_item"]')).map(card => {
+            const jkEl = card.querySelector("[data-jk]");
+            const jk   = jkEl ? jkEl.getAttribute("data-jk") : "";
+            const h2   = card.querySelector("h2.jobTitle, h2");
+            const title = h2 ? h2.textContent.trim() : "";
+            const co   = card.querySelector('[data-testid="company-name"]');
+            const company = co ? co.textContent.trim() : "";
+            const loc  = card.querySelector('[data-testid="text-location"]');
+            const location = loc ? loc.textContent.trim() : "";
+            const allText  = card.innerText || "";
+            const dateMatch = allText.match(/il y a \\d+\\s*(jour|heure|minute|semaine|mois)/i)
+                           || allText.match(/(nouveau|aujourd)/i);
+            const dateText = dateMatch ? dateMatch[0] : "";
+            return { jk, title, company, location, dateText };
+        });
+    }'''
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        bpage = browser.new_page(
+            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            locale='fr-FR',
+        )
+
+        for kw in INDEED_KEYWORDS:
+            enc = urllib.parse.quote(kw)
+            kw_count = 0
+            for page_num in range(pages_per_kw):
+                start = page_num * 10
+                url = f'{INDEED_BASE}/jobs?q={enc}+CDI&l=France&sort=date&start={start}'
+                try:
+                    bpage.goto(url, wait_until='domcontentloaded', timeout=30000)
+                    bpage.wait_for_timeout(3000)
+                except Exception as e:
+                    print(f'  [Indeed "{kw}" p{page_num+1}] erreur: {e}')
+                    break
+
+                results = bpage.evaluate(EXTRACT_JS)
+                page_new = 0
+                for r in results:
+                    jk = r['jk']
+                    if not jk or not r['title'] or not r['company']:
+                        continue
+                    if jk in seen_ids:
+                        continue
+                    seen_ids.add(jk)
+
+                    # Parse location (Indeed format: "75000 Paris", "Paris (75)", "Télétravail partiel à Lyon")
+                    raw_loc = r['location']
+                    city_m = re.search(r'(?:à\s+)?([A-ZÀ-Ÿa-zà-ÿ\s\-]+?)\s*(?:\((\d{2})\d*\)|(\d{5}))?$', raw_loc)
+                    if city_m:
+                        city = city_m.group(1).strip()
+                        dept = city_m.group(2) or (city_m.group(3)[:2] if city_m.group(3) else '')
+                        location = ms_normalize_location(city, dept)
+                    else:
+                        location = 'France'
+                    if 'télétravail' in raw_loc.lower() or 'remote' in raw_loc.lower():
+                        location = 'Remote'
+
+                    page_new += 1
+                    kw_count += 1
+                    jobs.append({
+                        'id': 900000 + len(jobs),
+                        'title': r['title'],
+                        'company': r['company'],
+                        'link': f'{INDEED_BASE}/viewjob?jk={jk}',
+                        'desc': '',
+                        'location': location,
+                        'category': ft_category(r['title'], ''),
+                        'daysAgo': indeed_parse_age(r['dateText']),
+                        'isESN': is_esn(r['company']),
+                        'source': 'indeed',
+                    })
+
+                if page_new == 0:
+                    break
+
+            print(f'  [Indeed] "{kw}" +{kw_count} → {len(jobs)} total')
+
+        browser.close()
+
+    return jobs
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
@@ -777,6 +888,14 @@ if __name__ == '__main__':
         print(f'  {len(fj)} CDI FashionJobs')
     except Exception as e:
         print(f'  FashionJobs erreur: {e}')
+
+    print('Fetch Indeed...')
+    try:
+        ind = fetch_indeed(pages_per_kw=2)
+        jobs += ind
+        print(f'  {len(ind)} CDI Indeed')
+    except Exception as e:
+        print(f'  Indeed erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
