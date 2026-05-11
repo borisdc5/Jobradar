@@ -90,24 +90,27 @@ while True:
 # Build reverse index: slug → company key (for job matching)
 slug_to_key = {v['slug']: k for k, v in companies.items() if v['slug']}
 
-# ── 2. Fetch all jobs ─────────────────────────────────────────────────────────
+# ── 2. Fetch all jobs (follow next_page_url — avoids page= param issue) ───────
 print('\nChargement de tous les jobs RecruitCRM...')
 # job_map: company_slug → {has_open: bool, owner_id: int|None}
 job_map = {}
-page = 1
-consecutive_errors = 0
 total_jobs = 0
+page_num = 0
+next_url = f'{BASE}/jobs?per_page=100'  # first page: no page= param
 
-while True:
-    data = rcrm_get('/jobs', {'per_page': 100, 'page': page})
-    if not data:
-        consecutive_errors += 1
-        if consecutive_errors >= 3:
-            print(f'  3 erreurs consécutives — arrêt à la page {page}')
-            break
-        time.sleep(2)
-        continue
-    consecutive_errors = 0
+while next_url:
+    # Use rcrm_get with raw URL for first page, then follow next_page_url
+    req = urllib.request.Request(next_url, headers={
+        'Authorization': f'Bearer {TOKEN}',
+        'Accept': 'application/json',
+        'User-Agent': 'JobRadar/1.0',
+    })
+    try:
+        resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+        data = json.loads(resp.read())
+    except Exception as e:
+        print(f'  Erreur jobs page {page_num+1}: {e}')
+        break
 
     items = data.get('data', [])
     if not items:
@@ -125,13 +128,12 @@ while True:
             job_map[co_slug]['owner_id'] = j.get('owner')
 
     total_jobs += len(items)
-    print(f'  Page {page:3d} → {len(items)} jobs (total {total_jobs}, slugs uniques: {len(job_map)})')
+    page_num += 1
+    print(f'  Page {page_num:3d} → {len(items)} jobs (total {total_jobs}, slugs uniques: {len(job_map)})')
 
-    if len(items) < 100:
-        break
-
-    page += 1
-    time.sleep(1.1)
+    next_url = data.get('next_page_url')  # None when last page reached
+    if next_url:
+        time.sleep(1.1)
 
 # ── 3. Fetch users (consultants) ──────────────────────────────────────────────
 print('\nChargement des consultants (users)...')
