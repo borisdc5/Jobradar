@@ -1,4 +1,4 @@
-import urllib.request, urllib.parse, ssl, json, re, os, gzip, http.cookiejar
+import urllib.request, urllib.parse, ssl, json, re, os, gzip, http.cookiejar, time
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -1362,40 +1362,43 @@ def fetch_wld(max_scroll=10):
         return []
 
     if hits_raw:
-        print(f'  [WLD] {len(hits_raw)} hits bruts, fields: {list(hits_raw[0].keys())[:12]}')
+        print(f'  [WLD] {len(hits_raw)} hits bruts, fields: {list(hits_raw[0].keys())}')
 
     jobs, seen_ids = [], set()
     for hit in hits_raw:
-        obj_id = str(hit.get('objectID', ''))
+        obj_id = str(hit.get('objectID', '') or hit.get('id', ''))
         if not obj_id or obj_id in seen_ids:
             continue
         seen_ids.add(obj_id)
 
-        title = (hit.get('title') or hit.get('name') or hit.get('jobTitle') or '').strip()
+        title = (hit.get('title') or '').strip()
         if not title:
             continue
 
-        co = hit.get('company') or hit.get('employer') or hit.get('organization') or {}
-        company = (co.get('name') or co.get('title') or '').strip() if isinstance(co, dict) else str(co).strip()
+        # Company in smallCompany.companyName
+        sc = hit.get('smallCompany') or {}
+        company = (sc.get('companyName') or sc.get('name') or '').strip()
         if not company:
             continue
 
         # CDI filter
-        ct = hit.get('contractTypes') or hit.get('contractType') or []
+        ct = hit.get('contractTypes') or []
         if isinstance(ct, str): ct = [ct]
         if ct and not any(x.lower() in ('permanent', 'cdi') for x in ct):
             continue
 
-        slug = hit.get('slug') or obj_id
+        slug = hit.get('seoAlias') or hit.get('helmetHandle') or obj_id
         link = f'https://welovedevs.com/fr/app/jobs/{slug}'
+        places = hit.get('formattedPlaces') or []
+        location = _wld_location({'location': places[0] if places else ''})
 
         jobs.append({
             'id':        1000000 + len(jobs),
             'title':     title,
             'company':   company,
             'link':      link,
-            'desc':      '',
-            'location':  _wld_location(hit),
+            'desc':      (hit.get('descriptionPreview') or '')[:200],
+            'location':  location,
             'category':  categorize(title, ''),
             'daysAgo':   _wld_days_ago(hit),
             'isESN':     is_esn_company(company),
