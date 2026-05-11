@@ -1149,6 +1149,147 @@ def fetch_indeed():
 
     return jobs
 
+# ── WeLoveDevs ────────────────────────────────────────────────────────────────
+
+WLD_JOBS_URL = ('https://welovedevs.com/fr/app/jobs'
+                '?query=&refinementList%5BcontractTypes%5D%5B0%5D=permanent')
+
+def _wld_location(hit):
+    loc = hit.get('location') or hit.get('city') or hit.get('place') or ''
+    if isinstance(loc, dict):
+        loc = loc.get('label') or loc.get('name') or loc.get('city') or ''
+    loc = (loc or '').strip().lower()
+    if not loc or any(x in loc for x in ['remote','télétravail','teletravail','full remote']):
+        return 'Remote'
+    if 'paris' in loc: return 'Paris'
+    if 'lyon' in loc: return 'Lyon'
+    if 'bordeaux' in loc: return 'Bordeaux'
+    if 'nantes' in loc: return 'Nantes'
+    if 'toulouse' in loc: return 'Toulouse'
+    if 'rennes' in loc: return 'Rennes'
+    if 'montpellier' in loc: return 'Montpellier'
+    if 'lille' in loc: return 'Lille'
+    if 'marseille' in loc: return 'Marseille'
+    if 'strasbourg' in loc: return 'Strasbourg'
+    if 'grenoble' in loc: return 'Grenoble'
+    if 'france' in loc: return 'ALL'
+    parts = loc.split(',')
+    return parts[0].strip().title() if parts[0].strip() else ''
+
+def _wld_days_ago(hit):
+    for field in ['publishedAt', 'createdAt', 'updatedAt', 'date', '_highlightResult']:
+        val = hit.get(field)
+        if not val or field == '_highlightResult':
+            continue
+        try:
+            if isinstance(val, (int, float)):
+                ts = val / 1000 if val > 1e10 else val
+                pub = datetime.fromtimestamp(ts, tz=timezone.utc)
+                return max(0, (datetime.now(timezone.utc) - pub).days)
+            if isinstance(val, str):
+                pub = datetime.fromisoformat(val.replace('Z', '+00:00'))
+                return max(0, (datetime.now(timezone.utc) - pub).days)
+        except Exception:
+            pass
+    return 0
+
+def fetch_wld(max_scroll=10):
+    """Scrape WeLoveDevs CDI jobs via Playwright, intercepting Algolia API responses."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print('  Playwright non disponible, WeLoveDevs ignoré')
+        return []
+
+    hits_raw = []
+
+    def on_response(response):
+        if 'algolia' not in response.url:
+            return
+        if response.status != 200:
+            return
+        try:
+            data = response.json()
+            for result in (data.get('results') or [data]):
+                for hit in result.get('hits', []):
+                    hits_raw.append(hit)
+        except Exception:
+            pass
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page(
+            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            locale='fr-FR',
+            viewport={'width': 1280, 'height': 900},
+        )
+        page.on('response', on_response)
+        try:
+            page.goto(WLD_JOBS_URL, wait_until='networkidle', timeout=30000)
+        except Exception as e:
+            print(f'  [WLD] chargement erreur: {e}')
+            browser.close()
+            return []
+
+        # Scroll to trigger infinite-scroll / pagination
+        for _ in range(max_scroll):
+            prev = len(hits_raw)
+            page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+            page.wait_for_timeout(1500)
+            if len(hits_raw) == prev:
+                break
+
+        browser.close()
+
+    if not hits_raw:
+        print('  [WLD] aucun résultat Algolia intercepté')
+        return []
+
+    if hits_raw:
+        print(f'  [WLD] {len(hits_raw)} hits bruts, fields: {list(hits_raw[0].keys())[:12]}')
+
+    jobs, seen_ids = [], set()
+    for hit in hits_raw:
+        obj_id = str(hit.get('objectID', ''))
+        if not obj_id or obj_id in seen_ids:
+            continue
+        seen_ids.add(obj_id)
+
+        title = (hit.get('title') or hit.get('name') or hit.get('jobTitle') or '').strip()
+        if not title:
+            continue
+
+        co = hit.get('company') or hit.get('employer') or hit.get('organization') or {}
+        company = (co.get('name') or co.get('title') or '').strip() if isinstance(co, dict) else str(co).strip()
+        if not company:
+            continue
+
+        # CDI filter
+        ct = hit.get('contractTypes') or hit.get('contractType') or []
+        if isinstance(ct, str): ct = [ct]
+        if ct and not any(x.lower() in ('permanent', 'cdi') for x in ct):
+            continue
+
+        slug = hit.get('slug') or obj_id
+        link = f'https://welovedevs.com/fr/app/jobs/{slug}'
+
+        jobs.append({
+            'id':        1000000 + len(jobs),
+            'title':     title,
+            'company':   company,
+            'link':      link,
+            'desc':      '',
+            'location':  _wld_location(hit),
+            'category':  categorize(title, ''),
+            'daysAgo':   _wld_days_ago(hit),
+            'isESN':     is_esn_company(company),
+            'isCabinet': is_cabinet(company),
+            'source':    'wld',
+        })
+
+    print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
+    return jobs
+
 # ── Logos (Clearbit Autocomplete) ────────────────────────────────────────────
 
 CLEARBIT_AC = 'https://autocomplete.clearbit.com/v1/companies/suggest?query='
@@ -1403,6 +1544,14 @@ if __name__ == '__main__':
         print(f'  {len(ind)} CDI Indeed')
     except Exception as e:
         print(f'  Indeed erreur: {e}')
+
+    print('Fetch WeLoveDevs...')
+    try:
+        wld = fetch_wld(max_scroll=10)
+        jobs += wld
+        print(f'  {len(wld)} CDI WeLoveDevs')
+    except Exception as e:
+        print(f'  WeLoveDevs erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     print('Enrichissement logos...')
