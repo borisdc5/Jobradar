@@ -24,5 +24,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add crm_cache.json
           git diff --cached --quiet || git commit -m "Refresh CRM cache $(date +'%d/%m/%Y')"
-          git pull --rebase origin main
+          git pull --rebase --autostash origin main
           git push
