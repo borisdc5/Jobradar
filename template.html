@@ -144,7 +144,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z"/></svg></div>
         <div class="logo-text">JobRadar</div>
       </div>
-      <div class="logo-sub">CDI &middot; Jeux vid&eacute;o &middot; AFJV</div>
+      <div class="logo-sub">CDI &middot; tech/sales/market</div>
     </div>
     <div class="sb-body">
       <div class="fs">
@@ -174,6 +174,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           <span class="esn-check" id="esn-check"></span>
           <span id="esn-lbl">Masquer ESN</span>
         </button>
+      </div>
+      <div class="hr"></div>
+      <div class="fs">
+        <div class="fs-label">Filtres CRM</div>
+        <div class="tag-wrap" style="margin-bottom:8px;">
+          <span class="tag" id="tc-oui" onclick="toggleTC(true)">T&amp;Cs ✓</span>
+          <span class="tag" id="tc-non" onclick="toggleTC(false)">Sans T&amp;Cs</span>
+        </div>
+        <select id="consultant-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;">
+          <option value="">Tous les consultants</option>
+        </select>
       </div>
       <div class="hr"></div>
       <div class="fs">
@@ -210,7 +221,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
       <div class="fs">
         <div class="fs-label">Mots-cl&eacute;s <span class="fs-clear" onclick="document.getElementById('kw').value='';renderJobs()">reset</span></div>
-        <input id="kw" type="text" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;" placeholder="Unity, Unreal, C++..." oninput="renderJobs()">
+        <input id="kw" type="text" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;" placeholder="Fullstack, data, PHP..." oninput="renderJobs()">
       </div>
       <div class="fs">
         <div class="fs-label">Publi&eacute;e depuis <span class="fs-clear" onclick="clearF('age')">reset</span></div>
@@ -249,7 +260,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
-var hideESN = false, hideCabinet = false, saved = {}, view = 'list';
+var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null;
+var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw'];
 
 function initials(c) {
@@ -282,6 +294,22 @@ function toggleESN() {
   document.getElementById('esn-lbl').textContent=hideESN?'ESN masqu\u00e9es':'Masquer ESN';
   renderJobs();
 }
+function toggleSavedOnly() {
+  showSavedOnly=!showSavedOnly;
+  renderJobs();
+}
+function toggleTC(val) {
+  if(filterTC===val){filterTC=null;document.getElementById('tc-oui').className='tag';document.getElementById('tc-non').className='tag';}
+  else{filterTC=val;document.getElementById('tc-oui').className='tag'+(filterTC===true?' on':'');document.getElementById('tc-non').className='tag'+(filterTC===false?' on':'');}
+  renderJobs();
+}
+function populateConsultants() {
+  var sel=document.getElementById('consultant-sel');
+  var names={};
+  for(var i=0;i<ALL_JOBS.length;i++){var c=ALL_JOBS[i].crm_consultant;if(c)names[c]=true;}
+  var sorted=Object.keys(names).sort(function(a,b){return a.localeCompare(b);});
+  for(var i=0;i<sorted.length;i++){var opt=document.createElement('option');opt.value=sorted[i];opt.textContent=sorted[i];sel.appendChild(opt);}
+}
 function toggleTag(el,group) {
   var v=el.getAttribute('data-v'),idx=filters[group].indexOf(v);
   if(idx!==-1){filters[group].splice(idx,1);el.className='tag';}
@@ -313,6 +341,9 @@ function removeFilter(group,val) {
   if(group==='esn'){hideESN=false;document.getElementById('esn-btn').className='esn-btn esn-blue';document.getElementById('esn-check').textContent='';document.getElementById('esn-lbl').textContent='Masquer ESN';}
   else if(group==='cabinet'){hideCabinet=false;document.getElementById('cab-btn').className='esn-btn';document.getElementById('cab-check').textContent='';document.getElementById('cab-lbl').textContent='Masquer cabinets';}
   else if(group==='kw'){document.getElementById('kw').value='';}
+  else if(group==='saved'){showSavedOnly=false;}
+  else if(group==='tc'){filterTC=null;document.getElementById('tc-oui').className='tag';document.getElementById('tc-non').className='tag';}
+  else if(group==='consultant'){document.getElementById('consultant-sel').value='';}
   else{var idx=filters[group].indexOf(val);if(idx!==-1)filters[group].splice(idx,1);document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){if(t.getAttribute('data-v')===val)t.className='tag';});}
   renderJobs();
 }
@@ -328,6 +359,10 @@ function resetAll() {
   document.getElementById('cab-btn').className='esn-btn';
   document.getElementById('cab-check').textContent='';
   document.getElementById('cab-lbl').textContent='Masquer cabinets';
+  filterTC=null;showSavedOnly=false;
+  document.getElementById('tc-oui').className='tag';
+  document.getElementById('tc-non').className='tag';
+  document.getElementById('consultant-sel').value='';
   activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
@@ -346,12 +381,17 @@ function renderJobs() {
   var search=(document.getElementById('search-input').value||'').toLowerCase();
   var kw=(document.getElementById('kw').value||'').toLowerCase().trim();
   var sort=document.getElementById('sort-sel').value||'date';
+  var consultant=document.getElementById('consultant-sel').value;
   var jobs=[];
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
     if(activeSources.indexOf(j.source)===-1) continue;
     if(hideESN&&j.isESN) continue;
     if(hideCabinet&&j.isCabinet) continue;
+    if(showSavedOnly&&!saved[j.id]) continue;
+    if(filterTC===true&&!j.crm_tc) continue;
+    if(filterTC===false&&j.crm_tc) continue;
+    if(consultant&&j.crm_consultant!==consultant) continue;
     if(search&&(j.title+' '+j.company+' '+j.desc).toLowerCase().indexOf(search)===-1) continue;
     if(kw){var hay=(j.title+' '+j.desc).toLowerCase(),parts=kw.split(','),ok=false;for(var t=0;t<parts.length;t++){var tp=parts[t].trim();if(tp&&hay.indexOf(tp)!==-1){ok=true;break;}}if(!ok)continue;}
     if(filters.category.length&&filters.category.indexOf(j.category)===-1) continue;
@@ -370,13 +410,16 @@ function renderJobs() {
   if(kv) activeF.push({group:'kw',val:kv});
   if(hideESN) activeF.push({group:'esn',val:'sans ESN'});
   if(hideCabinet) activeF.push({group:'cabinet',val:'sans cabinets'});
-  var remC=0,recC=0,savC=0;
-  for(var i=0;i<jobs.length;i++){if(jobs[i].location==='Remote')remC++;if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
+  if(showSavedOnly) activeF.push({group:'saved',val:'sauvegardés'});
+  if(filterTC===true) activeF.push({group:'tc',val:'T&Cs ✓'});
+  if(filterTC===false) activeF.push({group:'tc',val:'sans T&Cs'});
+  if(consultant) activeF.push({group:'consultant',val:consultant});
+  var recC=0,savC=0;
+  for(var i=0;i<jobs.length;i++){if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
   document.getElementById('stats-bar').innerHTML=
-    '<div class="stat"><span class="stat-n">'+jobs.length+'</span><span class="stat-l">CDI</span></div>'+
-    '<div class="stat"><span class="stat-n" style="color:var(--accent)">'+remC+'</span><span class="stat-l">Remote</span></div>'+
     '<div class="stat"><span class="stat-n" style="color:var(--blue)">'+recC+'</span><span class="stat-l">3 derniers jours</span></div>'+
-    '<div class="stat"><span class="stat-n" style="color:var(--warn)">'+savC+'</span><span class="stat-l">Sauvegard\u00e9s</span></div>'+
+    '<div class="stat" onclick="toggleSavedOnly()" title="Cliquer pour voir les sauvegard\u00e9s" style="cursor:pointer;'+(showSavedOnly?'outline:2px solid var(--warn);border-radius:8px;':'')+'">' +
+      '<span class="stat-n" style="color:var(--warn)">'+Object.keys(saved).length+'</span><span class="stat-l">Sauvegard\u00e9s</span></div>'+
     '<span class="last-update">Mis \u00e0 jour : '+UPDATED+'</span>';
   var chips='';
   for(var i=0;i<Math.min(activeF.length,6);i++){var f=activeF[i];chips+='<span class="achip'+(f.group==='cabinet'?' achip-red':f.group==='esn'?' achip-blue':'')+'" onclick="removeFilter(\''+f.group+'\',\''+f.val+'\')">'+f.val+' \u00d7</span>';}
@@ -424,7 +467,8 @@ function renderJobs() {
   wrap.innerHTML=html;
 }
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
-function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];renderJobs();}
+function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}
+populateConsultants();
 renderJobs();
 </script>
 </body>
