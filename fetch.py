@@ -65,6 +65,12 @@ CABINETS = [
     'groupe domino','groupe interaction','groupe morgan','groupe proman','groupe dlsi',
     'groupe ras','groupe jubil','groupe abalone','groupe triangle','groupe connectt',
     'groupe samsic','groupe leader','groupe ergalis',
+    # Ajouts
+    'cimem','jober group','skills cadres','fab group','karpos','timtargett',
+    'kara travail','team.is','crit interim','kent recrutement','experteam',
+    'w hunt','horizon job','cabinet gascon','abil ressources',
+    'les interimaires','advance emploi','talents handicap',
+    'asap work','innova solutions',
 ]
 
 ESNS = [
@@ -110,6 +116,16 @@ ESNS = [
     'waycom','wide agency','xefi','xelya','ygl consulting','zenika',
     'sii atlantique','sii méditerranée','sii méditerranee',
     'sii ouest','sii est','sii services','sii luxembourg',
+    # Ajouts
+    'arcesi','audensiel','sully group','reisel','nbtech','b-hive',
+    'max digital services','avisto','expleo','ikigaï','ikigai','onepoint',
+    'spie ics','holenek','sinetik','scalian','hardis group','kanoma',
+    'k-lagan','stork groupe','ccl consulting','orange business',
+    'size up consulting','ekkiden','inetum','it mates','its services',
+    'assystem','infotel','andrice','ingeniance','seequalis',
+    'sollers consulting','ciorane','ginko','defi informatique',
+    'sea tpi','econocom','akkodis','seres technologies',
+    'kaizen solutions','amiltone','groupe sii','inside group','alpee',
 ]
 
 def is_cabinet(company):
