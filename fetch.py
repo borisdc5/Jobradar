@@ -181,11 +181,12 @@ def parse_afjv(xml):
         cats = re.findall(r'<category>(.*?)</category>', item)
         contrat = next((c for c in cats if c in ['CDI','CDD','Stage','Alternance','Freelance','Intermittent']), '')
         if contrat != 'CDI': continue
-        category = next((c for c in cats if c not in ['CDI','CDD','Stage','Alternance','Freelance','Intermittent','France','International','Belgique']), '')
+        afjv_hint = next((c for c in cats if c not in ['CDI','CDD','Stage','Alternance','Freelance','Intermittent','France','International','Belgique']), '')
         desc = re.sub(r'<[^>]+>', ' ', g('description')).strip()
         company = afjv_company(desc)
-        jobs.append({'id': i, 'title': g('title'), 'company': company, 'link': g('link'),
-                     'desc': desc[:200], 'location': afjv_location(desc), 'category': category,
+        title_afjv = g('title')
+        jobs.append({'id': i, 'title': title_afjv, 'company': company, 'link': g('link'),
+                     'desc': desc[:200], 'location': afjv_location(desc), 'category': categorize(title_afjv, afjv_hint),
                      'daysAgo': days_ago(g('pubDate')), 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company), 'source': 'afjv'})
     return jobs
 
@@ -221,26 +222,192 @@ def ft_normalize_location(lieu):
     if dept == '06' or 'nice' in city: return 'Nice'
     return parts[1].strip() if len(parts) == 2 else raw.strip()
 
-def ft_category(title, rome):
-    t = (title + ' ' + rome).lower()
-    if any(x in t for x in ['data','machine learning','intelligence artificielle',' ia ','analyst','business intel','big data','dataops','mlops']): return 'Data / Gestion de données'
-    if any(x in t for x in ['développeur','développeuse','software','fullstack','full-stack','front','back','mobile','python','java','.net','php','react','angular','programmeur','ingénieur logiciel']): return 'Programmation'
-    if any(x in t for x in ['devops','cloud','infrastructure','sre','système','réseau','administrateur sys','ops','kubernetes','docker','ansible']): return 'DevOps / Cloud'
-    if any(x in t for x in ['cybersécurité','cyber sécurité','sécurité informatique','rssi','pentest','soc ','vulnerability']): return 'Cybersécurité'
-    if any(x in t for x in ['product manager','product owner',' po ','chef de projet','scrum','agile','program manager','project manager']): return 'Product / Projet'
-    if any(x in t for x in ['ux','ui ','designer','design','expérience utilisateur','ergonome']): return 'UX / Design'
-    if any(x in t for x in ['test','qa ','qualité logiciel','recette','assurance qualité']): return 'Test / QA'
-    if any(x in t for x in ['manager','management','directeur','responsable','dsi','cto','cio','head of']): return 'Management'
-    if any(x in t for x in ['commercial','marketing','vente','business dev','account manager','growth']): return 'Commercial / Marketing'
+_AFJV_MAP = {
+    'programmation':            'Développement',
+    'data / gestion de données':'Data / IA',
+    'devops / cloud':           'DevOps / Cloud',
+    'cybersécurité':            'Cybersécurité',
+    'product / projet':         'Produit',
+    'ux / design':              'Produit',
+    'test / qa':                'Produit',
+    'management':               'Architecture & Lead',
+    'commercial / marketing':   'Marketing',
+    'conception':               'Jeux Vidéo',
+    'infographie':              'Jeux Vidéo',
+    'musique / son':            'Jeux Vidéo',
+}
+
+def categorize(title, hint=''):
+    # Direct AFJV category mapping
+    mapped = _AFJV_MAP.get((hint or '').lower().strip())
+    if mapped:
+        return mapped
+    t = (title + ' ' + hint).lower()
+    # ── Cybersécurité ──────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'cyber','pentest','penetration test','ethical hack','red team','blue team',
+        'soc analyst','threat hunt','incident respons','cert analyst','rssi','ciso',
+        'security manager','security auditor','iso 27001','iam consultant',
+        'iam engineer','pam engineer','devsecops','cloud security',
+        'network security','endpoint security','security engineer',
+        'offensive security','vulnerability',
+    ]): return 'Cybersécurité'
+    # ── Data / IA ──────────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'data scientist','data engineer','data analyst','data architect','dataops',
+        'analytics engineer','etl developer','big data','spark engineer','hadoop',
+        'machine learning','deep learning','llm engineer','genai','gen ai',
+        'ai engineer','ai architect','ai researcher','ai product','conversational ai',
+        'reinforcement learning','computer vision engineer','nlp engineer',
+        'prompt engineer','mlops','bi developer','bi consultant','reporting analyst',
+        'tableau developer','power bi','qlik developer',
+        'dba ','database administrator','postgre','oracle dba','sql server dba',
+        'mongodb engineer','mdm consultant','quantitative analyst',
+        'applied scientist','research scientist','intelligence artificielle',
+        'business intel',
+    ]): return 'Data / IA'
+    # ── ERP / CRM ──────────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'sap consultant','sap developer','sap fi','sap mm','sap sd','sap abap',
+        'sap hana','oracle erp','dynamics 365','dynamics crm','sage consultant',
+        'infor consultant','salesforce','hubspot consultant','crm manager',
+        'power platform','mendix','outsystems','low code','no code',
+    ]): return 'ERP / CRM'
+    # ── Architecture & Lead ────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'software architect','solution architect','enterprise architect',
+        'technical architect','chief architect',
+        'cto','vp engineering','vp tech','vp of eng','engineering manager',
+        'head of engineering','tech lead','lead developer','lead engineer',
+        'tribe lead','technical director',
+    ]): return 'Architecture & Lead'
+    # ── DevOps / Cloud ─────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'devops','site reliability','sre ','platform engineer','build & release',
+        'ci/cd','cloud engineer','cloud architect','aws engineer','azure engineer',
+        'gcp engineer','multi-cloud','finops','kubernetes','openshift',
+        'container platform','administrateur sys','sysadmin','linux engineer',
+        'windows engineer','infrastructure architect','infrastructure manager',
+        'unix engineer','administrateur réseau','network engineer','network architect',
+        'telecom engineer','voip','sd-wan','noc engineer',
+        'ingénieur production','production engineer','ops engineer','run manager',
+        'it operations','infrastructure','réseau admin',
+    ]): return 'DevOps / Cloud'
+    # ── Développement ──────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'backend engineer','backend developer','software engineer','software developer',
+        'java developer','kotlin developer','scala developer','php developer',
+        'python developer','django developer','flask developer','node.js',
+        'golang developer','rust developer','.net developer','c# developer',
+        'ruby developer','api developer','microservices','application engineer',
+        'frontend engineer','javascript developer','typescript developer',
+        'react developer','vue.js','angular developer','next.js','nuxt.js',
+        'ui developer','mobile web developer',
+        'fullstack engineer','full stack engineer','product engineer',
+        'ios developer','android developer','flutter developer','react native',
+        'swift developer','xamarin','ionic developer','mobile engineer',
+        'embedded software','firmware engineer','linux embedded','qt developer',
+        'gameplay programmer','game developer','unreal engine','unity developer',
+        'graphics programmer','engine programmer',
+        'développeur','développeuse','programmeur','ingénieur logiciel',
+        'ingénieur développement','ingénieur backend','ingénieur frontend',
+        'fullstack','full-stack','frontend','front-end','backend',
+        'software eng','logiciel',
+    ]): return 'Développement'
+    # ── Produit ─────────────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'product manager','product owner','head of product','chief product',
+        'technical product','ai product manager','growth product',
+        'product designer','ux designer','ui designer','ux researcher',
+        'service designer','interaction designer','ux writer',
+        'product operations','product analyst','product strategist',
+        'qa engineer','test engineer','qa analyst','automation tester','sdet',
+        'test automation','performance tester','validation engineer',
+        'chef de produit',' po ','po,',
+    ]): return 'Produit'
+    # ── IT Support ──────────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'helpdesk','help desk','service desk','desktop support','it support engineer',
+        'technicien support','workplace engineer','field support','it technician',
+    ]): return 'IT Support'
+    # ── Marketing ───────────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'growth manager','growth hacker','acquisition manager','performance marketing',
+        'sea manager','seo manager','paid media','crm marketing','lifecycle manager',
+        'content manager','brand manager','social media manager','community manager',
+        'copywriter','editorial manager','influence manager','product marketing',
+        'go-to-market',' pmm ','market intelligence','marketing operations',
+        'marketing automation','marketing analyst','digital analyst','cro specialist',
+        'web analyst','cmo','vp marketing','head of marketing','marketing director',
+        'marketing digital','marketing manager',
+    ]): return 'Marketing'
+    # ── Sales / BizDev ──────────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'sdr ','bdr ','sales development representative','business development representative',
+        'account executive','saas sales','closing manager',
+        'key account manager','strategic account manager',
+        'presales','pre-sales','solutions consultant','solutions engineer',
+        'head of sales','sales director','vp sales','revenue operations',
+        'sales operations','partnership manager','channel manager','alliances manager',
+        'customer success','customer care manager','onboarding specialist',
+        'customer experience manager','implementation consultant',
+        'business developer','business development',
+        'account manager',
+    ]): return 'Sales / BizDev'
+    # ── Gestion de Projet ───────────────────────────────────────────────────────
+    if any(x in t for x in [
+        'chef de projet','technical project manager','digital project manager',
+        'infrastructure project manager','erp project manager','delivery lead',
+        'program manager','pmo ',
+    ]): return 'Gestion de Projet'
+    # ── Consulting / Transformation ──────────────────────────────────────────────
+    if any(x in t for x in [
+        'consultant digital','it consultant','transformation consultant',
+        'strategy consultant','innovation consultant','agile coach',
+        'change manager','delivery manager','scrum master',
+        'project manager','chef de projet it',
+    ]): return 'Consulting'
+    # ── Broad fallbacks ──────────────────────────────────────────────────────────
+    if any(x in t for x in ['directeur technique','dsi','cio','head of tech']):
+        return 'Architecture & Lead'
+    if any(x in t for x in ['commercial','vente','business dev']):
+        return 'Sales / BizDev'
+    if any(x in t for x in ['marketing','growth ','seo ','sea ']):
+        return 'Marketing'
+    if any(x in t for x in ['data ','analyse données']):
+        return 'Data / IA'
     return ''
 
 FT_KEYWORDS = [
+    # Développement
     'développeur',
+    'software engineer',
+    # DevOps / Cloud
     'devops',
-    'cloud',
-    'data',
+    'ingénieur cloud',
+    'administrateur systèmes',
+    # Data / IA
+    'data engineer',
+    'data scientist',
+    'machine learning',
+    # Cybersécurité
     'cybersécurité',
+    'pentester',
+    # Produit / Design
     'product manager',
+    'ux designer',
+    # ERP / CRM
+    'consultant SAP',
+    'consultant Salesforce',
+    # Archi & Lead
+    'architecte logiciel',
+    'tech lead',
+    # Sales / Marketing
+    'business developer',
+    'marketing digital',
+    # Consulting / Projet
+    'consultant transformation',
+    'chef de projet informatique',
 ]
 
 def fetch_ft():
@@ -275,7 +442,7 @@ def fetch_ft():
                 'link': (o.get('origineOffre') or {}).get('urlOrigine', '#'),
                 'desc': o.get('description', '')[:200],
                 'location': ft_normalize_location(o.get('lieuTravail') or {}),
-                'category': ft_category(title, o.get('romeLibelle', '')),
+                'category': categorize(title, o.get('romeLibelle', '')),
                 'daysAgo': days_ago(o.get('dateCreation', '')),
                 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'ft',
@@ -375,7 +542,7 @@ def _fetch_ms_job(args):
             'link': url,
             'desc': desc,
             'location': location,
-            'category': ft_category(title, ''),
+            'category': categorize(title, ''),
             'daysAgo': age,
             'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
             'source': 'ms',
@@ -449,7 +616,7 @@ def _fetch_hw_job(args):
                 'link': url,
                 'desc': desc,
                 'location': location,
-                'category': ft_category(title, ''),
+                'category': categorize(title, ''),
                 'daysAgo': age,
                 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'hw',
@@ -460,13 +627,20 @@ def _fetch_hw_job(args):
 
 HW_KEYWORDS = [
     'développeur',
+    'ingénieur logiciel',
     'data',
     'devops',
     'cloud',
     'cybersécurité',
     'product manager',
-    'designer',
-    'ingénieur logiciel',
+    'ux designer',
+    'consultant IT',
+    'chef de projet IT',
+    'architecte',
+    'business developer',
+    'marketing digital',
+    'salesforce',
+    'sap consultant',
 ]
 
 def fetch_hellowork(pages_per_kw=2):
@@ -557,7 +731,7 @@ def fetch_lir(max_pages=6):
                 'link': link,
                 'desc': '',
                 'location': ms_normalize_location(city, postal),
-                'category': ft_category(title, ''),
+                'category': categorize(title, ''),
                 'daysAgo': age,
                 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'lir',
@@ -694,7 +868,7 @@ def fetch_apec(max_results=200):
                 'link': f'{APEC_BASE}/candidat/recherche-emploi.html/offre/{r.get("numeroOffre", "")}',
                 'desc': re.sub(r'<[^>]+>', ' ', r.get('texteOffre', '')).strip()[:200],
                 'location': location,
-                'category': ft_category(title, ''),
+                'category': categorize(title, ''),
                 'daysAgo': age,
                 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'apec',
@@ -806,7 +980,7 @@ def fetch_fashionjobs(max_pages=3):
                     'link': link,
                     'desc': '',
                     'location': location,
-                    'category': ft_category(r['title'], ''),
+                    'category': categorize(r['title'], ''),
                     'daysAgo': age,
                     'isESN': is_esn_company(co), 'isCabinet': is_cabinet(co),
                     'source': 'fj',
@@ -824,7 +998,7 @@ def fetch_fashionjobs(max_pages=3):
 
 INDEED_BASE = 'https://fr.indeed.com'
 INDEED_KEYWORDS = [
-    # Backend – language-specific to avoid overlap
+    # Backend
     'développeur Python',
     'développeur Java',
     'développeur PHP Symfony',
@@ -841,13 +1015,25 @@ INDEED_KEYWORDS = [
     'data scientist',
     'data analyst',
     'machine learning MLOps',
-    # Infra / Cloud / Sec
+    # DevOps / Cloud / Infra
     'ingénieur DevOps Kubernetes',
     'architecte cloud AWS Azure',
+    'administrateur réseaux infrastructure',
+    # Cybersécurité
     'analyste cybersécurité',
-    # Product / Design
-    'product owner scrum',
-    'UX designer',
+    'consultant sécurité RSSI',
+    # Produit / Design
+    'product manager',
+    'UX designer product',
+    # ERP / CRM
+    'consultant SAP',
+    'consultant Salesforce CRM',
+    # Architecture
+    'architecte logiciel solution',
+    # Sales / Marketing / Consulting
+    'business developer SaaS',
+    'chef de projet IT agile',
+    'consultant transformation digitale',
 ]
 
 def indeed_parse_age(text):
@@ -947,7 +1133,7 @@ def fetch_indeed():
                         'link': f'{INDEED_BASE}/viewjob?jk={jk}',
                         'desc': '',
                         'location': location,
-                        'category': ft_category(r['title'], ''),
+                        'category': categorize(r['title'], ''),
                         'daysAgo': indeed_parse_age(r['dateText']),
                         'isESN': is_esn_company(r['company']), 'isCabinet': is_cabinet(r['company']),
                         'source': 'indeed',
