@@ -16,14 +16,124 @@ APEC_EMAIL       = os.getenv('APEC_EMAIL', '')
 APEC_PASSWORD    = os.getenv('APEC_PASSWORD', '')
 RECRUITCRM_TOKEN = os.getenv('RECRUITCRM_API_KEY', '')
 
-ESN = ['capgemini','atos','sopra','accenture','michael page','hays','robert half','manpower',
-       'adecco','randstad','sqli','altran','alten','aubay','devoteam','wavestone','kpmg',
-       'deloitte','pwc','umaneer','experis','modis','itekway','alteca','informatis',
-       'start people','groupe open']
+CABINETS = [
+    # Intérim / staffing majeurs
+    'adecco','manpower','randstad','expectra','synergie','start people','supplay',
+    'proman','partnaire','menway','ergalis','adéquat','adequat','abalone',
+    'domino rh','domino care','domino staff','domino missions',
+    'aquila rh','lynx rh','vitalis médical','vitalis medical',
+    'temporis','samsic','triangle solutions','triangle intérim','triangle interim',
+    'jubil','dlsi','connectt','sup interim','ras intérim','ras interim','ras recrutement',
+    'ras transport','option intérim','option interim','leader intérim','leader interim',
+    'actual leader','kelly services','kelly scientifique','kelly finance',
+    # Cabinets de recrutement / search firms
+    'page personnel','michael page','robert half','hays','walters people','robert walters',
+    'fed group','fed business','fed finance','fed it','fed supply','fed construction',
+    'fed engineering','fed human','fed legal','fed santé','fyte',
+    'spring professional','spring france','lhh','appel médical','appel medical',
+    'jbm médical','jbm medical','winsearch','selescope','vidal associates',
+    'morgan philips','hudson france','perfhomme','lincoln group','lincoln recrutement',
+    'alphéa','alphea','harry hope','adsearch','phi rh','solve recrutement',
+    'ignition program','mozaik rh','talent.io','hiresweet','recrulab',
+    'nonstop consulting','nigel frank','progressive recruitment','washington frank',
+    'computer futures','euro london','alexander b. smith','badenoch',
+    'rh partners','solinki','orientaction','talentpeople','ccld',
+    'seyos','mobiskill','easy partner','skillink','externatic',
+    'avizio','arravati','blue coders','the product crew',
+    # Recrutement digital / tech / niches
+    'lynkus','uptoo','altaide','urban linker','silkhom','data recrutement',
+    'licorne society','getpro','kicklox','blue search conseil',
+    'elaee','finaïa','finaia','talent program','jobberry','profil partenaire',
+    'opensourcing','circular search','hartstone','human solutions',
+    'dream catcher','effektiv','macandr','fusion rh','co-efficience',
+    'ethika','elatos','batenborch','work&you','nextgen rh',
+    'florian mantione','ethis rh','solutio rh','cooptalis','keyman',
+    'mind partners','sapiance','vauban executive','turningpoint','persuaders',
+    'potentiel conseil','lobster hfs','impactup','in quarto','light consultants',
+    'cadres en mission','talentup','search & selection','rc human',
+    'aptic conseil','avantage consulting','bmc consultants','phoenix consulting',
+    'centurion search','publika','mcg engineering','otteo rh','viamedis rh',
+    'rexel rh','kaducé','kaduce','h&r recrutement','alphyr',
+    'talent expert','remotive','hunteed','mozaik',
+    'clémentine','clementine','amalo','cofabrik','bluedocker',
+    "cadr'avenir",'cadravenir','perfia','winid','aéos','aeos',
+    'charly recrutement','job link','morgan services',
+    'interaction santé','interaction btp','interaction naval',
+    'proman santé','proman btp','proman expertise',
+    'adéquat inside','adéquat recrutement',
+    'groupe actual','groupe crit','groupe menway','groupe synergie','groupe partnaire',
+    'groupe domino','groupe interaction','groupe morgan','groupe proman','groupe dlsi',
+    'groupe ras','groupe jubil','groupe abalone','groupe triangle','groupe connectt',
+    'groupe samsic','groupe leader','groupe ergalis',
+]
+
+ESNS = [
+    # ESN Tier 1
+    'capgemini','atos','sopra','accenture','alten','aubay','devoteam','wavestone',
+    'sqli','altran','umaneer','experis','modis','itekway','alteca','informatis',
+    'groupe open',
+    # ESN mid-market
+    'blue soft','kaliop','conserto','xebia','exalt','eleven labs','niji',
+    'makina corpus','sensiolabs','clever age','synolia','izberg','yield studio',
+    'theodo','fabernovel','betomorrow','jems','advens','i-tracing',
+    'almond','nomios','apixit','synetis','intrinsec','wifirst','systonic',
+    'cheops technology','adista','celad','agylis','guarani','hn services',
+    'objectware','helpline','absys cyborg','dcs easyware','proxiad',
+    'addixgroup','koesio','sra informatique','oci informatique','adomik',
+    'arondor','meritis','zen value','easis','viveris','isatech','jiliti',
+    'ouidou','klanik','skaizen','digital virgo','jouve','coexya',
+    'decivision','arolla','carbon it','zenior','aneo','ekimetrics','ysance',
+    'avanade','ardemis','acensi','cat-amania','consort group','tmc france',
+    'it link','adentis','auberon consulting','geser best','guérin technologies',
+    'guerin technologies','oxiane','obeo','inetdoc','vif software','trsb',
+    'omnilog','unlck','ocsi','syage','humancraft','adelyce','bial-x',
+    'datavalue consulting','tnp consultants','saegus','stanford technologies',
+    'isia','micropole','norsys','oxya','apsolut',
+    'teamwork france','delaware france','callimedia','cellenza','sam solutions',
+    'zenity','net6tem','webnet','useradgents','pentalog','softeam',
+    'astrel','kincy','alyotech','rtone','wemanity','noveo','koders',
+    'feel europe','acpqualife','afg engineering','afd tech','ametra','aquantic',
+    'arhs developments','artelys','askell','atawa','axopen','beelix',
+    'brainsonic','c2s bouygues','citech','clostera','codeworks',
+    'crayon france','data one','davidson','degetel',
+    'digitalberry','divalto','efor group','ekimia','elsys design',
+    'emakina','enovea','espritek','etix everywhere','everience',
+    'feelagile','finegan','foliateam','galiad','harington','hitechpros',
+    'hub one','iobeya','its group','izi solutions','kereon',
+    'konsultoo','la javaness','lùkla','lukla','mallyance',
+    'maltem','mca engineering','methys','mind7','néosoft','neosoft',
+    'noveane','nuxeo','opstim','otimo','performance informatique',
+    'pixagility','proelan','proservia','qim info','sogilis','squad',
+    'stedia','synchrone','teamnet','tech advantage','tech valley',
+    'teksystems','tenth revolution','tersea','the coding machine',
+    'timspirit','ucase consulting','upper-link','virtuos','viseatis',
+    'waycom','wide agency','xefi','xelya','ygl consulting','zenika',
+    'sii atlantique','sii méditerranée','sii méditerranee',
+    'sii ouest','sii est','sii services','sii luxembourg',
+]
+
+def is_cabinet(company):
+    c = (company or '').lower()
+    if any(e in c for e in CABINETS):
+        return True
+    return 'conseil' in c
+
+def is_esn_company(company):
+    c = (company or '').lower()
+    if any(e in c for e in ESNS):
+        return True
+    # "SII" seul (hors sii atlantique etc. déjà couverts)
+    if c == 'sii' or c.startswith('sii ') or ' sii ' in c:
+        return True
+    if ' rh' in c or c.endswith(' rh'):
+        return True
+    if 'recrutement' in c:
+        return True
+    return False
 
 def is_esn(company):
-    c = (company or '').lower()
-    return any(e in c for e in ESN)
+    """Compat: renvoie True si cabinet OU ESN (pour backward compat si besoin)."""
+    return is_cabinet(company) or is_esn_company(company)
 
 def http_get(url, headers=None):
     req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
@@ -76,7 +186,7 @@ def parse_afjv(xml):
         company = afjv_company(desc)
         jobs.append({'id': i, 'title': g('title'), 'company': company, 'link': g('link'),
                      'desc': desc[:200], 'location': afjv_location(desc), 'category': category,
-                     'daysAgo': days_ago(g('pubDate')), 'isESN': is_esn(company), 'source': 'afjv'})
+                     'daysAgo': days_ago(g('pubDate')), 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company), 'source': 'afjv'})
     return jobs
 
 # ── France Travail API ─────────────────────────────────────────────────────────
@@ -167,7 +277,7 @@ def fetch_ft():
                 'location': ft_normalize_location(o.get('lieuTravail') or {}),
                 'category': ft_category(title, o.get('romeLibelle', '')),
                 'daysAgo': days_ago(o.get('dateCreation', '')),
-                'isESN': is_esn(company),
+                'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'ft',
             })
         print(f'  [{kw}] +{len(data.get("resultats",[]))} → {len(jobs)} uniques')
@@ -205,7 +315,7 @@ def parse_sjh(xml):
             'location': ms_normalize_location(city, '') if city else 'France',
             'category': '',
             'daysAgo': days_ago(pub),
-            'isESN': is_esn(company),
+            'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
             'source': 'sjh',
         })
     return jobs
@@ -267,7 +377,7 @@ def _fetch_ms_job(args):
             'location': location,
             'category': ft_category(title, ''),
             'daysAgo': age,
-            'isESN': is_esn(company),
+            'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
             'source': 'ms',
         }
     except Exception:
@@ -341,7 +451,7 @@ def _fetch_hw_job(args):
                 'location': location,
                 'category': ft_category(title, ''),
                 'daysAgo': age,
-                'isESN': is_esn(company),
+                'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'hw',
             }
     except Exception:
@@ -449,7 +559,7 @@ def fetch_lir(max_pages=6):
                 'location': ms_normalize_location(city, postal),
                 'category': ft_category(title, ''),
                 'daysAgo': age,
-                'isESN': is_esn(company),
+                'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'lir',
             })
         print(f'  [LIR page {p}] {page_count} offres → {len(jobs)} total')
@@ -586,7 +696,7 @@ def fetch_apec(max_results=200):
                 'location': location,
                 'category': ft_category(title, ''),
                 'daysAgo': age,
-                'isESN': is_esn(company),
+                'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'apec',
             })
 
@@ -698,7 +808,7 @@ def fetch_fashionjobs(max_pages=3):
                     'location': location,
                     'category': ft_category(r['title'], ''),
                     'daysAgo': age,
-                    'isESN': is_esn(co),
+                    'isESN': is_esn_company(co), 'isCabinet': is_cabinet(co),
                     'source': 'fj',
                 })
 
@@ -839,7 +949,7 @@ def fetch_indeed():
                         'location': location,
                         'category': ft_category(r['title'], ''),
                         'daysAgo': indeed_parse_age(r['dateText']),
-                        'isESN': is_esn(r['company']),
+                        'isESN': is_esn_company(r['company']), 'isCabinet': is_cabinet(r['company']),
                         'source': 'indeed',
                     })
             except Exception as e:
