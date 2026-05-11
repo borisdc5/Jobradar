@@ -155,8 +155,10 @@ print('\nEnrichissement des entreprises avec données jobs...')
 for company in companies.values():
     slug = company['slug']
     jd = job_map.get(slug)
-    company['has_tc']       = jd is not None          # any job (open or closed) = T&Cs
+    company['has_tc']       = jd is not None          # any job (open/closed/cancelled...) = T&Cs
     company['has_open_job'] = jd['has_open'] if jd else False
+    # is_client = Active Account status AND has an open job
+    company['is_client']    = company.get('status') == 'Active Account' and company['has_open_job']
     # Paternité: open job owner > company owner
     consultant_id = (jd['owner_id'] if jd else None) or company.get('owner_id')
     company['consultant'] = users.get(str(consultant_id), '') if consultant_id else ''
