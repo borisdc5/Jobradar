@@ -1149,6 +1149,106 @@ def fetch_indeed():
 
     return jobs
 
+# ── Collective.work ───────────────────────────────────────────────────────────
+
+CW_BASE     = 'https://www.collective.work'
+CW_JOBS_URL = CW_BASE + '/jobs/fr?contractType=Permanent&page={page}'
+CW_HEADERS  = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml',
+    'Accept-Language': 'fr-FR,fr;q=0.9',
+}
+
+def _cw_location(proj):
+    wp = proj.get('workPreferences') or []
+    if isinstance(wp, list):
+        wp_str = ' '.join(str(x).lower() for x in wp)
+        if 'remote' in wp_str or 'full_remote' in wp_str:
+            return 'Remote'
+    loc = proj.get('location') or {}
+    name = (loc.get('fullNameFrench') or loc.get('fullNameEnglish') or '') if isinstance(loc, dict) else str(loc)
+    name = name.lower()
+    if not name: return ''
+    if 'paris' in name: return 'Paris'
+    if 'lyon' in name: return 'Lyon'
+    if 'bordeaux' in name: return 'Bordeaux'
+    if 'nantes' in name: return 'Nantes'
+    if 'toulouse' in name: return 'Toulouse'
+    if 'rennes' in name: return 'Rennes'
+    if 'montpellier' in name: return 'Montpellier'
+    if 'lille' in name: return 'Lille'
+    if 'marseille' in name: return 'Marseille'
+    if 'strasbourg' in name: return 'Strasbourg'
+    if 'grenoble' in name: return 'Grenoble'
+    if 'remote' in name or 'télétravail' in name: return 'Remote'
+    if 'france' in name: return 'ALL'
+    return name.split(',')[0].strip().title()
+
+def fetch_collective(max_pages=12):
+    jobs, seen_ids = [], set()
+    for page in range(1, max_pages + 1):
+        url = CW_JOBS_URL.format(page=page)
+        req = urllib.request.Request(url, headers=CW_HEADERS)
+        try:
+            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8')
+        except Exception as e:
+            print(f'  [CW p{page}] erreur: {e}')
+            break
+        m = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.DOTALL)
+        if not m:
+            print(f'  [CW p{page}] __NEXT_DATA__ introuvable')
+            break
+        try:
+            data    = json.loads(m.group(1))
+            queries = data['props']['pageProps']['dehydratedState']['queries']
+            results = queries[0]['state']['data']['results']
+            projects   = results.get('projects', [])
+            pagination = results.get('pagination', {})
+        except Exception as e:
+            print(f'  [CW p{page}] parse erreur: {e}')
+            break
+        if not projects:
+            break
+        page_count = 0
+        for proj in projects:
+            job_id = proj.get('id', '')
+            if not job_id or job_id in seen_ids:
+                continue
+            seen_ids.add(job_id)
+            title   = (proj.get('name') or proj.get('sumUp') or '').strip()
+            co      = proj.get('company') or {}
+            company = (co.get('name') or '').strip() if isinstance(co, dict) else str(co).strip()
+            if not title or not company:
+                continue
+            slug = proj.get('slug', job_id)
+            link = f'{CW_BASE}/jobs/fr/{slug}'
+            desc = re.sub(r'<[^>]+>', ' ', proj.get('description') or '').strip()[:200]
+            try:
+                pub = datetime.fromisoformat((proj.get('publishedAt') or '').replace('Z', '+00:00'))
+                days = max(0, (datetime.now(timezone.utc) - pub).days)
+            except Exception:
+                days = 0
+            jobs.append({
+                'id':        1100000 + len(jobs),
+                'title':     title,
+                'company':   company,
+                'link':      link,
+                'desc':      desc,
+                'location':  _cw_location(proj),
+                'category':  categorize(title, ''),
+                'daysAgo':   days,
+                'isESN':     is_esn_company(company),
+                'isCabinet': is_cabinet(company),
+                'source':    'cw',
+            })
+            page_count += 1
+        print(f'  [CW p{page}] {page_count} offres → {len(jobs)} total')
+        total = pagination.get('total', 0)
+        if page * 30 >= total:
+            break
+        time.sleep(0.5)
+    return jobs
+
 # ── WeLoveDevs ────────────────────────────────────────────────────────────────
 
 WLD_JOBS_URL = ('https://welovedevs.com/fr/app/jobs'
@@ -1544,6 +1644,14 @@ if __name__ == '__main__':
         print(f'  {len(ind)} CDI Indeed')
     except Exception as e:
         print(f'  Indeed erreur: {e}')
+
+    print('Fetch Collective.work...')
+    try:
+        cw = fetch_collective(max_pages=12)
+        jobs += cw
+        print(f'  {len(cw)} CDI Collective.work')
+    except Exception as e:
+        print(f'  Collective.work erreur: {e}')
 
     print('Fetch WeLoveDevs...')
     try:
