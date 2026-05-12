@@ -98,9 +98,10 @@ job_map = {}
 total_jobs = 0
 page_num = 0
 next_url = f'{BASE}/jobs?per_page=100'  # first page: no page= param
+MAX_JOB_PAGES = 600          # safety cap : 60 000 jobs max (~11 min)
+no_new_streak = 0            # early-stop : pages sans nouvelle entreprise
 
-while next_url:
-    # Use rcrm_get with raw URL for first page, then follow next_page_url
+while next_url and page_num < MAX_JOB_PAGES:
     req = urllib.request.Request(next_url, headers={
         'Authorization': f'Bearer {TOKEN}',
         'Accept': 'application/json',
@@ -117,6 +118,7 @@ while next_url:
     if not items:
         break
 
+    new_slugs = 0
     for j in items:
         co_slug = j.get('company_slug', '')
         if not co_slug:
@@ -124,6 +126,7 @@ while next_url:
         is_open = (j.get('job_status') or {}).get('label') == 'Open'
         if co_slug not in job_map:
             job_map[co_slug] = {'has_open': False, 'owner_id': None}
+            new_slugs += 1
         if is_open and not job_map[co_slug]['has_open']:
             job_map[co_slug]['has_open'] = True
             job_map[co_slug]['owner_id'] = j.get('owner')
@@ -131,6 +134,15 @@ while next_url:
     total_jobs += len(items)
     page_num += 1
     print(f'  Page {page_num:3d} → {len(items)} jobs (total {total_jobs}, slugs uniques: {len(job_map)})')
+
+    # Early stop : 20 pages consécutives sans aucune nouvelle entreprise
+    if new_slugs == 0:
+        no_new_streak += 1
+        if no_new_streak >= 20:
+            print(f'  20 pages sans nouvelle entreprise — arrêt anticipé')
+            break
+    else:
+        no_new_streak = 0
 
     next_url = data.get('next_page_url')  # None when last page reached
     if next_url:
