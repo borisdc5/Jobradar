@@ -1317,6 +1317,94 @@ def _wld_days_ago(hit):
             pass
     return 0
 
+LJ_BASE = 'https://lesjeudis.com'
+LJ_JOBS_URL = LJ_BASE + '/jobs?page={page}'
+LJ_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,*/*',
+    'Accept-Language': 'fr-FR,fr;q=0.9',
+}
+
+def fetch_lesjeudis(max_pages=15):
+    """Scrape LesJeudis CDI jobs via __NEXT_DATA__ (no Playwright needed)."""
+    jobs, seen_ids = [], set()
+    for page in range(1, max_pages + 1):
+        url = LJ_JOBS_URL.format(page=page)
+        req = urllib.request.Request(url, headers=LJ_HEADERS)
+        try:
+            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8')
+        except Exception as e:
+            print(f'  LesJeudis page {page} erreur: {e}')
+            break
+        m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.DOTALL)
+        if not m:
+            break
+        try:
+            items = json.loads(m.group(1))['props']['pageProps']['data']['jobs']['pages']
+        except Exception as e:
+            print(f'  LesJeudis page {page} parse error: {e}')
+            break
+        if not items:
+            break
+        for item in items:
+            job_id = item.get('id')
+            if not job_id or job_id in seen_ids:
+                continue
+            seen_ids.add(job_id)
+            title   = (item.get('title') or '').strip()
+            company = (item.get('organization') or '').strip()
+            if not title or not company:
+                continue
+            url_path = (item.get('url') or {}).get('path') or item.get('urlNoPrefix') or ''
+            link = LJ_BASE + url_path if url_path else ''
+            if not link:
+                continue
+            # Published date → daysAgo
+            days_ago = 0
+            pub_str = item.get('published') or ''
+            if pub_str:
+                try:
+                    pub = datetime.fromisoformat(pub_str)
+                    if pub.tzinfo is None:
+                        pub = pub.replace(tzinfo=timezone.utc)
+                    days_ago = max(0, (datetime.now(timezone.utc) - pub).days)
+                except Exception:
+                    pass
+            # Location
+            remote_opts = item.get('remoteOptions') or []
+            is_remote = any('télétravail' in (r.get('label') or '').lower() for r in remote_opts)
+            if is_remote:
+                location = 'Remote'
+            else:
+                addresses = item.get('address') or []
+                loc = next((a for a in addresses if a.lower() not in ('france',)), None)
+                location = loc or (addresses[0] if addresses else 'France')
+            # Logo
+            logo = None
+            org = item.get('organizationProfile') or {}
+            if org.get('logo'):
+                logo = org['logo']
+            elif item.get('logo'):
+                logo = item['logo']
+            jobs.append({
+                'id':        1200000 + len(jobs),
+                'title':     title,
+                'company':   company,
+                'link':      link,
+                'desc':      '',
+                'location':  location,
+                'category':  categorize(title, ''),
+                'daysAgo':   days_ago,
+                'logo':      logo,
+                'isESN':     is_esn_company(company),
+                'isCabinet': is_cabinet(company),
+                'source':    'lj',
+            })
+        print(f'  Page {page}: {len(items)} jobs (total {len(jobs)})')
+        time.sleep(0.5)
+    print(f'  LesJeudis: {len(jobs)} CDI récupérés')
+    return jobs
+
 def fetch_wld(max_scroll=10):
     """Scrape WeLoveDevs CDI jobs via Playwright, intercepting Algolia API responses."""
     try:
@@ -1680,6 +1768,14 @@ if __name__ == '__main__':
         print(f'  {len(cw)} CDI Collective.work')
     except Exception as e:
         print(f'  Collective.work erreur: {e}')
+
+    print('Fetch LesJeudis...')
+    try:
+        lj = fetch_lesjeudis(max_pages=15)
+        jobs += lj
+        print(f'  {len(lj)} CDI LesJeudis')
+    except Exception as e:
+        print(f'  LesJeudis erreur: {e}')
 
     print('Fetch WeLoveDevs...')
     try:
