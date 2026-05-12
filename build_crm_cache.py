@@ -56,6 +56,9 @@ while True:
     if not items:
         break
 
+    if page == 1 and items:
+        print(f'  [DEBUG] Champs API company: {list(items[0].keys())}')
+
     for c in items:
         name = (c.get('company_name') or '').strip()
         if not name:
