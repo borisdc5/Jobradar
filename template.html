@@ -417,7 +417,6 @@ function renderJobs() {
   var recC=0,savC=0;
   for(var i=0;i<jobs.length;i++){if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
   document.getElementById('stats-bar').innerHTML=
-    '<div class="stat"><span class="stat-n" style="color:var(--blue)">'+recC+'</span><span class="stat-l">3 derniers jours</span></div>'+
     '<div class="stat" onclick="toggleSavedOnly()" title="Cliquer pour voir les sauvegard\u00e9s" style="cursor:pointer;'+(showSavedOnly?'outline:2px solid var(--warn);border-radius:8px;':'')+'">' +
       '<span class="stat-n" style="color:var(--warn)">'+Object.keys(saved).length+'</span><span class="stat-l">Sauvegard\u00e9s</span></div>'+
     '<span class="last-update">Mis \u00e0 jour : '+UPDATED+'</span>';

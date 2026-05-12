@@ -129,7 +129,7 @@ ESNS = [
     'sollers consulting','ciorane','ginko','defi informatique',
     'sea tpi','econocom','akkodis','seres technologies',
     'kaizen solutions','amiltone','groupe sii','inside group','alpee',
-    'cenova','algovia','unitech solutions','tlti','raedy','sijo','taleo',
+    'skiils','cenova','algovia','unitech solutions','tlti','raedy','sijo','taleo',
     'inventiv it','alpineo consulting','craftmandata','whub','sapiens group',
     '5 degrés','5 degres','consulting efficiency','obeya it','futurwork',
     'acatus','avnir engineering','sweet it','apya','nexoris','bk consulting',
