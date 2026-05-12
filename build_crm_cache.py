@@ -77,6 +77,7 @@ while True:
             'slug':         slug,        # alphanumeric slug, matches job.company_slug
             'numeric_id':   c.get('id'), # kept for reference
             'owner_id':     c.get('owner'),
+            'updated_at':   c.get('updated_at') or '',
         }
 
     print(f'  Page {page:3d} → {len(items)} entrées (total {len(companies)})')

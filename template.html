@@ -450,6 +450,7 @@ function renderJobs() {
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
             '</div>' +
+            (j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<div style="font-size:9px;color:var(--txt3);text-align:right;font-family:\'DM Mono\',monospace;margin-top:2px;">&#8635; '+fmtCrmDate(j.crm_last_updated)+'</div>':'') +
           '</div>' +
         '</div>' +
         '<div class="jco">'+j.company+'</div>' +
@@ -464,6 +465,15 @@ function renderJobs() {
     '</div>';
   }
   wrap.innerHTML=html;
+}
+function fmtCrmDate(s) {
+  if(!s) return '';
+  var d=new Date(s);
+  if(isNaN(d)) return '';
+  var dd=String(d.getDate()).padStart(2,'0');
+  var mm=String(d.getMonth()+1).padStart(2,'0');
+  var yy=d.getFullYear();
+  return dd+'/'+mm+'/'+yy;
 }
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
 function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}

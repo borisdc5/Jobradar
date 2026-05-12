@@ -1553,13 +1553,13 @@ def enrich_crm(jobs):
     if not os.path.exists(CRM_CACHE_FILE) and not RECRUITCRM_TOKEN:
         print('  Token RECRUITCRM absent et pas de cache, enrichissement CRM ignoré')
         for j in jobs:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
         return jobs
 
     crm_lookup, users = _load_crm_lookup()
     if not crm_lookup:
         for j in jobs:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
         return jobs
 
     # Build match map on unique company names only
@@ -1580,17 +1580,18 @@ def enrich_crm(jobs):
         company = (j.get('company') or '').strip()
         res = match_map.get(company)
         if res:
-            j['crm_link']       = res['crm_link']
-            j['is_client']      = res['is_client']
-            j['crm_status']     = res.get('status', '')
-            j['crm_tc']         = res.get('has_tc', None)
-            j['crm_open_job']   = res.get('has_open_job', False)
-            j['crm_consultant'] = res.get('consultant', '')
+            j['crm_link']         = res['crm_link']
+            j['is_client']        = res['is_client']
+            j['crm_status']       = res.get('status', '')
+            j['crm_tc']           = res.get('has_tc', None)
+            j['crm_open_job']     = res.get('has_open_job', False)
+            j['crm_consultant']   = res.get('consultant', '')
+            j['crm_last_updated'] = res.get('updated_at', '')
             matched += 1
             if res['is_client']:                     clients += 1
             elif res.get('status') == 'Prospect':    prospects += 1
         else:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
 
     print(f'  CRM: {matched}/{len(jobs)} offres matchées — {clients} clients actifs, {prospects} prospects')
     return jobs
