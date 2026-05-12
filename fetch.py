@@ -71,6 +71,9 @@ CABINETS = [
     'w hunt','horizon job','cabinet gascon','abil ressources',
     'les interimaires','advance emploi','talents handicap',
     'asap work','innova solutions',
+    'taste','awake group','skiils','pastèque','pasteque','matchee','caboost',
+    'sherpa accompagnement','ergon recruitment','bloomays','arbalett',
+    'surfjob','easy-talent','easy talent','rheso','le bureau des talents',
 ]
 
 ESNS = [
@@ -126,6 +129,11 @@ ESNS = [
     'sollers consulting','ciorane','ginko','defi informatique',
     'sea tpi','econocom','akkodis','seres technologies',
     'kaizen solutions','amiltone','groupe sii','inside group','alpee',
+    'cenova','algovia','unitech solutions','tlti','raedy','sijo','taleo',
+    'inventiv it','alpineo consulting','craftmandata','whub','sapiens group',
+    '5 degrés','5 degres','consulting efficiency','obeya it','futurwork',
+    'acatus','avnir engineering','sweet it','apya','nexoris','bk consulting',
+    'frydom','seven','go&dev','la tribu',
 ]
 
 def is_cabinet(company):
