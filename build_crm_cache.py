@@ -56,9 +56,6 @@ while True:
     if not items:
         break
 
-    if page == 1 and items:
-        print(f'  [DEBUG] Champs API company: {list(items[0].keys())}')
-
     for c in items:
         name = (c.get('company_name') or '').strip()
         if not name:
@@ -80,7 +77,7 @@ while True:
             'slug':         slug,        # alphanumeric slug, matches job.company_slug
             'numeric_id':   c.get('id'), # kept for reference
             'owner_id':     c.get('owner'),
-            'updated_at':   c.get('updated_at') or '',
+            'updated_on':   c.get('updated_on') or '',
         }
 
     print(f'  Page {page:3d} → {len(items)} entrées (total {len(companies)})')

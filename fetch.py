@@ -1674,7 +1674,7 @@ def enrich_crm(jobs):
             j['crm_tc']           = res.get('has_tc', None)
             j['crm_open_job']     = res.get('has_open_job', False)
             j['crm_consultant']   = res.get('consultant', '')
-            j['crm_last_updated'] = res.get('updated_at', '')
+            j['crm_last_updated'] = res.get('updated_on', '')
             matched += 1
             if res['is_client']:                     clients += 1
             elif res.get('status') == 'Prospect':    prospects += 1
