@@ -56,6 +56,10 @@ while True:
     if not items:
         break
 
+    # Debug: print raw keys on first page to spot updated_by field
+    if page == 1 and items:
+        print(f'  [debug] Champs bruts API company: {sorted(items[0].keys())}')
+
     for c in items:
         name = (c.get('company_name') or '').strip()
         if not name:
@@ -69,15 +73,20 @@ while True:
                 status = (cf.get('value') or '').strip()
                 break
 
+        # updated_by : try common RCRM field names for "last modified by"
+        updated_by_id = (c.get('updated_by') or c.get('last_modified_by')
+                         or c.get('modified_by') or c.get('last_updated_by'))
+
         companies[name.lower()] = {
-            'company_name': name,
-            'crm_link':     crm_link,
-            'status':       status,
-            'is_client':    status == 'Active Account',
-            'slug':         slug,        # alphanumeric slug, matches job.company_slug
-            'numeric_id':   c.get('id'), # kept for reference
-            'owner_id':     c.get('owner'),
-            'updated_on':   c.get('updated_on') or '',
+            'company_name':   name,
+            'crm_link':       crm_link,
+            'status':         status,
+            'is_client':      status == 'Active Account',
+            'slug':           slug,
+            'numeric_id':     c.get('id'),
+            'owner_id':       c.get('owner'),
+            'updated_on':     c.get('updated_on') or '',
+            'updated_by_id':  updated_by_id,  # resolved to name after users are loaded
         }
 
     print(f'  Page {page:3d} → {len(items)} entrées (total {len(companies)})')
@@ -172,9 +181,12 @@ for company in companies.values():
     company['has_open_job'] = jd['has_open'] if jd else False
     # is_client = Active Account status AND has an open job
     company['is_client']    = company.get('status') == 'Active Account' and company['has_open_job']
-    # Paternité: open job owner > company owner
+    # Propriétaire du compte : open job owner > company owner
     consultant_id = (jd['owner_id'] if jd else None) or company.get('owner_id')
     company['consultant'] = users.get(str(consultant_id), '') if consultant_id else ''
+    # Auteur de la dernière modification
+    upd_id = company.pop('updated_by_id', None)
+    company['updated_by'] = users.get(str(upd_id), '') if upd_id else ''
 
 with_tc   = sum(1 for v in companies.values() if v['has_tc'])
 with_open = sum(1 for v in companies.values() if v['has_open_job'])

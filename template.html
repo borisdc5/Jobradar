@@ -188,9 +188,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           <span class="tag" id="tc-oui" onclick="toggleTC(true)">T&amp;Cs ✓</span>
           <span class="tag" id="tc-non" onclick="toggleTC(false)">Sans T&amp;Cs</span>
         </div>
-        <select id="consultant-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;">
-          <option value="">Tous les consultants</option>
+        <select id="consultant-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;margin-bottom:6px;">
+          <option value="">Propriétaire du compte</option>
         </select>
+        <select id="updatedby-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;margin-bottom:6px;">
+          <option value="">Dernière action par</option>
+        </select>
+        <button class="esn-btn" id="nocrm-btn" onclick="toggleNoCRM()" style="margin-top:2px;">
+          <span class="esn-check" id="nocrm-check"></span>
+          <span id="nocrm-lbl">Pas dans RCRM</span>
+        </button>
       </div>
       <div class="hr"></div>
       <div class="fs">
@@ -266,7 +273,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
-var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null;
+var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj'];
 
@@ -310,11 +317,25 @@ function toggleTC(val) {
   renderJobs();
 }
 function populateConsultants() {
+  // Propriétaire du compte
   var sel=document.getElementById('consultant-sel');
   var names={};
   for(var i=0;i<ALL_JOBS.length;i++){var c=ALL_JOBS[i].crm_consultant;if(c)names[c]=true;}
   var sorted=Object.keys(names).sort(function(a,b){return a.localeCompare(b);});
   for(var i=0;i<sorted.length;i++){var opt=document.createElement('option');opt.value=sorted[i];opt.textContent=sorted[i];sel.appendChild(opt);}
+  // Dernière action par
+  var sel2=document.getElementById('updatedby-sel');
+  var names2={};
+  for(var i=0;i<ALL_JOBS.length;i++){var c=ALL_JOBS[i].crm_updated_by;if(c)names2[c]=true;}
+  var sorted2=Object.keys(names2).sort(function(a,b){return a.localeCompare(b);});
+  for(var i=0;i<sorted2.length;i++){var opt=document.createElement('option');opt.value=sorted2[i];opt.textContent=sorted2[i];sel2.appendChild(opt);}
+}
+function toggleNoCRM() {
+  hideNoCRM=!hideNoCRM;
+  document.getElementById('nocrm-btn').className='esn-btn'+(hideNoCRM?' on':'');
+  document.getElementById('nocrm-check').textContent=hideNoCRM?'✕':'';
+  document.getElementById('nocrm-lbl').textContent=hideNoCRM?'Pas dans RCRM ✓':'Pas dans RCRM';
+  renderJobs();
 }
 function toggleTag(el,group) {
   var v=el.getAttribute('data-v'),idx=filters[group].indexOf(v);
@@ -350,6 +371,8 @@ function removeFilter(group,val) {
   else if(group==='saved'){showSavedOnly=false;}
   else if(group==='tc'){filterTC=null;document.getElementById('tc-oui').className='tag';document.getElementById('tc-non').className='tag';}
   else if(group==='consultant'){document.getElementById('consultant-sel').value='';}
+  else if(group==='updatedby'){document.getElementById('updatedby-sel').value='';}
+  else if(group==='nocrm'){hideNoCRM=false;document.getElementById('nocrm-btn').className='esn-btn';document.getElementById('nocrm-check').textContent='';document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';}
   else{var idx=filters[group].indexOf(val);if(idx!==-1)filters[group].splice(idx,1);document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){if(t.getAttribute('data-v')===val)t.className='tag';});}
   renderJobs();
 }
@@ -369,6 +392,11 @@ function resetAll() {
   document.getElementById('tc-oui').className='tag';
   document.getElementById('tc-non').className='tag';
   document.getElementById('consultant-sel').value='';
+  document.getElementById('updatedby-sel').value='';
+  hideNoCRM=false;
+  document.getElementById('nocrm-btn').className='esn-btn';
+  document.getElementById('nocrm-check').textContent='';
+  document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
   activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
@@ -390,6 +418,7 @@ function renderJobs() {
   var kw=(document.getElementById('kw').value||'').toLowerCase().trim();
   var sort=document.getElementById('sort-sel').value||'date';
   var consultant=document.getElementById('consultant-sel').value;
+  var updatedBy=document.getElementById('updatedby-sel').value;
   var jobs=[];
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
@@ -399,7 +428,9 @@ function renderJobs() {
     if(showSavedOnly&&!saved[j.id]) continue;
     if(filterTC===true&&!j.crm_tc) continue;
     if(filterTC===false&&j.crm_tc) continue;
+    if(hideNoCRM&&j.crm_link) continue;
     if(consultant&&j.crm_consultant!==consultant) continue;
+    if(updatedBy&&j.crm_updated_by!==updatedBy) continue;
     if(search&&(j.title+' '+j.company+' '+j.desc).toLowerCase().indexOf(search)===-1) continue;
     if(kw){var hay=(j.title+' '+j.desc).toLowerCase(),parts=kw.split(','),ok=false;for(var t=0;t<parts.length;t++){var tp=parts[t].trim();if(tp&&hay.indexOf(tp)!==-1){ok=true;break;}}if(!ok)continue;}
     if(filters.category.length&&filters.category.indexOf(j.category)===-1) continue;
@@ -458,7 +489,7 @@ function renderJobs() {
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
             '</div>' +
-            (j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<div style="font-size:9px;color:var(--txt3);text-align:right;font-family:\'DM Mono\',monospace;margin-top:2px;">&#8635; '+fmtCrmDate(j.crm_last_updated)+'</div>':'') +
+            (j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<div style="font-size:9px;color:var(--txt3);text-align:right;font-family:\'DM Mono\',monospace;margin-top:2px;">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' · '+j.crm_updated_by:'')+'</div>':'') +
           '</div>' +
         '</div>' +
         '<div class="jco">'+j.company+'</div>' +

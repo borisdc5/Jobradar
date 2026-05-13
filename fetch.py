@@ -1770,13 +1770,13 @@ def enrich_crm(jobs):
     if not os.path.exists(CRM_CACHE_FILE) and not RECRUITCRM_TOKEN:
         print('  Token RECRUITCRM absent et pas de cache, enrichissement CRM ignoré')
         for j in jobs:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':'','crm_updated_by':''})
         return jobs
 
     crm_lookup, users = _load_crm_lookup()
     if not crm_lookup:
         for j in jobs:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':'','crm_updated_by':''})
         return jobs
 
     # Build match map on unique company names only
@@ -1804,11 +1804,12 @@ def enrich_crm(jobs):
             j['crm_open_job']     = res.get('has_open_job', False)
             j['crm_consultant']   = res.get('consultant', '')
             j['crm_last_updated'] = res.get('updated_on', '')
+            j['crm_updated_by']   = res.get('updated_by', '')
             matched += 1
             if res['is_client']:                     clients += 1
             elif res.get('status') == 'Prospect':    prospects += 1
         else:
-            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':''})
+            j.update({'crm_link':'','is_client':False,'crm_status':'','crm_tc':None,'crm_open_job':False,'crm_consultant':'','crm_last_updated':'','crm_updated_by':''})
 
     print(f'  CRM: {matched}/{len(jobs)} offres matchées — {clients} clients actifs, {prospects} prospects')
     return jobs
@@ -1939,6 +1940,7 @@ if __name__ == '__main__':
         for j in jobs:
             j.setdefault('crm_link', '')
             j.setdefault('is_client', False)
+            j.setdefault('crm_updated_by', '')
 
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     template = open('template.html', encoding='utf-8').read()
