@@ -443,10 +443,12 @@ def fetch_ft():
         return []
     token = ft_get_token()
     headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
+    from datetime import timedelta
+    min_date = (datetime.now(timezone.utc) - timedelta(days=90)).strftime('%Y-%m-%dT00:00:00Z')
     seen, jobs = set(), []
     for kw in FT_KEYWORDS:
         enc = urllib.parse.quote(kw)
-        url = f'{FT_API_URL}?typeContrat=CDI&motsCles={enc}&range=0-149'
+        url = f'{FT_API_URL}?typeContrat=CDI&motsCles={enc}&range=0-149&minCreationDate={min_date}'
         req = urllib.request.Request(url, headers=headers)
         try:
             data = json.loads(urllib.request.urlopen(req, context=ctx, timeout=20).read())
@@ -1320,7 +1322,7 @@ def _wld_days_ago(hit):
                 return max(0, (datetime.now(timezone.utc) - pub).days)
         except Exception:
             pass
-    return 0
+    return 999  # pas de date → sera éliminé par le filtre global 90j
 
 LJ_BASE = 'https://lesjeudis.com'
 LJ_JOBS_URL = LJ_BASE + '/jobs?page={page}'
@@ -2061,7 +2063,11 @@ if __name__ == '__main__':
     except Exception as e:
         print(f'  Welcome to the Jungle erreur: {e}')
 
-    print(f'Total: {len(jobs)} offres')
+    # ── Filtre global : on ne garde que les offres de moins de 90 jours ──────────
+    before = len(jobs)
+    jobs = [j for j in jobs if j.get('daysAgo', 0) <= 90]
+    print(f'Total: {len(jobs)} offres ({before - len(jobs)} supprimées car > 90j)')
+
     print('Enrichissement logos...')
     try:
         enrich_logos(jobs)
