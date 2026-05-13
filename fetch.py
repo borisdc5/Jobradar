@@ -1505,6 +1505,121 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── LinkedIn ──────────────────────────────────────────────────────────────────
+
+LI_GUEST_URL = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search'
+LI_HEADERS   = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept-Language': 'fr-FR,fr;q=0.9',
+    'Accept': 'text/html,*/*',
+}
+LI_KEYWORDS = [
+    'développeur', 'software engineer', 'data engineer', 'devops',
+    'cloud architect', 'cybersécurité', 'product manager', 'data scientist',
+    'fullstack', 'backend developer', 'frontend developer', 'mobile developer',
+    'machine learning', 'SRE',
+]
+
+def _li_parse_cards(html):
+    """Parse LinkedIn job cards from guest API HTML response."""
+    jobs_raw = []
+    cards = re.findall(r'<li>(.*?)</li>', html, re.DOTALL)
+    for c in cards:
+        t   = re.search(r'class="base-search-card__title"[^>]*>\s*(.*?)\s*</h3>', c, re.DOTALL)
+        co  = re.search(r'class="base-search-card__subtitle".*?<a[^>]*>\s*(.*?)\s*</a>', c, re.DOTALL)
+        loc = re.search(r'class="job-search-card__location"[^>]*>\s*(.*?)\s*</span>', c, re.DOTALL)
+        dt  = re.search(r'datetime="([^"]+)"', c)
+        jid = re.search(r'data-entity-urn="urn:li:jobPosting:(\d+)"', c)
+        if not (t and co and jid):
+            continue
+        title   = re.sub(r'<[^>]+>', '', t.group(1)).strip()
+        company = re.sub(r'<[^>]+>', '', co.group(1)).strip()
+        city    = re.sub(r'<[^>]+>', '', loc.group(1)).strip() if loc else ''
+        jobs_raw.append({
+            'title':   title,
+            'company': company,
+            'city':    city,
+            'date':    dt.group(1) if dt else '',
+            'job_id':  jid.group(1),
+        })
+    return jobs_raw
+
+def fetch_linkedin(pages_per_kw=3, max_hits=600):
+    """Fetch full-time jobs in France from LinkedIn via the public guest API.
+    No login required — uses the same endpoint as LinkedIn's public job search.
+    f_JT=F → Full-time (closest to CDI on LinkedIn).
+    """
+    seen_ids, jobs = set(), []
+
+    for kw in LI_KEYWORDS:
+        if len(jobs) >= max_hits:
+            break
+        kw_new = 0
+        for page in range(pages_per_kw):
+            if len(jobs) >= max_hits:
+                break
+            url = LI_GUEST_URL + '?' + urllib.parse.urlencode({
+                'keywords': kw,
+                'location': 'France',
+                'f_JT':     'F',      # Full-time
+                'start':    str(page * 25),
+                'count':    '25',
+            })
+            req = urllib.request.Request(url, headers=LI_HEADERS)
+            try:
+                resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+                html = resp.read().decode('utf-8', 'replace')
+            except Exception as e:
+                print(f'  [LI] "{kw}" p{page} erreur: {e}')
+                break
+
+            cards = _li_parse_cards(html)
+            if not cards:
+                break  # no more results
+
+            for c in cards:
+                job_id = c['job_id']
+                if job_id in seen_ids:
+                    continue
+                seen_ids.add(job_id)
+
+                company = c['company']
+                title   = c['title']
+                if not company or not title:
+                    continue
+
+                # Age from date string
+                try:
+                    from datetime import datetime, timezone
+                    d = datetime.fromisoformat(c['date'])
+                    if d.tzinfo is None:
+                        d = d.replace(tzinfo=timezone.utc)
+                    age = max(0, (datetime.now(timezone.utc) - d).days)
+                except Exception:
+                    age = 99
+
+                jobs.append({
+                    'id':        1300000 + len(jobs),
+                    'title':     title,
+                    'company':   company,
+                    'link':      f'https://www.linkedin.com/jobs/view/{job_id}/',
+                    'desc':      '',
+                    'location':  ms_normalize_location(c['city'].split(',')[0].strip(), ''),
+                    'category':  categorize(title, ''),
+                    'daysAgo':   age,
+                    'isESN':     is_esn_company(company),
+                    'isCabinet': is_cabinet(company),
+                    'source':    'li',
+                })
+                kw_new += 1
+
+            time.sleep(0.5)
+
+        print(f'  [LI] "{kw}" → {kw_new} nouveaux (total {len(jobs)})')
+        time.sleep(0.8)
+
+    return jobs
+
 # ── Welcome to the Jungle ─────────────────────────────────────────────────────
 
 WTTJ_ALGOLIA_APP    = 'CSEKHVMS53'
@@ -1914,6 +2029,14 @@ if __name__ == '__main__':
         print(f'  {len(wld)} CDI WeLoveDevs')
     except Exception as e:
         print(f'  WeLoveDevs erreur: {e}')
+
+    print('Fetch LinkedIn...')
+    try:
+        li = fetch_linkedin(pages_per_kw=3, max_hits=600)
+        jobs += li
+        print(f'  {len(li)} offres LinkedIn')
+    except Exception as e:
+        print(f'  LinkedIn erreur: {e}')
 
     print('Fetch Welcome to the Jungle...')
     try:

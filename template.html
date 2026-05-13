@@ -131,6 +131,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .indeed-dot{width:5px;height:5px;border-radius:50%;background:#4A9EFF;flex-shrink:0;}
 .wttj-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#FF4F31;color:#fff5f3;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .wttj-dot{width:5px;height:5px;border-radius:50%;background:#FF4F31;flex-shrink:0;}
+.li-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#0A66C2;color:#E8F0FE;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.li-dot{width:5px;height:5px;border-radius:50%;background:#70A8E8;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
 .crm-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;text-decoration:none;transition:opacity .12s;}
@@ -166,6 +168,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-cw" onclick="toggleSource('cw')"><div class="src-dot" style="background:#4ade80"></div><span class="src-name">Collective.work</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-lj" onclick="toggleSource('lj')"><div class="src-dot" style="background:#f59e0b"></div><span class="src-name">LesJeudis</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-wttj" onclick="toggleSource('wttj')"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome to the Jungle</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-li" onclick="toggleSource('li')"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge live">live</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
         <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
       </div>
@@ -275,7 +278,7 @@ var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj','li'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -411,6 +414,7 @@ function resetAll() {
   document.getElementById('src-cw').className='src-chip active';
   document.getElementById('src-lj').className='src-chip active';
   document.getElementById('src-wttj').className='src-chip active';
+  document.getElementById('src-li').className='src-chip active';
   renderJobs();
 }
 function renderJobs() {
@@ -498,7 +502,7 @@ function renderJobs() {
           (j.isESN?'<span class="pill p-blue">ESN</span>':'')+
           (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
           (j.crm_link?'<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ client actif':j.crm_status==='Prospect'?'◎ prospect':'📁 CRM')+'</a>':'')+
-          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
+          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
     '</div>';
