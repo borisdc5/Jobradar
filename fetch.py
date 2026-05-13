@@ -1585,16 +1585,16 @@ def fetch_wttj(max_hits=300):
             seen_ids.add(obj_id)
 
             org = hit.get('organization') or {}
-            company = org.get('name', '').strip()
+            company = (org.get('name') or '').strip()
             if not company:
                 continue
 
-            title = hit.get('name', '').strip()
+            title = (hit.get('name') or '').strip()
             if not title:
                 continue
 
-            org_ref = org.get('reference', '')
-            wk_ref  = hit.get('wk_reference', '')
+            org_ref = (org.get('reference') or '')
+            wk_ref  = (hit.get('wk_reference') or '')
             link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}' if org_ref and wk_ref else '#'
 
             profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
