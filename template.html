@@ -262,7 +262,10 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
       <div class="fs">
         <div class="fs-label">Mots-cl&eacute;s <span class="fs-clear" onclick="document.getElementById('kw').value='';renderJobs()">reset</span></div>
-        <input id="kw" type="text" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;" placeholder="Fullstack, data, PHP..." oninput="renderJobs()">
+        <input id="kw" type="text" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;" placeholder="React senior, Python OR Java, Vue NOT junior..." oninput="renderJobs()">
+        <div style="font-size:10px;color:var(--txt3);margin-top:5px;line-height:1.6;">
+          Espace = ET · <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;">OR</code> ou virgule = OU · <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;">NOT</code> ou <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;">-</code> = exclusion
+        </div>
       </div>
       <div class="fs">
         <div class="fs-label">Publi&eacute;e depuis <span class="fs-clear" onclick="clearF('age')">reset</span></div>
@@ -452,9 +455,55 @@ function resetAll() {
   document.getElementById('src-li').className='src-chip active';
   renderJobs();
 }
+function evalKw(query, hay) {
+  /* Boolean keyword search:
+     - space / AND  → tous les mots doivent être présents (ordre libre)
+     - OR / virgule → au moins un groupe doit matcher
+     - NOT / -      → le mot doit être ABSENT
+     Exemples: "React senior", "Python OR Java", "Vue NOT junior", "React -stage OR Angular"
+  */
+  query = query.trim();
+  if (!query) return true;
+  hay = hay.toLowerCase();
+
+  // Split by OR or comma → union
+  var orGroups = query.split(/\bOR\b|,/i);
+  for (var g = 0; g < orGroups.length; g++) {
+    var grp = orGroups[g].trim();
+    if (!grp) continue;
+
+    // Tokenize (respect quoted phrases)
+    var raw = grp.match(/"[^"]*"|\S+/g) || [];
+    var terms = [];
+    var ti = 0;
+    while (ti < raw.length) {
+      var tok = raw[ti];
+      if (/^AND$/i.test(tok)) { ti++; continue; }  // skip explicit AND
+      if (/^NOT$/i.test(tok)) {                      // NOT <next_word>
+        ti++;
+        if (ti < raw.length) terms.push({ w: raw[ti].replace(/"/g,'').toLowerCase(), neg: true });
+        ti++; continue;
+      }
+      var neg = tok.charAt(0) === '-';
+      if (neg) tok = tok.slice(1);
+      var word = tok.replace(/"/g, '').toLowerCase();
+      if (word) terms.push({ w: word, neg: neg });
+      ti++;
+    }
+
+    // All terms in group must match (intersection)
+    var ok = true;
+    for (var t = 0; t < terms.length; t++) {
+      var found = hay.indexOf(terms[t].w) !== -1;
+      if (terms[t].neg ? found : !found) { ok = false; break; }
+    }
+    if (ok) return true;  // OR: one group is enough
+  }
+  return false;
+}
 function renderJobs() {
   var search=(document.getElementById('search-input').value||'').toLowerCase();
-  var kw=(document.getElementById('kw').value||'').toLowerCase().trim();
+  var kw=(document.getElementById('kw').value||'').trim();
   var sort=document.getElementById('sort-sel').value||'date';
   var consultant=document.getElementById('consultant-sel').value;
   var updatedBy=document.getElementById('updatedby-sel').value;
@@ -471,7 +520,7 @@ function renderJobs() {
     if(consultant&&j.crm_consultant!==consultant) continue;
     if(updatedBy&&j.crm_updated_by!==updatedBy) continue;
     if(search&&(j.title+' '+j.company+' '+j.desc).toLowerCase().indexOf(search)===-1) continue;
-    if(kw){var hay=(j.title+' '+j.desc).toLowerCase(),parts=kw.split(','),ok=false;for(var t=0;t<parts.length;t++){var tp=parts[t].trim();if(tp&&hay.indexOf(tp)!==-1){ok=true;break;}}if(!ok)continue;}
+    if(kw&&!evalKw(kw,j.title+' '+j.company+' '+j.desc)) continue;
     if(filters.category.length&&filters.category.indexOf(j.category)===-1) continue;
     if(!locMatch(j)) continue;
     if(filters.age.length){var ma=Math.min.apply(null,filters.age.map(Number));if(j.daysAgo>ma)continue;}
