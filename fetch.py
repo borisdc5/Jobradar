@@ -266,7 +266,7 @@ def categorize(title, hint=''):
     mapped = _AFJV_MAP.get((hint or '').lower().strip())
     if mapped:
         return mapped
-    t = (title + ' ' + hint).lower()
+    t = ((title or '') + ' ' + (hint or '')).lower()
     # ── Cybersécurité ──────────────────────────────────────────────────────────
     if any(x in t for x in [
         'cyber','pentest','penetration test','ethical hack','red team','blue team',
@@ -1527,7 +1527,7 @@ def _wttj_normalize_location(hit):
     offices = hit.get('offices') or []
     if not offices:
         return 'France'
-    city = offices[0].get('city', '').strip()
+    city = (offices[0].get('city') or '').strip()
     postal = ''  # WTTJ doesn't provide postal code in offices
     return ms_normalize_location(city, postal) if city else 'France'
 
