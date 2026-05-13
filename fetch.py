@@ -443,12 +443,10 @@ def fetch_ft():
         return []
     token = ft_get_token()
     headers = {'Authorization': f'Bearer {token}', 'Accept': 'application/json'}
-    from datetime import timedelta
-    min_date = (datetime.now(timezone.utc) - timedelta(days=90)).strftime('%Y-%m-%dT00:00:00Z')
     seen, jobs = set(), []
     for kw in FT_KEYWORDS:
         enc = urllib.parse.quote(kw)
-        url = f'{FT_API_URL}?typeContrat=CDI&motsCles={enc}&range=0-149&minCreationDate={min_date}'
+        url = f'{FT_API_URL}?typeContrat=CDI&motsCles={enc}&range=0-149'
         req = urllib.request.Request(url, headers=headers)
         try:
             data = json.loads(urllib.request.urlopen(req, context=ctx, timeout=20).read())
@@ -848,7 +846,6 @@ def fetch_apec(max_results=300):
             'secteursActivite': [],
             'motsCles': '',
             'lieux': [],
-            'tri': 1,                       # 1 = tri par date de publication (0 = pertinence)
             'pagination': {'startIndex': start, 'range': batch},
         }).encode('utf-8')
         req = urllib.request.Request(APEC_SEARCH, data=body, headers=h2, method='POST')
