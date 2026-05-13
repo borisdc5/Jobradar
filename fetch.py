@@ -820,7 +820,7 @@ def _apec_decode(resp):
     except Exception:
         return json.loads(raw.decode('latin-1'))
 
-def fetch_apec(max_results=200):
+def fetch_apec(max_results=300):
     if not APEC_EMAIL or not APEC_PASSWORD:
         print('  Credentials APEC absents, ignoré')
         return []
@@ -846,6 +846,7 @@ def fetch_apec(max_results=200):
             'secteursActivite': [],
             'motsCles': '',
             'lieux': [],
+            'tri': 1,                       # 1 = tri par date de publication (0 = pertinence)
             'pagination': {'startIndex': start, 'range': batch},
         }).encode('utf-8')
         req = urllib.request.Request(APEC_SEARCH, data=body, headers=h2, method='POST')
