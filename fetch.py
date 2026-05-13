@@ -1023,7 +1023,8 @@ def fetch_fashionjobs(max_pages=3):
 
 # ── Indeed ───────────────────────────────────────────────────────────────────
 
-INDEED_BASE = 'https://fr.indeed.com'
+# Indeed removed: blocked 100% from GitHub Actions cloud IPs (Security Check on every request)
+# INDEED_BASE = 'https://fr.indeed.com'
 INDEED_KEYWORDS = [
     # Backend
     'développeur Python',
@@ -2016,13 +2017,8 @@ if __name__ == '__main__':
     except Exception as e:
         print(f'  FashionJobs erreur: {e}')
 
-    print('Fetch Indeed...')
-    try:
-        ind = fetch_indeed()
-        jobs += ind
-        print(f'  {len(ind)} CDI Indeed')
-    except Exception as e:
-        print(f'  Indeed erreur: {e}')
+    # Indeed: blocked by cloud IP detection — removed
+    # print('Fetch Indeed...')
 
     print('Fetch Collective.work...')
     try:

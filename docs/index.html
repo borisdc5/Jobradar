@@ -191,7 +191,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-lir" onclick="toggleSource('lir')"><div class="src-dot" style="background:#1B3A5C"></div><span class="src-name">L'Industrie Recrute</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-apec" onclick="toggleSource('apec')"><div class="src-dot" style="background:#7A1E00"></div><span class="src-name">APEC</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-fj" onclick="toggleSource('fj')"><div class="src-dot" style="background:#4A0030"></div><span class="src-name">FashionJobs</span><span class="src-badge live">live</span></div>
-        <div class="src-chip active" id="src-indeed" onclick="toggleSource('indeed')"><div class="src-dot" style="background:#003A6B"></div><span class="src-name">Indeed</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-wld" onclick="toggleSource('wld')"><div class="src-dot" style="background:#c084fc"></div><span class="src-name">WeLoveDevs</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-cw" onclick="toggleSource('cw')"><div class="src-dot" style="background:#4ade80"></div><span class="src-name">Collective.work</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-lj" onclick="toggleSource('lj')"><div class="src-dot" style="background:#f59e0b"></div><span class="src-name">LesJeudis</span><span class="src-badge live">live</span></div>
@@ -313,7 +312,7 @@ var UPDATED = "13/05/2026 10:51 UTC";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj','li'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -436,7 +435,7 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj','li'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
   document.getElementById('src-ms').className='src-chip active';
