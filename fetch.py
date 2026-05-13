@@ -1720,7 +1720,9 @@ def fetch_wttj(days=30, max_hits=1000):
 
                 org_ref = (org.get('reference') or '')
                 wk_ref  = (hit.get('wk_reference') or '')
-                link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}' if org_ref and wk_ref else '#'
+                if not org_ref or not wk_ref:
+                    continue  # skip jobs without a valid URL
+                link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}'
 
                 profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
                 desc = (hit.get('summary') or '')[:200]

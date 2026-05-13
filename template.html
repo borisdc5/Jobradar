@@ -135,11 +135,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .li-dot{width:5px;height:5px;border-radius:50%;background:#70A8E8;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
-.crm-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;text-decoration:none;transition:opacity .12s;margin-top:4px;white-space:nowrap;}
+.crm-row{display:flex;align-items:center;gap:5px;margin-top:6px;flex-wrap:wrap;}
+.crm-date{font-size:9px;color:var(--txt3);font-family:'DM Mono',monospace;margin-left:auto;}
+.crm-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;text-decoration:none;transition:opacity .12s;white-space:nowrap;}
 .crm-badge:hover{opacity:.8;}
 .crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
 .crm-prospect{background:#2E1A00;color:#FFB347;border:1px solid #5C3A00;}
-.crm-known{background:#1a1a2e;color:#a5b4fc;border:1px solid #3730a3;}
 .crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
 </style>
 </head>
@@ -193,7 +194,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <select id="consultant-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;margin-bottom:6px;">
           <option value="">Propriétaire du compte</option>
         </select>
-        <select id="updatedby-sel" onchange="renderJobs()" style="width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;margin-bottom:6px;">
+        <select id="updatedby-sel" onchange="renderJobs()" style="display:none;width:100%;padding:7px 10px;border:1px solid var(--border2);border-radius:8px;background:white;font-size:12px;color:var(--txt);font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;margin-bottom:6px;">
           <option value="">Dernière action par</option>
         </select>
         <button class="esn-btn" id="nocrm-btn" onclick="toggleNoCRM()" style="margin-top:2px;">
@@ -331,6 +332,7 @@ function populateConsultants() {
   for(var i=0;i<ALL_JOBS.length;i++){var c=ALL_JOBS[i].crm_updated_by;if(c)names2[c]=true;}
   var sorted2=Object.keys(names2).sort(function(a,b){return a.localeCompare(b);});
   for(var i=0;i<sorted2.length;i++){var opt=document.createElement('option');opt.value=sorted2[i];opt.textContent=sorted2[i];sel2.appendChild(opt);}
+  if(sorted2.length>0) sel2.style.display='block';
 }
 function toggleNoCRM() {
   hideNoCRM=!hideNoCRM;
@@ -399,7 +401,7 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','indeed','wld','cw','lj','wttj','li'];
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
   document.getElementById('src-ms').className='src-chip active';
@@ -478,22 +480,23 @@ function renderJobs() {
     var logoHtml=j.logo
       ?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">'
       :initials(j.company);
+    var crmRow='';
+    if(j.crm_link){
+      var ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
+      ciHtml+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
+      ciHtml+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
+      var dateHtml=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' · '+j.crm_updated_by:'')+'</span>':'');
+      var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
+      crmRow='<div class="crm-row">'+ciHtml+dateHtml+badgeHtml+'</div>';
+    }
     html+='<div class="job-card'+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
       '<div class="co-logo">'+logoHtml+'</div>' +
       '<div class="jbody">' +
         '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
           '<div class="jright">' +
-            (j.crm_link&&j.crm_tc!==null&&j.crm_tc!==undefined?
-              '<div class="crm-indicators">' +
-                (j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>') +
-                (j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'')+
-                (j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'')+
-              '</div>':'')+
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
             '</div>' +
-            (j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<div style="font-size:9px;color:var(--txt3);text-align:right;font-family:\'DM Mono\',monospace;margin-top:2px;">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' · '+j.crm_updated_by:'')+'</div>':'') +
-            (j.crm_link?'<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>':'') +
           '</div>' +
         '</div>' +
         '<div class="jco">'+j.company+'</div>' +
@@ -503,6 +506,7 @@ function renderJobs() {
           (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
           (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
+        crmRow +
       '</div>' +
     '</div>';
   }
