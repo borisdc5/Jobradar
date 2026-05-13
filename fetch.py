@@ -1505,6 +1505,121 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── Welcome to the Jungle ─────────────────────────────────────────────────────
+
+WTTJ_ALGOLIA_APP    = 'CSEKHVMS53'
+WTTJ_ALGOLIA_KEY    = '4bd8f6215d0cc52b26430765769e65a0'
+WTTJ_ALGOLIA_INDEX  = 'wttj_jobs_production_fr'
+WTTJ_ALGOLIA_URL    = f'https://{WTTJ_ALGOLIA_APP}-dsn.algolia.net/1/indexes/{WTTJ_ALGOLIA_INDEX}/query'
+WTTJ_BASE           = 'https://www.welcometothejungle.com'
+
+WTTJ_KEYWORDS = [
+    'développeur', 'ingénieur logiciel', 'data', 'devops', 'cloud',
+    'cybersécurité', 'product manager', 'designer', 'fullstack',
+    'machine learning', 'sre', 'backend', 'frontend', 'mobile',
+]
+
+def _wttj_normalize_location(hit):
+    """Extract and normalize location from a WTTJ Algolia hit."""
+    remote = hit.get('remote', 'no')
+    if remote in ('yes', 'full'):
+        return 'Remote'
+    offices = hit.get('offices') or []
+    if not offices:
+        return 'France'
+    city = offices[0].get('city', '').strip()
+    postal = ''  # WTTJ doesn't provide postal code in offices
+    return ms_normalize_location(city, postal) if city else 'France'
+
+def _wttj_days_ago(hit):
+    date_str = hit.get('published_at', '')
+    if not date_str:
+        return 99
+    try:
+        d = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return max(0, (datetime.now(timezone.utc) - d).days)
+    except Exception:
+        return 99
+
+def fetch_wttj(max_hits=300):
+    """Fetch CDI jobs from Welcome to the Jungle via their Algolia search API."""
+    headers = {
+        'Content-Type': 'application/json',
+        'X-Algolia-Application-Id': WTTJ_ALGOLIA_APP,
+        'X-Algolia-API-Key': WTTJ_ALGOLIA_KEY,
+        'Origin': WTTJ_BASE,
+        'Referer': WTTJ_BASE + '/fr/jobs',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+    }
+
+    seen_ids, jobs = set(), []
+
+    for kw in WTTJ_KEYWORDS:
+        if len(jobs) >= max_hits:
+            break
+        body = json.dumps({
+            'query': kw,
+            'filters': 'contract_type:full_time AND offices.country_code:FR',
+            'hitsPerPage': 100,
+            'page': 0,
+            'attributesToRetrieve': [
+                'name', 'organization', 'offices', 'remote',
+                'published_at', 'wk_reference', 'new_profession',
+                'summary', 'objectID',
+            ],
+        }).encode()
+        req = urllib.request.Request(WTTJ_ALGOLIA_URL, data=body, method='POST', headers=headers)
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            data = json.loads(resp.read())
+        except Exception as e:
+            print(f'  [WTTJ] "{kw}" erreur: {e}')
+            continue
+
+        hits = data.get('hits', [])
+        new_count = 0
+        for hit in hits:
+            obj_id = hit.get('objectID', '')
+            if not obj_id or obj_id in seen_ids:
+                continue
+            seen_ids.add(obj_id)
+
+            org = hit.get('organization') or {}
+            company = org.get('name', '').strip()
+            if not company:
+                continue
+
+            title = hit.get('name', '').strip()
+            if not title:
+                continue
+
+            org_ref = org.get('reference', '')
+            wk_ref  = hit.get('wk_reference', '')
+            link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}' if org_ref and wk_ref else '#'
+
+            profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
+            desc = (hit.get('summary') or '')[:200]
+
+            jobs.append({
+                'id':        1200000 + len(jobs),
+                'title':     title,
+                'company':   company,
+                'link':      link,
+                'desc':      desc,
+                'location':  _wttj_normalize_location(hit),
+                'category':  categorize(title, profession),
+                'daysAgo':   _wttj_days_ago(hit),
+                'isESN':     is_esn_company(company),
+                'isCabinet': is_cabinet(company),
+                'source':    'wttj',
+            })
+            new_count += 1
+
+        print(f'  [WTTJ] "{kw}" → {len(hits)} hits, {new_count} nouveaux (total {len(jobs)})')
+        time.sleep(0.3)
+
+    return jobs
+
 # ── Logos (Clearbit Autocomplete) ────────────────────────────────────────────
 
 CLEARBIT_AC = 'https://autocomplete.clearbit.com/v1/companies/suggest?query='
@@ -1784,6 +1899,14 @@ if __name__ == '__main__':
         print(f'  {len(wld)} CDI WeLoveDevs')
     except Exception as e:
         print(f'  WeLoveDevs erreur: {e}')
+
+    print('Fetch Welcome to the Jungle...')
+    try:
+        wttj = fetch_wttj(max_hits=300)
+        jobs += wttj
+        print(f'  {len(wttj)} CDI Welcome to the Jungle')
+    except Exception as e:
+        print(f'  Welcome to the Jungle erreur: {e}')
 
     print(f'Total: {len(jobs)} offres')
     print('Enrichissement logos...')
