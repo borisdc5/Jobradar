@@ -1541,8 +1541,11 @@ def _wttj_days_ago(hit):
     except Exception:
         return 99
 
-def fetch_wttj(max_hits=300):
-    """Fetch CDI jobs from Welcome to the Jungle via their Algolia search API."""
+def fetch_wttj(days=30, max_hits=1000):
+    """Fetch CDI jobs from Welcome to the Jungle via their Algolia search API.
+    Filters to jobs published in the last `days` days, covering all tech keywords.
+    """
+    import math
     headers = {
         'Content-Type': 'application/json',
         'X-Algolia-Application-Id': WTTJ_ALGOLIA_APP,
@@ -1552,70 +1555,81 @@ def fetch_wttj(max_hits=300):
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
     }
 
+    # Unix timestamp for `days` ago
+    since_ts = int((datetime.now(timezone.utc).timestamp())) - days * 86400
+
     seen_ids, jobs = set(), []
 
     for kw in WTTJ_KEYWORDS:
         if len(jobs) >= max_hits:
             break
-        body = json.dumps({
-            'query': kw,
-            'filters': 'contract_type:full_time AND offices.country_code:FR',
-            'hitsPerPage': 100,
-            'page': 0,
-            'attributesToRetrieve': [
-                'name', 'organization', 'offices', 'remote',
-                'published_at', 'wk_reference', 'new_profession',
-                'summary', 'objectID',
-            ],
-        }).encode()
-        req = urllib.request.Request(WTTJ_ALGOLIA_URL, data=body, method='POST', headers=headers)
-        try:
-            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
-            data = json.loads(resp.read())
-        except Exception as e:
-            print(f'  [WTTJ] "{kw}" erreur: {e}')
-            continue
+        page = 0
+        while len(jobs) < max_hits:
+            body = json.dumps({
+                'query': kw,
+                'filters': 'contract_type:full_time AND offices.country_code:FR',
+                'numericFilters': [f'published_at_timestamp >= {since_ts}'],
+                'hitsPerPage': 100,
+                'page': page,
+                'attributesToRetrieve': [
+                    'name', 'organization', 'offices', 'remote',
+                    'published_at', 'wk_reference', 'new_profession',
+                    'summary', 'objectID',
+                ],
+            }).encode()
+            req = urllib.request.Request(WTTJ_ALGOLIA_URL, data=body, method='POST', headers=headers)
+            try:
+                resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+                data = json.loads(resp.read())
+            except Exception as e:
+                print(f'  [WTTJ] "{kw}" p{page} erreur: {e}')
+                break
 
-        hits = data.get('hits', [])
-        new_count = 0
-        for hit in hits:
-            obj_id = hit.get('objectID', '')
-            if not obj_id or obj_id in seen_ids:
-                continue
-            seen_ids.add(obj_id)
+            hits = data.get('hits', [])
+            nb_pages = data.get('nbPages', 1)
+            new_count = 0
+            for hit in hits:
+                obj_id = hit.get('objectID', '')
+                if not obj_id or obj_id in seen_ids:
+                    continue
+                seen_ids.add(obj_id)
 
-            org = hit.get('organization') or {}
-            company = (org.get('name') or '').strip()
-            if not company:
-                continue
+                org = hit.get('organization') or {}
+                company = (org.get('name') or '').strip()
+                if not company:
+                    continue
 
-            title = (hit.get('name') or '').strip()
-            if not title:
-                continue
+                title = (hit.get('name') or '').strip()
+                if not title:
+                    continue
 
-            org_ref = (org.get('reference') or '')
-            wk_ref  = (hit.get('wk_reference') or '')
-            link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}' if org_ref and wk_ref else '#'
+                org_ref = (org.get('reference') or '')
+                wk_ref  = (hit.get('wk_reference') or '')
+                link = f'{WTTJ_BASE}/fr/companies/{org_ref}/jobs/{wk_ref}' if org_ref and wk_ref else '#'
 
-            profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
-            desc = (hit.get('summary') or '')[:200]
+                profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
+                desc = (hit.get('summary') or '')[:200]
 
-            jobs.append({
-                'id':        1200000 + len(jobs),
-                'title':     title,
-                'company':   company,
-                'link':      link,
-                'desc':      desc,
-                'location':  _wttj_normalize_location(hit),
-                'category':  categorize(title, profession),
-                'daysAgo':   _wttj_days_ago(hit),
-                'isESN':     is_esn_company(company),
-                'isCabinet': is_cabinet(company),
-                'source':    'wttj',
-            })
-            new_count += 1
+                jobs.append({
+                    'id':        1200000 + len(jobs),
+                    'title':     title,
+                    'company':   company,
+                    'link':      link,
+                    'desc':      desc,
+                    'location':  _wttj_normalize_location(hit),
+                    'category':  categorize(title, profession),
+                    'daysAgo':   _wttj_days_ago(hit),
+                    'isESN':     is_esn_company(company),
+                    'isCabinet': is_cabinet(company),
+                    'source':    'wttj',
+                })
+                new_count += 1
 
-        print(f'  [WTTJ] "{kw}" → {len(hits)} hits, {new_count} nouveaux (total {len(jobs)})')
+            print(f'  [WTTJ] "{kw}" p{page}/{nb_pages-1} → {new_count} nouveaux (total {len(jobs)})')
+            page += 1
+            if page >= nb_pages or not hits:
+                break
+            time.sleep(0.2)
         time.sleep(0.3)
 
     return jobs
@@ -1902,7 +1916,7 @@ if __name__ == '__main__':
 
     print('Fetch Welcome to the Jungle...')
     try:
-        wttj = fetch_wttj(max_hits=300)
+        wttj = fetch_wttj(days=30, max_hits=1000)
         jobs += wttj
         print(f'  {len(wttj)} CDI Welcome to the Jungle')
     except Exception as e:
