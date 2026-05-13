@@ -1763,8 +1763,21 @@ def _name_match(query, result_name):
     Uses bidirectional token overlap: shared tokens must represent ≥50% of
     BOTH the query and the result (prevents "Orange" → "Orange County Register").
     """
-    STOP = {'sa', 'sas', 'srl', 'inc', 'ltd', 'group', 'groupe', 'france',
-            'the', 'de', 'du', 'le', 'la', 'les', 'et', 'and', 'co', 'corp'}
+    STOP = {
+        # Formes juridiques
+        'sa', 'sas', 'srl', 'sarl', 'inc', 'ltd', 'llc', 'bv', 'gmbh', 'co', 'corp',
+        # Articles / conjonctions
+        'the', 'de', 'du', 'le', 'la', 'les', 'et', 'and', 'en', 'by',
+        # Géo génériques
+        'france', 'europe', 'global', 'international', 'worldwide',
+        # Mots business ultra-génériques (ne distinguent pas deux entreprises)
+        'group', 'groupe', 'holding', 'partners', 'partner', 'associates',
+        'services', 'service', 'solutions', 'consulting', 'conseil',
+        'management', 'capital', 'invest', 'ventures', 'studio',
+        # Tech génériques
+        'cloud', 'digital', 'tech', 'technology', 'technologies',
+        'software', 'systems', 'data', 'ai', 'it',
+    }
     def tokens(s):
         return set(re.sub(r'[^a-z0-9\s]', '', s.lower()).split()) - STOP
     qt = tokens(query)
