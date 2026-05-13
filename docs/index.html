@@ -485,7 +485,7 @@ function renderJobs() {
       ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
       ciHtml+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
       ciHtml+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
-      var dateStr=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+'</span>':'');
+      var dateStr=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' &middot; '+j.crm_updated_by:'')+'</span>':'');
       var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
       crmBottomRight=dateStr+badgeHtml;
     }
