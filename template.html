@@ -85,7 +85,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .jbody{flex:1;min-width:0;}
 .jtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px;}
 .jtitle{font-size:13px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.jco{font-size:11px;color:var(--txt2);margin-bottom:7px;}
+.jco{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:7px;}
 .jmeta{display:flex;flex-wrap:wrap;gap:5px;}
 .pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--txt2);border:1px solid var(--border);}
 .p-green{background:var(--accent-bg);color:var(--accent-txt);border-color:var(--accent);}
@@ -135,10 +135,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .li-dot{width:5px;height:5px;border-radius:50%;background:#70A8E8;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
-.crm-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;text-decoration:none;transition:opacity .12s;}
-.crm-badge:hover{opacity:.75;}
+.crm-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:7px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;text-decoration:none;transition:opacity .12s;margin-top:4px;white-space:nowrap;}
+.crm-badge:hover{opacity:.8;}
 .crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
 .crm-prospect{background:#2E1A00;color:#FFB347;border:1px solid #5C3A00;}
+.crm-known{background:#1a1a2e;color:#a5b4fc;border:1px solid #3730a3;}
 .crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
 </style>
 </head>
@@ -169,8 +170,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-lj" onclick="toggleSource('lj')"><div class="src-dot" style="background:#f59e0b"></div><span class="src-name">LesJeudis</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-wttj" onclick="toggleSource('wttj')"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome to the Jungle</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-li" onclick="toggleSource('li')"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge live">live</span></div>
-        <div class="src-chip dim"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge soon">bient&ocirc;t</span></div>
-        <div class="src-chip dim"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome Jungle</span><span class="src-badge soon">bient&ocirc;t</span></div>
       </div>
       <div class="hr"></div>
       <div class="fs">
@@ -494,6 +493,7 @@ function renderJobs() {
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
             '</div>' +
             (j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<div style="font-size:9px;color:var(--txt3);text-align:right;font-family:\'DM Mono\',monospace;margin-top:2px;">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' · '+j.crm_updated_by:'')+'</div>':'') +
+            (j.crm_link?'<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>':'') +
           '</div>' +
         '</div>' +
         '<div class="jco">'+j.company+'</div>' +
@@ -501,7 +501,6 @@ function renderJobs() {
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-blue">ESN</span>':'')+
           (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
-          (j.crm_link?'<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ client actif':j.crm_status==='Prospect'?'◎ prospect':'📁 CRM')+'</a>':'')+
           (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
