@@ -142,9 +142,35 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
 .crm-prospect{background:#2E1A00;color:#FFB347;border:1px solid #5C3A00;}
 .crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
+/* ── Login overlay ───────────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;}
+.login-box{width:340px;background:white;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:36px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.login-logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.login-logo svg{width:22px;height:22px;fill:white;}
+.login-title{font-size:18px;font-weight:600;letter-spacing:-.4px;}
+.login-sub{font-size:12px;color:var(--txt3);text-align:center;line-height:1.5;}
+.login-input{width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;text-align:center;letter-spacing:2px;}
+.login-input:focus{border-color:var(--accent);}
+.login-btn{width:100%;padding:10px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .15s;}
+.login-btn:hover{opacity:.88;}
+.login-err{font-size:12px;color:var(--red);display:none;}
+/* ── Fraîcheur données ───────────────────────────────────────── */
+.freshness-box{background:var(--bg3);border-radius:var(--radius);padding:10px 12px;font-size:11px;color:var(--txt2);line-height:1.7;}
+.freshness-box strong{color:var(--txt);font-weight:600;}
 </style>
 </head>
 <body>
+<!-- Login overlay -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z"/></svg></div>
+    <div class="login-title">JobRadar</div>
+    <div class="login-sub">Accès réservé à l'équipe.<br>Entre le mot de passe pour continuer.</div>
+    <input class="login-input" id="pwd-input" type="password" placeholder="••••••••" onkeydown="tryLogin(event)" autofocus>
+    <button class="login-btn" onclick="tryLogin()">Accéder →</button>
+    <span class="login-err" id="pwd-err">Mot de passe incorrect</span>
+  </div>
+</div>
 <div class="app">
   <aside class="sidebar">
     <div class="sb-head">
@@ -247,6 +273,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           <span class="tag" data-v="14" onclick="toggleTag(this,'age')">14j</span>
           <span class="tag" data-v="30" onclick="toggleTag(this,'age')">30j</span>
           <span class="tag" data-v="60" onclick="toggleTag(this,'age')">60j</span>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="fs">
+        <div class="freshness-box">
+          <strong>🕐 Fraîcheur des données</strong><br>
+          Offres : mise à jour <strong>chaque jour à 7h</strong><br>
+          Données CRM : mise à jour <strong>chaque dimanche</strong><br>
+          <span style="color:var(--txt3);font-size:10px;">Les statuts CRM peuvent avoir jusqu'à 7 jours de décalage.</span>
         </div>
       </div>
     </div>
@@ -524,6 +559,29 @@ function fmtCrmDate(s) {
 }
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
 function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}
+/* ── Auth ── */
+var _ak='jr_auth_v1', _ex='VUw5OTkh';
+function _initAuth(){
+  var ov=document.getElementById('login-overlay');
+  if(localStorage.getItem(_ak)===_ex){ov.style.display='none';return;}
+  ov.style.display='flex';
+  setTimeout(function(){var i=document.getElementById('pwd-input');if(i)i.focus();},50);
+}
+function tryLogin(e){
+  if(e&&e.type==='keydown'&&e.key!=='Enter')return;
+  var v=document.getElementById('pwd-input').value;
+  var err=document.getElementById('pwd-err');
+  if(btoa(v)===_ex){
+    localStorage.setItem(_ak,_ex);
+    document.getElementById('login-overlay').style.display='none';
+    err.style.display='none';
+  } else {
+    err.style.display='block';
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+  }
+}
+_initAuth();
 populateConsultants();
 renderJobs();
 </script>
