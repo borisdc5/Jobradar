@@ -943,11 +943,14 @@ def fetch_fashionjobs(max_pages=3):
             user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             locale='fr-FR',
         )
+        bpage.set_default_navigation_timeout(30000)
+        bpage.set_default_timeout(10000)
 
         for page_num in range(1, max_pages + 1):
             url = FJ_SEARCH if page_num == 1 else f'{FJ_BASE}/s/?page={page_num}{FJ_EXTRA}'
             try:
-                bpage.goto(url, wait_until='networkidle', timeout=30000)
+                bpage.goto(url, wait_until='domcontentloaded', timeout=30000)
+                bpage.wait_for_timeout(2000)
             except Exception as e:
                 print(f'  [FJ p{page_num}] erreur: {e}')
                 break
