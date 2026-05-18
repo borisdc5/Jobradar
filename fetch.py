@@ -1467,8 +1467,10 @@ def fetch_stationf():
             if not title or not company:
                 continue
 
-            slug = h.get('slug') or oid
-            link = f'{SF_BASE}/jobs/{slug}'
+            slug    = h.get('slug') or oid
+            wo      = org.get('website_organization') or {}
+            wo_slug = (wo.get('slug') if isinstance(wo, dict) else None) or org.get('slug') or ''
+            link    = f'{SF_BASE}/companies/{wo_slug}/jobs/{slug}' if wo_slug else f'{SF_BASE}/jobs/{slug}'
 
             # Location
             offices = h.get('offices') or []
