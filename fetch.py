@@ -167,6 +167,83 @@ def is_esn(company):
     """Compat: renvoie True si cabinet OU ESN (pour backward compat si besoin)."""
     return is_cabinet(company) or is_esn_company(company)
 
+# ── Taille d'entreprise ───────────────────────────────────────────────────────
+# Cache croisé : rempli dynamiquement par WTTJ + Station F, puis appliqué
+# à toutes les sources. Clé = nom entreprise lowercase.
+_company_size_cache: dict = {}
+
+# Valeurs connues pour grandes entreprises fréquentes
+KNOWN_COMPANY_SIZES = {
+    'capgemini': 350000, 'atos': 90000, 'accenture': 700000,
+    'sopra steria': 50000, 'sopra': 50000, 'cgi': 90000,
+    'alten': 45000, 'thales': 80000, 'safran': 100000,
+    'airbus': 130000, 'orange': 140000, 'sncf': 150000,
+    'edf': 160000, 'société générale': 130000, 'societe generale': 130000,
+    'bnp paribas': 200000, 'bnp': 200000, 'axa': 150000,
+    'crédit agricole': 150000, 'credit agricole': 150000,
+    'lvmh': 170000, 'totalenergies': 105000, 'total': 105000,
+    'michelin': 120000, 'renault': 110000, 'stellantis': 300000,
+    'amazon': 1500000, 'google': 150000, 'meta': 80000,
+    'microsoft': 220000, 'apple': 160000, 'ibm': 260000,
+    'deloitte': 330000, 'pwc': 280000, 'kpmg': 260000,
+    'ernst & young': 365000, 'ey ': 365000,
+    'devoteam': 10000, 'wavestone': 3500, 'sqli': 3000,
+    'aubay': 8000, 'inetum': 27000, 'scalian': 6000,
+    'econocom': 9000, 'akkodis': 50000, 'assystem': 7000,
+    'infotel': 2500, 'groupe sii': 7000,
+}
+
+def size_bucket(n):
+    """Convertit un nb_employees en tranche lisible."""
+    if not n:
+        return None
+    try:
+        n = int(n)
+    except (ValueError, TypeError):
+        return None
+    if n <= 10:    return '≤10'
+    if n <= 50:    return '11–50'
+    if n <= 200:   return '51–200'
+    if n <= 1000:  return '201–1k'
+    if n <= 5000:  return '1k–5k'
+    return '5k+'
+
+def _cache_size(company, nb_employees):
+    """Enregistre la taille dans le cache si valide."""
+    if not company or not nb_employees:
+        return
+    try:
+        n = int(nb_employees)
+        if n > 0:
+            _company_size_cache[company.lower().strip()] = n
+    except (ValueError, TypeError):
+        pass
+
+def enrich_company_size(jobs):
+    """Applique le cache de taille à tous les jobs."""
+    # Seed avec les valeurs connues (si pas déjà dans le cache)
+    for name, n in KNOWN_COMPANY_SIZES.items():
+        _company_size_cache.setdefault(name, n)
+    covered = 0
+    for j in jobs:
+        if j.get('company_size'):
+            covered += 1
+            continue
+        name = (j.get('company') or '').lower().strip()
+        # Recherche exacte puis partielle
+        n = _company_size_cache.get(name)
+        if n is None:
+            for k, v in _company_size_cache.items():
+                if k and (k in name or name in k) and len(k) >= 4:
+                    n = v
+                    break
+        if n:
+            j['company_size'] = n
+            covered += 1
+        else:
+            j['company_size'] = None
+    print(f'  Taille entreprise : {covered}/{len(jobs)} jobs enrichis')
+
 def http_get(url, headers=None):
     req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
     return urllib.request.urlopen(req, context=ctx, timeout=20).read()
@@ -1502,19 +1579,23 @@ def fetch_stationf():
                 except Exception:
                     pass
 
+            nb_emp = org.get('nb_employees')
+            _cache_size(company, nb_emp)
+
             jobs.append({
-                'id':        1300000 + len(jobs),
-                'title':     title,
-                'company':   company,
-                'link':      link,
-                'desc':      '',
-                'location':  location,
-                'category':  categorize(title, ''),
-                'daysAgo':   days_ago,
-                'logo':      logo,
-                'isESN':     is_esn_company(company),
-                'isCabinet': is_cabinet(company),
-                'source':    'sf',
+                'id':           1300000 + len(jobs),
+                'title':        title,
+                'company':      company,
+                'link':         link,
+                'desc':         '',
+                'location':     location,
+                'category':     categorize(title, ''),
+                'daysAgo':      days_ago,
+                'logo':         logo,
+                'isESN':        is_esn_company(company),
+                'isCabinet':    is_cabinet(company),
+                'source':       'sf',
+                'company_size': int(nb_emp) if nb_emp else None,
             })
 
         print(f'  StationF page {page+1}/{nb_pages}: {len(result.get("hits",[]))} jobs (total {len(jobs)})')
@@ -1817,7 +1898,7 @@ def fetch_wttj(days=30, max_hits=1000):
                 'attributesToRetrieve': [
                     'name', 'organization', 'offices', 'remote',
                     'published_at', 'wk_reference', 'new_profession',
-                    'summary', 'objectID',
+                    'summary', 'objectID', 'nb_employees',
                 ],
             }).encode()
             req = urllib.request.Request(WTTJ_ALGOLIA_URL, data=body, method='POST', headers=headers)
@@ -1854,19 +1935,22 @@ def fetch_wttj(days=30, max_hits=1000):
 
                 profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
                 desc = (hit.get('summary') or '')[:200]
+                nb_emp = org.get('nb_employees') or hit.get('nb_employees')
+                _cache_size(company, nb_emp)
 
                 jobs.append({
-                    'id':        1200000 + len(jobs),
-                    'title':     title,
-                    'company':   company,
-                    'link':      link,
-                    'desc':      desc,
-                    'location':  _wttj_normalize_location(hit),
-                    'category':  categorize(title, profession),
-                    'daysAgo':   _wttj_days_ago(hit),
-                    'isESN':     is_esn_company(company),
-                    'isCabinet': is_cabinet(company),
-                    'source':    'wttj',
+                    'id':           1200000 + len(jobs),
+                    'title':        title,
+                    'company':      company,
+                    'link':         link,
+                    'desc':         desc,
+                    'location':     _wttj_normalize_location(hit),
+                    'category':     categorize(title, profession),
+                    'daysAgo':      _wttj_days_ago(hit),
+                    'isESN':        is_esn_company(company),
+                    'isCabinet':    is_cabinet(company),
+                    'source':       'wttj',
+                    'company_size': int(nb_emp) if nb_emp else None,
                 })
                 new_count += 1
 
@@ -2214,6 +2298,14 @@ if __name__ == '__main__':
             j.setdefault('crm_link', '')
             j.setdefault('is_client', False)
             j.setdefault('crm_updated_by', '')
+
+    print('Enrichissement taille entreprises...')
+    try:
+        enrich_company_size(jobs)
+    except Exception as e:
+        print(f'  Taille entreprise erreur: {e}')
+        for j in jobs:
+            j.setdefault('company_size', None)
 
     updated = datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')
     template = open('template.html', encoding='utf-8').read()
