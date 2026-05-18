@@ -1548,19 +1548,27 @@ def fetch_wld(max_scroll=10):
             locale='fr-FR',
             viewport={'width': 1280, 'height': 900},
         )
+        page.set_default_navigation_timeout(30000)
+        page.set_default_timeout(10000)
         page.on('response', on_response)
         try:
-            page.goto(WLD_JOBS_URL, wait_until='networkidle', timeout=30000)
+            page.goto(WLD_JOBS_URL, wait_until='domcontentloaded', timeout=30000)
         except Exception as e:
             print(f'  [WLD] chargement erreur: {e}')
             browser.close()
             return []
 
-        # Scroll to trigger infinite-scroll / pagination
+        # Attendre que les premières requêtes Algolia arrivent
+        page.wait_for_timeout(4000)
+
+        # Scroll pour déclencher la pagination infinie
         for _ in range(max_scroll):
             prev = len(hits_raw)
-            page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-            page.wait_for_timeout(1500)
+            try:
+                page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+                page.wait_for_timeout(1200)
+            except Exception:
+                break
             if len(hits_raw) == prev:
                 break
 
