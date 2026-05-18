@@ -128,6 +128,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .cw-dot{width:5px;height:5px;border-radius:50%;background:#4ade80;flex-shrink:0;}
 .lj-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#1a0d2e;color:#f59e0b;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .lj-dot{width:5px;height:5px;border-radius:50%;background:#f59e0b;flex-shrink:0;}
+.sf-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#0d1a2e;color:#38bdf8;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
+.sf-dot{width:5px;height:5px;border-radius:50%;background:#38bdf8;flex-shrink:0;}
 .indeed-dot{width:5px;height:5px;border-radius:50%;background:#4A9EFF;flex-shrink:0;}
 .wttj-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;background:#FF4F31;color:#fff5f3;border-radius:5px;font-size:9px;font-family:'DM Mono',monospace;}
 .wttj-dot{width:5px;height:5px;border-radius:50%;background:#FF4F31;flex-shrink:0;}
@@ -194,6 +196,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-wld" onclick="toggleSource('wld')"><div class="src-dot" style="background:#c084fc"></div><span class="src-name">WeLoveDevs</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-cw" onclick="toggleSource('cw')"><div class="src-dot" style="background:#4ade80"></div><span class="src-name">Collective.work</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-lj" onclick="toggleSource('lj')"><div class="src-dot" style="background:#f59e0b"></div><span class="src-name">LesJeudis</span><span class="src-badge live">live</span></div>
+        <div class="src-chip active" id="src-sf" onclick="toggleSource('sf')"><div class="src-dot" style="background:#38bdf8"></div><span class="src-name">Station F</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-wttj" onclick="toggleSource('wttj')"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome to the Jungle</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-li" onclick="toggleSource('li')"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge live">live</span></div>
       </div>
@@ -315,7 +318,7 @@ var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'];
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -451,6 +454,7 @@ function resetAll() {
   document.getElementById('src-wld').className='src-chip active';
   document.getElementById('src-cw').className='src-chip active';
   document.getElementById('src-lj').className='src-chip active';
+  document.getElementById('src-sf').className='src-chip active';
   document.getElementById('src-wttj').className='src-chip active';
   document.getElementById('src-li').className='src-chip active';
   renderJobs();
@@ -589,7 +593,7 @@ function renderJobs() {
           (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
           (j.isESN?'<span class="pill p-blue">ESN</span>':'')+
           (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
-          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
+          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':j.source==='sf'?'<span class="sf-tag"><span class="sf-dot"></span>station f</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
         '</div>' +
       '</div>' +
     '</div>';

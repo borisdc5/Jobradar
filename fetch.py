@@ -1412,6 +1412,112 @@ def fetch_lesjeudis(max_pages=15):
     print(f'  LesJeudis: {len(jobs)} CDI récupérés')
     return jobs
 
+# ── Station F ──────────────────────────────────────────────────────────────────
+SF_APP_ID  = 'CSEKHVMS53'
+SF_API_KEY = 'ZTQzYjA0MGViZWQ5YmU0YWRkMjQ0ODhlYmFiOGNiOTU1MmVmMmExZDFkMDI2MjNmMGExNTA1OTdlMjM4ZDlhN2ZpbHRlcnM9d2Vic2l0ZS5yZWZlcmVuY2UlM0FzdGF0aW9uLWYtam9iLWJvYXJk'
+SF_INDEX   = 'wk_cms_jobs_production_careers'
+SF_BASE    = 'https://jobs.stationf.co'
+
+def fetch_stationf():
+    """Fetch Station F CDI jobs via Algolia API (no Playwright needed)."""
+    qs = urllib.parse.urlencode({
+        'x-algolia-agent': 'Algolia for JavaScript (3.35.0); Browser (lite)',
+        'x-algolia-application-id': SF_APP_ID,
+        'x-algolia-api-key': SF_API_KEY,
+    })
+    url = f'https://{SF_APP_ID.lower()}-dsn.algolia.net/1/indexes/*/queries?{qs}'
+
+    jobs, seen = [], set()
+    page = 0
+    nb_pages = 1
+
+    while page < nb_pages:
+        hit_params = urllib.parse.urlencode({
+            'enableABTest': 'false',
+            'query': '',
+            'page': page,
+            'hitsPerPage': 20,
+            'facetFilters': '[["contract_type_names.en:Full-Time"]]',
+        })
+        payload = json.dumps({'requests': [{'indexName': SF_INDEX, 'params': hit_params}]}).encode()
+        req = urllib.request.Request(url, data=payload, method='POST',
+                                     headers={'Content-Type': 'application/json'})
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            result = json.loads(resp.read())['results'][0]
+        except Exception as e:
+            print(f'  StationF page {page} erreur: {e}')
+            break
+
+        if page == 0:
+            nb_pages = result.get('nbPages', 1)
+
+        for h in result.get('hits', []):
+            oid = h.get('objectID') or h.get('slug', '')
+            if not oid or oid in seen:
+                continue
+            seen.add(oid)
+
+            title   = (h.get('name') or '').strip()
+            org     = h.get('organization') or {}
+            company = (org.get('name') or '').strip()
+            if not title or not company:
+                continue
+
+            slug = h.get('slug') or oid
+            link = f'{SF_BASE}/jobs/{slug}'
+
+            # Location
+            offices = h.get('offices') or []
+            remote_val = h.get('remote') or ''
+            if remote_val in ('remote', 'fulltime'):
+                location = 'Remote'
+            elif offices:
+                location = offices[0].get('city') or offices[0].get('district') or 'France'
+            else:
+                location = 'France'
+
+            # Logo
+            logo = None
+            logo_obj = org.get('logo') or {}
+            thumb = logo_obj.get('thumb') or {}
+            logo = thumb.get('url') or logo_obj.get('url') or None
+
+            # daysAgo
+            days_ago = 0
+            pub = h.get('published_at') or ''
+            if pub:
+                try:
+                    dt = datetime.fromisoformat(pub.replace('Z', '+00:00'))
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    days_ago = max(0, (datetime.now(timezone.utc) - dt).days)
+                except Exception:
+                    pass
+
+            jobs.append({
+                'id':        1300000 + len(jobs),
+                'title':     title,
+                'company':   company,
+                'link':      link,
+                'desc':      '',
+                'location':  location,
+                'category':  categorize(title, ''),
+                'daysAgo':   days_ago,
+                'logo':      logo,
+                'isESN':     is_esn_company(company),
+                'isCabinet': is_cabinet(company),
+                'source':    'sf',
+            })
+
+        print(f'  StationF page {page+1}/{nb_pages}: {len(result.get("hits",[]))} jobs (total {len(jobs)})')
+        page += 1
+        if page < nb_pages:
+            time.sleep(0.3)
+
+    print(f'  StationF: {len(jobs)} CDI récupérés')
+    return jobs
+
 def fetch_wld(max_scroll=10):
     """Scrape WeLoveDevs CDI jobs via Playwright, intercepting Algolia API responses."""
     try:
@@ -2038,6 +2144,14 @@ if __name__ == '__main__':
         print(f'  {len(lj)} CDI LesJeudis')
     except Exception as e:
         print(f'  LesJeudis erreur: {e}')
+
+    print('Fetch Station F...')
+    try:
+        sf = fetch_stationf()
+        jobs += sf
+        print(f'  {len(sf)} CDI Station F')
+    except Exception as e:
+        print(f'  Station F erreur: {e}')
 
     print('Fetch WeLoveDevs...')
     try:
