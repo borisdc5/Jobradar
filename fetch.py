@@ -1146,18 +1146,70 @@ def _cache_size(company, nb_employees):
     except (ValueError, TypeError):
         pass
 
+# Codes INSEE tranche_effectif_salarie → nombre représentatif
+_INSEE_TRANCHE = {
+    '00': 0,  '01': 1,  '02': 4,  '03': 7,
+    '11': 14, '12': 34, '21': 74, '22': 149,
+    '31': 224,'32': 374,'41': 749,'42': 1499,
+    '51': 3499,'52': 7499,'53': 14999,'54': 30000,
+}
+GOUV_API = 'https://recherche-entreprises.api.gouv.fr/search'
+
+def _name_similarity(a, b):
+    """Simple token overlap — retourne True si les noms se ressemblent assez."""
+    a, b = a.lower().strip(), b.lower().strip()
+    if a == b:
+        return True
+    # Remove common legal suffixes
+    for sfx in (' sas',' sarl',' sa',' srl',' group',' groupe',' france',' holding'):
+        a = a.replace(sfx, '')
+        b = b.replace(sfx, '')
+    a, b = a.strip(), b.strip()
+    if a == b or a in b or b in a:
+        return True
+    # Token overlap ≥ 50%
+    ta = set(re.split(r'\W+', a)) - {'', 'le', 'la', 'les', 'de', 'du', 'des', 'et'}
+    tb = set(re.split(r'\W+', b)) - {'', 'le', 'la', 'les', 'de', 'du', 'des', 'et'}
+    if not ta or not tb:
+        return False
+    overlap = len(ta & tb) / max(len(ta), len(tb))
+    return overlap >= 0.6
+
+def _pappers_lookup(company_name):
+    """Interroge l'API gouvernementale (sans clé) — fallback uniquement."""
+    try:
+        url = GOUV_API + '?' + urllib.parse.urlencode({
+            'q': company_name, 'per_page': 3,
+        })
+        req = urllib.request.Request(url, headers={'User-Agent': 'JobRadar/1.0'})
+        resp = urllib.request.urlopen(req, context=ctx, timeout=8)
+        data = json.loads(resp.read())
+        for r in data.get('results', []):
+            api_name = r.get('nom_complet') or r.get('nom_raison_sociale') or ''
+            if not _name_similarity(company_name, api_name):
+                continue
+            code = r.get('tranche_effectif_salarie') or ''
+            n = _INSEE_TRANCHE.get(code)
+            if n and n > 0:
+                return n
+    except Exception:
+        pass
+    return None
+
 def enrich_company_size(jobs):
-    """Applique le cache de taille à tous les jobs."""
+    """Applique le cache de taille à tous les jobs, avec fallback API gouv."""
     # Seed avec les valeurs connues (si pas déjà dans le cache)
     for name, n in KNOWN_COMPANY_SIZES.items():
         _company_size_cache.setdefault(name, n)
+
+    # Passe 1 : cache local (HW + WTTJ/SF + hardcoded)
+    missing = []
     covered = 0
     for j in jobs:
         if j.get('company_size'):
             covered += 1
             continue
         name = (j.get('company') or '').lower().strip()
-        # Recherche exacte puis partielle
         n = _company_size_cache.get(name)
         if n is None:
             for k, v in _company_size_cache.items():
@@ -1169,7 +1221,30 @@ def enrich_company_size(jobs):
             covered += 1
         else:
             j['company_size'] = None
-    print(f'  Taille entreprise : {covered}/{len(jobs)} jobs enrichis')
+            missing.append(j)
+
+    # Passe 2 : fallback API gouvernementale (une requête par entreprise unique)
+    unique_missing = {}
+    for j in missing:
+        name = (j.get('company') or '').strip()
+        if name and name not in unique_missing:
+            unique_missing[name] = []
+        if name:
+            unique_missing[name].append(j)
+
+    api_found = 0
+    for company, jlist in unique_missing.items():
+        n = _pappers_lookup(company)
+        if n:
+            _company_size_cache[company.lower().strip()] = n
+            for j in jlist:
+                j['company_size'] = n
+            api_found += 1
+            covered += len(jlist)
+        time.sleep(0.15)  # gentle rate limit
+
+    print(f'  Taille entreprise : {covered}/{len(jobs)} jobs enrichis '
+          f'({api_found} via API gouv, {len(unique_missing)-api_found} inconnus)')
 
 def http_get(url, headers=None):
     req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
