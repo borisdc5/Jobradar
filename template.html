@@ -233,6 +233,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
       </div>
       <div class="hr"></div>
       <div class="fs">
+        <div class="fs-label">Taille entreprise <span class="fs-clear" onclick="clearSizes()">reset</span></div>
+        <div class="tag-wrap" id="filter-size">
+          <span class="tag" data-v="≤10" onclick="toggleSize('≤10 pers.')">≤10</span>
+          <span class="tag" data-v="11–50" onclick="toggleSize('11–50 pers.')">11–50</span>
+          <span class="tag" data-v="51–200" onclick="toggleSize('51–200 pers.')">51–200</span>
+          <span class="tag" data-v="201–1k" onclick="toggleSize('201–1k pers.')">201–1k</span>
+          <span class="tag" data-v="1k–5k" onclick="toggleSize('1k–5k pers.')">1k–5k</span>
+          <span class="tag" data-v="5k+" onclick="toggleSize('5k+ pers.')">5k+</span>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="fs">
         <div class="fs-label">Cat&eacute;gorie <span class="fs-clear" onclick="clearF('category')">reset</span></div>
         <div class="tag-wrap" id="filter-category">
           <span class="tag" data-v="Développement" onclick="toggleTag(this,'category')">Développement</span>
@@ -318,6 +330,7 @@ var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
+var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'];
 
@@ -399,6 +412,26 @@ function clearF(group) {
   document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){t.className='tag';});
   renderJobs();
 }
+function toggleSize(s) {
+  var idx=activeSizes.indexOf(s);
+  if(idx!==-1){activeSizes.splice(idx,1);}
+  else{activeSizes.push(s);}
+  // sync visual state: map label → data-v prefix
+  var labelMap={'≤10 pers.':'≤10','11–50 pers.':'11–50','51–200 pers.':'51–200','201–1k pers.':'201–1k','1k–5k pers.':'1k–5k','5k+ pers.':'5k+'};
+  document.querySelectorAll('#filter-size .tag').forEach(function(t){
+    var bucket=labelMap[t.getAttribute('data-v')] ? t.getAttribute('data-v') : t.getAttribute('data-v');
+    // match by onclick value
+    var oc=t.getAttribute('onclick')||'';
+    var m=oc.match(/toggleSize\('([^']+)'\)/);
+    if(m){t.className='tag'+(activeSizes.indexOf(m[1])!==-1?' active':'');}
+  });
+  renderJobs();
+}
+function clearSizes() {
+  activeSizes=[];
+  document.querySelectorAll('#filter-size .tag').forEach(function(t){t.className='tag';});
+  renderJobs();
+}
 function setView(v) {
   view=v;
   document.getElementById('vlist').className='vbtn'+(v==='list'?' on':'');
@@ -424,6 +457,7 @@ function removeFilter(group,val) {
   else if(group==='consultant'){document.getElementById('consultant-sel').value='';}
   else if(group==='updatedby'){document.getElementById('updatedby-sel').value='';}
   else if(group==='nocrm'){hideNoCRM=false;document.getElementById('nocrm-btn').className='esn-btn';document.getElementById('nocrm-check').textContent='';document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';}
+  else if(group==='size'){var si=activeSizes.indexOf(val);if(si!==-1)activeSizes.splice(si,1);document.querySelectorAll('#filter-size .tag').forEach(function(t){var oc=t.getAttribute('onclick')||'';var m=oc.match(/toggleSize\('([^']+)'\)/);if(m&&m[1]===val)t.className='tag';});}
   else{var idx=filters[group].indexOf(val);if(idx!==-1)filters[group].splice(idx,1);document.querySelectorAll('#filter-'+group+' .tag').forEach(function(t){if(t.getAttribute('data-v')===val)t.className='tag';});}
   renderJobs();
 }
@@ -439,6 +473,7 @@ function resetAll() {
   document.getElementById('cab-btn').className='esn-btn';
   document.getElementById('cab-check').textContent='';
   document.getElementById('cab-lbl').textContent='Masquer cabinets';
+  activeSizes=[];document.querySelectorAll('#filter-size .tag').forEach(function(t){t.className='tag';});
   filterTC=null;showSavedOnly=false;
   document.getElementById('tc-oui').className='tag';
   document.getElementById('tc-non').className='tag';
@@ -535,6 +570,7 @@ function renderJobs() {
     if(filters.category.length&&filters.category.indexOf(j.category)===-1) continue;
     if(!locMatch(j)) continue;
     if(filters.age.length){var ma=Math.min.apply(null,filters.age.map(Number));if(j.daysAgo>ma)continue;}
+    if(activeSizes.length&&activeSizes.indexOf(sizeBucket(j.company_size))===-1) continue;
     jobs.push(j);
   }
   jobs.sort(function(a,b){
@@ -552,6 +588,7 @@ function renderJobs() {
   if(filterTC===true) activeF.push({group:'tc',val:'T&Cs ✓'});
   if(filterTC===false) activeF.push({group:'tc',val:'sans T&Cs'});
   if(consultant) activeF.push({group:'consultant',val:consultant});
+  for(var si=0;si<activeSizes.length;si++) activeF.push({group:'size',val:activeSizes[si]});
   var recC=0,savC=0;
   for(var i=0;i<jobs.length;i++){if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
   document.getElementById('stats-bar').innerHTML=
