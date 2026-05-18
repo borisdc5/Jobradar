@@ -184,7 +184,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     </div>
     <div class="sb-body">
       <div class="fs">
-        <div class="fs-label">Sources</div>
+        <div class="fs-label" style="display:flex;align-items:center;justify-content:space-between;">Sources<button onclick="deselectAllSources()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;line-height:1.4;">Tout déselectionner</button></div>
         <div class="src-chip active" id="src-afjv" onclick="toggleSource('afjv')"><div class="src-dot" style="background:#1A1A2E"></div><span class="src-name">AFJV</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-ft" onclick="toggleSource('ft')"><div class="src-dot" style="background:#005B98"></div><span class="src-name">France Travail</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-ms" onclick="toggleSource('ms')"><div class="src-dot" style="background:#1A4D3A"></div><span class="src-name">Makesense</span><span class="src-badge live">live</span></div>
@@ -334,6 +334,12 @@ function toggleSource(src) {
   var idx=activeSources.indexOf(src);
   if(idx!==-1){activeSources.splice(idx,1);document.getElementById('src-'+src).className='src-chip';}
   else{activeSources.push(src);document.getElementById('src-'+src).className='src-chip active';}
+  renderJobs();
+}
+function deselectAllSources() {
+  var all=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'];
+  activeSources=[];
+  for(var i=0;i<all.length;i++){var el=document.getElementById('src-'+all[i]);if(el)el.className='src-chip';}
   renderJobs();
 }
 function toggleCabinet() {

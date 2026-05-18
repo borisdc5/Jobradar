@@ -1845,10 +1845,10 @@ def fetch_wttj(days=30, max_hits=1000):
                     continue
 
                 org_slug = (org.get('slug') or '')
-                wk_ref   = (hit.get('wk_reference') or '')
-                if not org_slug or not wk_ref:
+                if not org_slug:
                     continue  # skip jobs without a valid URL
-                link = f'{WTTJ_BASE}/fr/companies/{org_slug}/jobs/{wk_ref}'
+                # Link to company jobs page (stable) — individual job URLs expire when filled
+                link = f'{WTTJ_BASE}/fr/companies/{org_slug}/jobs'
 
                 profession = (hit.get('new_profession') or {}).get('sub_category_name', '')
                 desc = (hit.get('summary') or '')[:200]
