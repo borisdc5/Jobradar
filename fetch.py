@@ -141,7 +141,7 @@ ESNS = [
     'acatus','avnir engineering','sweet it','apya','nexoris','bk consulting',
     'frydom','seven','go&dev','la tribu',
     'skills and affinity','skill now','serv\'it','servit',
-    'cgi','safran aircraft engines','thales','shape it',
+    'cgi','safran','thales','shape it',
 ]
 
 def is_cabinet(company):
@@ -156,6 +156,9 @@ def is_esn_company(company):
         return True
     # "SII" seul (hors sii atlantique etc. déjà couverts)
     if c == 'sii' or c.startswith('sii ') or ' sii ' in c:
+        return True
+    # "Open" seul ou "Open Consulting / Open Group / Open Sourcing" — trop court pour substring
+    if c == 'open' or c.startswith('open ') or c.endswith(' open'):
         return True
     if ' rh' in c or c.endswith(' rh'):
         return True
