@@ -228,6 +228,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="src-chip active" id="src-360cap" onclick="toggleSource('360cap');updateFundGroupUI()"><div class="src-dot" style="background:#6366f1"></div><span class="src-name">360 Capital</span><span class="src-badge live">live</span></div>
             <div class="src-chip active" id="src-isai" onclick="toggleSource('isai');updateFundGroupUI()"><div class="src-dot" style="background:#be185d"></div><span class="src-name">Isai</span><span class="src-badge live">live</span></div>
             <div class="src-chip active" id="src-breega" onclick="toggleSource('breega');updateFundGroupUI()"><div class="src-dot" style="background:#0d9488"></div><span class="src-name">Breega</span><span class="src-badge live">live</span></div>
+            <div class="src-chip active" id="src-sequoia" onclick="toggleSource('sequoia');updateFundGroupUI()"><div class="src-dot" style="background:#dc2626"></div><span class="src-name">Sequoia</span><span class="src-badge live">live</span></div>
           </div>
         </div>
       </div>
@@ -362,8 +363,8 @@ var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega'];
-var FUND_SOURCES  = ['elaia','daphni','partech','alven','xange','serena','360cap','isai','breega'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia'];
+var FUND_SOURCES  = ['elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia'];
 var fundsExpanded = false;
 
 function initials(c) {
@@ -550,7 +551,7 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia'];
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
   document.getElementById('src-afjv').className='src-chip active';
