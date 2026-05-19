@@ -141,7 +141,7 @@ ESNS = [
     'acatus','avnir engineering','sweet it','apya','nexoris','bk consulting',
     'frydom','seven','go&dev','la tribu',
     'skills and affinity','skill now','serv\'it','servit',
-    'cgi','safran','thales','shape it',
+    'cgi','safran','thales','shape it','smile group','smile',
 ]
 
 def is_cabinet(company):
@@ -193,7 +193,7 @@ KNOWN_COMPANY_SIZES = {
     'devoteam': 10000, 'wavestone': 3500, 'sqli': 3000,
     'aubay': 8000, 'inetum': 27000, 'scalian': 6000,
     'econocom': 9000, 'akkodis': 50000, 'assystem': 7000,
-    'infotel': 2500, 'groupe sii': 7000,
+    'infotel': 2500, 'groupe sii': 7000, 'smile group': 1300, 'smile': 1300,
     # ── HelloWork (4613 entreprises, tous secteurs) ──
     '10 fers serrurerie': 30, '1001 repas': 625, '1001 vies habitat': 3000, '123 pare-brise': 625, '1pact aquitaine': 30,
     '1pact grand-est': 30, '1pact grand-ouest': 3000, '1pact hauts-de-france': 30, '1pact normandie': 30, '1pact occitanie': 30,
@@ -1922,20 +1922,38 @@ def fetch_apec(max_results=300):
         'Origin': APEC_BASE,
     })
 
-    jobs, start, batch = [], 0, 50
-    while len(jobs) < max_results:
+    jobs, batch = [], 50
+
+    # ── 1. Sonde initiale : récupère totalCount pour partir de la fin ──────────
+    # L'API APEC trie les offres de la plus ancienne (index 0) à la plus récente
+    # (index totalCount-1). On calcule le startIndex pour ne prendre que les
+    # `max_results` offres les plus récentes.
+    def _apec_req(si, rng):
         body = json.dumps({
             'typesConvention': [143684],   # CDI
             'fonctions': [101833],          # Informatique
             'secteursActivite': [],
             'motsCles': '',
             'lieux': [],
-            'pagination': {'startIndex': start, 'range': batch},
+            'pagination': {'startIndex': si, 'range': rng},
         }).encode('utf-8')
         req = urllib.request.Request(APEC_SEARCH, data=body, headers=h2, method='POST')
+        resp = opener.open(req, timeout=20)
+        return _apec_decode(resp)
+
+    try:
+        probe = _apec_req(0, 1)
+        total = probe.get('totalCount', 0)
+    except Exception as e:
+        print(f'  APEC sonde erreur: {e}')
+        return []
+
+    print(f'  [APEC] totalCount={total}, on part de la fin')
+    start = max(0, total - max_results)  # commence aux offres récentes
+
+    while len(jobs) < max_results:
         try:
-            resp = opener.open(req, timeout=20)
-            data = _apec_decode(resp)
+            data = _apec_req(start, batch)
         except Exception as e:
             print(f'  APEC search erreur (start={start}): {e}')
             break
@@ -1963,10 +1981,12 @@ def fetch_apec(max_results=300):
             else:
                 location = lieu.strip() or 'France'
 
-            # Age
+            # Age — format API: "2026-05-19T10:34:58.000+0000"
             date_str = r.get('datePublication', '')
             try:
-                dp = datetime.fromisoformat(date_str.replace('.000+0000', '+00:00'))
+                # Normalise offset "+0000" → "+00:00" pour fromisoformat
+                ds = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', date_str)
+                dp = datetime.fromisoformat(ds)
                 age = max(0, (datetime.now(timezone.utc) - dp).days)
             except Exception:
                 age = 99
@@ -1987,7 +2007,6 @@ def fetch_apec(max_results=300):
 
         print(f'  [APEC] start={start} +{len(results)} → {len(jobs)} total')
         start += batch
-        total = data.get('totalCount', 0)
         if start >= total:
             break
 
