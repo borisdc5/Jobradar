@@ -2990,7 +2990,8 @@ def fetch_getro(display_name: str, source_id: str, network_id: str, base_url: st
 
 FUND_BOARDS = [
     # (display_name,  source_id,  welcomekit_base_url)
-    ('Elaia',         'elaia',    'https://elaia.welcomekit.co'),
+    ('Elaia', 'elaia', 'https://elaia.welcomekit.co'),
+    ('Isai',  'isai',  'https://isai.welcomekit.co'),
 ]
 
 WK_APP_ID = 'CSEKHVMS53'
