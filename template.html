@@ -220,6 +220,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
           </div>
           <div class="fund-chips" id="fund-chips">
             <div class="src-chip active" id="src-elaia" onclick="toggleSource('elaia');updateFundGroupUI()"><div class="src-dot" style="background:#7c3aed"></div><span class="src-name">Elaia</span><span class="src-badge live">live</span></div>
+            <div class="src-chip active" id="src-daphni" onclick="toggleSource('daphni');updateFundGroupUI()"><div class="src-dot" style="background:#1a56db"></div><span class="src-name">Daphni</span><span class="src-badge live">live</span></div>
           </div>
         </div>
       </div>
@@ -354,8 +355,8 @@ var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia'];
-var FUND_SOURCES  = ['elaia'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni'];
+var FUND_SOURCES  = ['elaia','daphni'];
 var fundsExpanded = false;
 
 function initials(c) {
@@ -542,7 +543,7 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni'];
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
   document.getElementById('src-afjv').className='src-chip active';

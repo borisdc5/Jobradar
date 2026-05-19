@@ -2735,6 +2735,121 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── Fonds d'investissements (Getro) ──────────────────────────────────────────
+#
+# Boards Getro : POST https://api.getro.com/api/v2/collections/{network_id}/search/jobs
+# Pagination : 20 par page, champ `results.count` = total.
+# Ajouter un fonds = 1 ligne dans GETRO_BOARDS.
+
+GETRO_BOARDS = [
+    # (display_name, source_id, network_id, base_url)
+    ('Daphni', 'daphni', '3359', 'https://talent.daphni.com'),
+]
+
+GETRO_API = 'https://api.getro.com/api/v2/collections/{}/search/jobs'
+
+def fetch_getro(display_name: str, source_id: str, network_id: str, base_url: str) -> list:
+    """Generic fetcher for Getro-hosted VC job boards."""
+    api_url = GETRO_API.format(network_id)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Origin': base_url,
+        'Referer': base_url + '/jobs',
+    }
+
+    jobs, seen, page, total = [], set(), 1, None
+
+    while True:
+        body = json.dumps({
+            'hitsPerPage': 20,
+            'page': page,
+            'filters': {'searchable_locations': ['France']},
+            'query': '',
+        }).encode()
+        req = urllib.request.Request(api_url, data=body, method='POST', headers=headers)
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            data  = json.loads(resp.read())
+        except Exception as e:
+            print(f'  [{display_name}] page {page} erreur: {e}')
+            break
+
+        results = data.get('results', {})
+        hits    = results.get('jobs', [])
+        if total is None:
+            total = results.get('count', 0)
+
+        if not hits:
+            break
+
+        for j in hits:
+            jid = str(j.get('id') or j.get('slug', ''))
+            if not jid or jid in seen:
+                continue
+            seen.add(jid)
+
+            title   = (j.get('title') or '').strip()
+            org     = j.get('organization') or {}
+            company = (org.get('name') or '').strip()
+            if not title or not company:
+                continue
+
+            # URL : priorité au lien source direct, sinon page Getro
+            link = j.get('url') or f'{base_url}/jobs/{j.get("slug","")}'
+
+            # Location
+            locs = j.get('locations') or j.get('searchable_locations') or []
+            wmode = j.get('work_mode') or ''
+            if wmode in ('remote', 'fully_remote'):
+                location = 'Remote'
+            elif locs:
+                # Keep shortest (most specific) location string
+                loc_raw = min(locs, key=len)
+                # Normalise: "Paris, France" → "Paris"
+                loc_raw = loc_raw.split(',')[0].strip()
+                location = ms_normalize_location(loc_raw, '')
+            else:
+                location = 'France'
+
+            # Age (Unix timestamp)
+            created = j.get('created_at') or 0
+            try:
+                age = max(0, (datetime.now(timezone.utc) -
+                              datetime.fromtimestamp(created, tz=timezone.utc)).days)
+            except Exception:
+                age = 99
+
+            # Logo
+            logo = org.get('logo_url') or org.get('logoUrl') or None
+
+            jobs.append({
+                'id':           900000 + len(jobs),
+                'title':        title,
+                'company':      company,
+                'link':         link,
+                'desc':         '',
+                'location':     location,
+                'category':     categorize(title, ''),
+                'daysAgo':      age,
+                'logo':         logo,
+                'company_size': None,
+                'isESN':        is_esn_company(company),
+                'isCabinet':    is_cabinet(company),
+                'source':       source_id,
+            })
+
+        print(f'  [{display_name}] page {page}/{(total//20)+1} → {len(hits)} offres')
+
+        if len(jobs) >= total or not hits:
+            break
+        page += 1
+        time.sleep(0.5)
+
+    print(f'  [{display_name}] total: {len(jobs)} offres')
+    return jobs
+
 # ── Fonds d'investissements (WelcomeKit) ─────────────────────────────────────
 #
 # Chaque fonds hébergé sur WelcomeKit utilise le même Algolia
@@ -3433,6 +3548,14 @@ if __name__ == '__main__':
     for (fname, fid, furl) in FUND_BOARDS:
         try:
             fj = fetch_welcomekit(fname, fid, furl)
+            jobs += fj
+        except Exception as e:
+            print(f'  {fname} erreur: {e}')
+
+    print('Fetch Fonds d\'investissements (Getro)...')
+    for (fname, fid, fnet, furl) in GETRO_BOARDS:
+        try:
+            fj = fetch_getro(fname, fid, fnet, furl)
             jobs += fj
         except Exception as e:
             print(f'  {fname} erreur: {e}')
