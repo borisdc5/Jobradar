@@ -2743,7 +2743,8 @@ def fetch_wld(max_scroll=10):
 
 GETRO_BOARDS = [
     # (display_name, source_id, network_id, base_url)
-    ('Daphni', 'daphni', '3359', 'https://talent.daphni.com'),
+    ('Daphni',   'daphni',   '3359',  'https://talent.daphni.com'),
+    ('Partech',  'partech',  '10421', 'https://portfoliojobs.partechpartners.com'),
 ]
 
 GETRO_API = 'https://api.getro.com/api/v2/collections/{}/search/jobs'
