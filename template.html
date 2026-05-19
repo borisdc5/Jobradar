@@ -138,6 +138,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .li-dot{width:5px;height:5px;border-radius:50%;background:#70A8E8;flex-shrink:0;}
 .src-chip{cursor:pointer;transition:all .15s;}
 .src-chip.active{background:var(--accent-bg);border-color:var(--accent);}
+/* Fonds d'investissements group */
+.fund-group{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:6px;}
+.fund-group-header{display:flex;align-items:center;gap:8px;padding:7px 10px;background:white;cursor:pointer;user-select:none;}
+.fund-group-header.active{background:var(--accent-bg);border-bottom:1px solid var(--border);}
+.fund-group-dot{width:8px;height:8px;border-radius:50%;background:#7c3aed;flex-shrink:0;}
+.fund-group-name{font-size:12px;font-weight:500;flex:1;color:var(--txt);}
+.fund-group-badge{font-size:9px;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;background:var(--accent-bg);color:var(--accent-txt);}
+.fund-chevron{font-size:11px;color:var(--txt3);transition:transform .2s;margin-left:2px;}
+.fund-chips{display:none;padding:6px 8px 8px 8px;background:var(--bg3);flex-direction:column;gap:4px;}
+.fund-chips .src-chip{background:white;margin-bottom:0;}
 .crm-btm-right{display:flex;align-items:center;gap:5px;justify-content:flex-end;flex-wrap:wrap;}
 .crm-date{font-size:9px;color:var(--txt3);font-family:'DM Mono',monospace;}
 .crm-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;text-decoration:none;transition:opacity .12s;white-space:nowrap;}
@@ -200,6 +210,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <div class="src-chip active" id="src-sf" onclick="toggleSource('sf')"><div class="src-dot" style="background:#38bdf8"></div><span class="src-name">Station F</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-wttj" onclick="toggleSource('wttj')"><div class="src-dot" style="background:#FF4F31"></div><span class="src-name">Welcome to the Jungle</span><span class="src-badge live">live</span></div>
         <div class="src-chip active" id="src-li" onclick="toggleSource('li')"><div class="src-dot" style="background:#0A66C2"></div><span class="src-name">LinkedIn</span><span class="src-badge live">live</span></div>
+        <!-- Fonds d'investissements -->
+        <div class="fund-group" id="fund-group">
+          <div class="fund-group-header active" id="fund-header" onclick="toggleFundGroup(event)">
+            <div class="fund-group-dot"></div>
+            <span class="fund-group-name">Fonds d'investissements</span>
+            <span class="fund-group-badge live" id="fund-badge">live</span>
+            <span class="fund-chevron" id="fund-chevron">▸</span>
+          </div>
+          <div class="fund-chips" id="fund-chips">
+            <div class="src-chip active" id="src-elaia" onclick="toggleSource('elaia');updateFundGroupUI()"><div class="src-dot" style="background:#7c3aed"></div><span class="src-name">Elaia</span><span class="src-badge live">live</span></div>
+          </div>
+        </div>
       </div>
       <div class="hr"></div>
       <div class="fs">
@@ -332,7 +354,9 @@ var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia'];
+var FUND_SOURCES  = ['elaia'];
+var fundsExpanded = false;
 
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
@@ -351,10 +375,45 @@ function toggleSource(src) {
   renderJobs();
 }
 function deselectAllSources() {
-  var all=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'];
+  var all=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf'].concat(FUND_SOURCES);
   activeSources=[];
   for(var i=0;i<all.length;i++){var el=document.getElementById('src-'+all[i]);if(el)el.className='src-chip';}
+  updateFundGroupUI();
   renderJobs();
+}
+function toggleFundGroup(e) {
+  // Clic sur le chevron (derniers 24px) → expand/collapse seulement
+  // Clic ailleurs → sélectionner/désélectionner tout + expand si pas ouvert
+  var chevronClicked = e && (e.currentTarget.offsetWidth - e.offsetX) < 30;
+  if(!chevronClicked) {
+    var allActive = FUND_SOURCES.every(function(s){return activeSources.indexOf(s)!==-1;});
+    FUND_SOURCES.forEach(function(s){
+      var idx=activeSources.indexOf(s);
+      if(allActive){if(idx!==-1)activeSources.splice(idx,1);}
+      else{if(idx===-1)activeSources.push(s);}
+    });
+    FUND_SOURCES.forEach(function(s){
+      var el=document.getElementById('src-'+s);
+      if(el)el.className='src-chip'+(activeSources.indexOf(s)!==-1?' active':'');
+    });
+    if(!allActive && !fundsExpanded) _expandFunds(true);
+    renderJobs();
+  } else {
+    _expandFunds(!fundsExpanded);
+  }
+  updateFundGroupUI();
+}
+function _expandFunds(open) {
+  fundsExpanded=open;
+  var chips=document.getElementById('fund-chips');
+  if(chips)chips.style.display=open?'flex':'none';
+  var chev=document.getElementById('fund-chevron');
+  if(chev)chev.textContent=open?'▾':'▸';
+}
+function updateFundGroupUI() {
+  var activeCount=FUND_SOURCES.filter(function(s){return activeSources.indexOf(s)!==-1;}).length;
+  var hdr=document.getElementById('fund-header');
+  if(hdr)hdr.className='fund-group-header'+(activeCount>0?' active':'');
 }
 function toggleCabinet() {
   hideCabinet=!hideCabinet;
@@ -483,7 +542,9 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia'];
+  FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
+  updateFundGroupUI();
   document.getElementById('src-afjv').className='src-chip active';
   document.getElementById('src-ft').className='src-chip active';
   document.getElementById('src-ms').className='src-chip active';

@@ -2735,6 +2735,162 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── Fonds d'investissements (WelcomeKit) ─────────────────────────────────────
+#
+# Chaque fonds hébergé sur WelcomeKit utilise le même Algolia
+# (APP_ID = CSEKHVMS53, index = wk_cms_jobs_production_careers) avec une clé
+# restreinte récupérée dynamiquement depuis la page d'accueil du job-board.
+# Ajouter un nouveau fonds = 1 ligne dans FUND_BOARDS ci-dessous.
+
+FUND_BOARDS = [
+    # (display_name,  source_id,  welcomekit_base_url)
+    ('Elaia',         'elaia',    'https://elaia.welcomekit.co'),
+]
+
+WK_APP_ID = 'CSEKHVMS53'
+WK_INDEX  = 'wk_cms_jobs_production_careers'
+
+def _wk_parse_size(size_fr: str) -> int | None:
+    """Parse WelcomeKit org size label (French) → representative int."""
+    if not size_fr:
+        return None
+    s = size_fr.lower()
+    m = re.search(r'entre\s+(\d+)\s+et\s+(\d+)', s)
+    if m:
+        return (int(m.group(1)) + int(m.group(2))) // 2
+    m2 = re.search(r'moins\s+de\s+(\d+)', s)
+    if m2:
+        return int(m2.group(1)) // 2
+    m3 = re.search(r'plus\s+de\s+(\d+)', s)
+    if m3:
+        return int(m3.group(1)) * 2
+    return None
+
+def fetch_welcomekit(display_name: str, source_id: str, base_url: str) -> list:
+    """Generic fetcher for any WelcomeKit-hosted job board."""
+    # 1. Récupère la clé Algolia depuis la page d'accueil
+    try:
+        page_req = urllib.request.Request(base_url + '/', headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        })
+        page_resp = urllib.request.urlopen(page_req, context=ctx, timeout=15)
+        page_html = page_resp.read().decode('utf-8', errors='replace')
+        m = re.search(r'id="algolia_api_key" value="([^"]+)"', page_html)
+        if not m:
+            print(f'  [{display_name}] clé Algolia introuvable')
+            return []
+        api_key_b64 = m.group(1)
+    except Exception as e:
+        print(f'  [{display_name}] erreur chargement page: {e}')
+        return []
+
+    # 2. Requête Algolia (CDI uniquement, toutes pages)
+    qs = urllib.parse.urlencode({
+        'x-algolia-agent': 'Algolia for JavaScript (3.35.0); Browser (lite)',
+        'x-algolia-application-id': WK_APP_ID,
+        'x-algolia-api-key': api_key_b64,
+    })
+    algolia_url = f'https://{WK_APP_ID.lower()}-dsn.algolia.net/1/indexes/*/queries?{qs}'
+
+    jobs, seen = [], set()
+    page, nb_pages = 0, 1
+
+    while page < nb_pages:
+        hit_params = urllib.parse.urlencode({
+            'enableABTest': 'false',
+            'query': '',
+            'page': page,
+            'hitsPerPage': 100,
+            'facetFilters': '[["contract_type_names.en:Full-Time"]]',
+        })
+        payload = json.dumps({'requests': [{'indexName': WK_INDEX, 'params': hit_params}]}).encode()
+        req = urllib.request.Request(algolia_url, data=payload, method='POST',
+                                     headers={'Content-Type': 'application/json'})
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            result = json.loads(resp.read())['results'][0]
+        except Exception as e:
+            print(f'  [{display_name}] page {page} erreur: {e}')
+            break
+
+        if page == 0:
+            nb_pages = result.get('nbPages', 1)
+
+        for h in result.get('hits', []):
+            oid = h.get('objectID') or h.get('slug', '')
+            if not oid or oid in seen:
+                continue
+            seen.add(oid)
+
+            title   = (h.get('name') or '').strip()
+            org     = h.get('organization') or {}
+            company = (org.get('name') or '').strip()
+            if not title or not company:
+                continue
+
+            slug = h.get('slug') or oid
+            link = f'{base_url}/jobs/{slug}'
+
+            # Location
+            offices    = h.get('offices') or []
+            remote_val = h.get('remote') or ''
+            if remote_val in ('remote', 'fulltime'):
+                location = 'Remote'
+            elif offices:
+                location = offices[0].get('city') or offices[0].get('district') or 'France'
+            else:
+                location = 'France'
+            location = ms_normalize_location(location, '')
+
+            # Date
+            date_str = h.get('published_at', '')
+            try:
+                ds = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', date_str)
+                dp = datetime.fromisoformat(ds)
+                age = max(0, (datetime.now(timezone.utc) - dp).days)
+            except Exception:
+                age = 99
+
+            # Logo
+            logo = None
+            logo_obj = org.get('logo') or {}
+            thumb = (logo_obj.get('thumb') or {}) if isinstance(logo_obj, dict) else {}
+            url_l = thumb.get('url') if isinstance(thumb, dict) else None
+            if url_l:
+                logo = ('https:' + url_l) if url_l.startswith('//') else url_l
+
+            # Taille entreprise (depuis WelcomeKit org.size ou nb_employees)
+            nb_emp = h.get('nb_employees')
+            if not nb_emp:
+                size_obj = org.get('size') or {}
+                size_fr  = size_obj.get('fr', '') if isinstance(size_obj, dict) else ''
+                nb_emp   = _wk_parse_size(size_fr)
+            if nb_emp:
+                _cache_size(company, int(nb_emp))
+
+            jobs.append({
+                'id':          800000 + len(jobs),
+                'title':       title,
+                'company':     company,
+                'link':        link,
+                'desc':        re.sub(r'<[^>]+>', ' ', h.get('profile') or '').strip()[:200],
+                'location':    location,
+                'category':    categorize(title, ''),
+                'daysAgo':     age,
+                'logo':        logo,
+                'company_size': int(nb_emp) if nb_emp else None,
+                'isESN':       is_esn_company(company),
+                'isCabinet':   is_cabinet(company),
+                'source':      source_id,
+            })
+
+        page += 1
+        if page < nb_pages:
+            time.sleep(0.5)
+
+    print(f'  [{display_name}] {len(jobs)} CDI')
+    return jobs
+
 # ── LinkedIn ──────────────────────────────────────────────────────────────────
 
 LI_GUEST_URL = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search'
@@ -3272,6 +3428,14 @@ if __name__ == '__main__':
         print(f'  {len(sf)} CDI Station F')
     except Exception as e:
         print(f'  Station F erreur: {e}')
+
+    print('Fetch Fonds d\'investissements (WelcomeKit)...')
+    for (fname, fid, furl) in FUND_BOARDS:
+        try:
+            fj = fetch_welcomekit(fname, fid, furl)
+            jobs += fj
+        except Exception as e:
+            print(f'  {fname} erreur: {e}')
 
     print('Fetch WeLoveDevs...')
     try:
