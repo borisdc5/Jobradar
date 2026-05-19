@@ -2735,6 +2735,99 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── Fonds d'investissements (TeamTailor) ─────────────────────────────────────
+#
+# Boards TeamTailor : scraping HTML + sitemap pour les dates.
+# Titre au format "Job Title @Company" dans les cartes.
+
+import html as _html_mod
+
+TEAMTAILOR_BOARDS = [
+    # (display_name, source_id, base_url, filter_qs)
+    ('Breega', 'breega', 'https://jobs.breega.com', '?department_id=285659'),
+]
+
+def fetch_teamtailor(display_name: str, source_id: str, base_url: str, filter_qs: str = '') -> list:
+    """Generic fetcher for TeamTailor-hosted VC job boards."""
+    hdrs = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+    # 1. Dates depuis le sitemap
+    date_map = {}
+    try:
+        sitemap = urllib.request.urlopen(
+            urllib.request.Request(base_url + '/sitemap.xml', headers=hdrs),
+            context=ctx, timeout=10).read().decode('utf-8', errors='replace')
+        for m in re.finditer(
+                r'<loc>(' + re.escape(base_url) + r'/jobs/[^<]+)</loc>\s*<lastmod>([^<]+)</lastmod>',
+                sitemap):
+            date_map[m.group(1)] = m.group(2)
+    except Exception as e:
+        print(f'  [{display_name}] sitemap erreur: {e}')
+
+    # 2. Page listant les offres
+    try:
+        page = urllib.request.urlopen(
+            urllib.request.Request(base_url + '/jobs' + filter_qs, headers=hdrs),
+            context=ctx, timeout=15).read().decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f'  [{display_name}] page erreur: {e}')
+        return []
+
+    jobs = []
+    for block in re.findall(r'<li class="w-full">(.*?)</li>', page, re.DOTALL):
+        url_m = re.search(r'href="(' + re.escape(base_url) + r'/jobs/[^"]+)"', block)
+        title_m = re.search(r'<span[^>]*></span>\s*([^\n<]+)', block)
+        if not url_m or not title_m:
+            continue
+
+        link       = url_m.group(1)
+        title_raw  = _html_mod.unescape(title_m.group(1).strip())
+        if '@' in title_raw:
+            title, company = [p.strip() for p in title_raw.rsplit('@', 1)]
+            title = title.rstrip(' -–').strip()
+        else:
+            title, company = title_raw.rstrip(' -–').strip(), ''
+        if not title or not company:
+            continue
+
+        # Spans: ['Join our startups', 'Paris', 'Hybrid'/'Remote'/...]
+        spans = [_html_mod.unescape(s) for s in re.findall(r'<span>([^<]+)</span>', block)]
+        remote_kws = {'remote', 'full remote', 'fully remote', 'télétravail'}
+        work_mode  = next((s for s in spans if s.lower() in {'hybrid','remote','on-site','full remote'}), '')
+        location   = next((s for s in spans
+                           if s not in {'·', '&middot;'} and 'startup' not in s.lower()
+                           and s.lower() not in {'hybrid','remote','on-site','full remote'}), 'France')
+        location   = ms_normalize_location(location, '')
+        if work_mode.lower() in remote_kws:
+            location = 'Remote'
+
+        # Age depuis le sitemap lastmod
+        lastmod = date_map.get(link, '')
+        try:
+            dp  = datetime.fromisoformat(lastmod)
+            age = max(0, (datetime.now(timezone.utc) - dp.astimezone(timezone.utc)).days)
+        except Exception:
+            age = 7
+
+        jobs.append({
+            'id':           980000 + len(jobs),
+            'title':        title,
+            'company':      company,
+            'link':         link,
+            'desc':         '',
+            'location':     location,
+            'category':     categorize(title, ''),
+            'daysAgo':      age,
+            'logo':         None,
+            'company_size': None,
+            'isESN':        is_esn_company(company),
+            'isCabinet':    is_cabinet(company),
+            'source':       source_id,
+        })
+
+    print(f'  [{display_name}] {len(jobs)} offres')
+    return jobs
+
 # ── Fonds d'investissements (Consider) ───────────────────────────────────────
 #
 # Boards Consider : POST {base_url}/api-boards/search-jobs
@@ -3680,6 +3773,14 @@ if __name__ == '__main__':
     for (fname, fid, furl) in FUND_BOARDS:
         try:
             fj = fetch_welcomekit(fname, fid, furl)
+            jobs += fj
+        except Exception as e:
+            print(f'  {fname} erreur: {e}')
+
+    print('Fetch Fonds d\'investissements (TeamTailor)...')
+    for (fname, fid, furl, fqs) in TEAMTAILOR_BOARDS:
+        try:
+            fj = fetch_teamtailor(fname, fid, furl, fqs)
             jobs += fj
         except Exception as e:
             print(f'  {fname} erreur: {e}')
