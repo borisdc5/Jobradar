@@ -2743,7 +2743,8 @@ def fetch_wld(max_scroll=10):
 
 CONSIDER_BOARDS = [
     # (display_name, source_id, board_id, base_url)
-    ('Alven', 'alven', 'alven', 'https://jobs.alven.co'),
+    ('Alven',  'alven',  'alven',  'https://jobs.alven.co'),
+    ('XAnge',  'xange',  'xange',  'https://jobs.xange.vc'),
 ]
 
 def fetch_consider(display_name: str, source_id: str, board_id: str, base_url: str) -> list:

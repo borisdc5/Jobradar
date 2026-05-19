@@ -223,6 +223,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
             <div class="src-chip active" id="src-daphni" onclick="toggleSource('daphni');updateFundGroupUI()"><div class="src-dot" style="background:#1a56db"></div><span class="src-name">Daphni</span><span class="src-badge live">live</span></div>
             <div class="src-chip active" id="src-partech" onclick="toggleSource('partech');updateFundGroupUI()"><div class="src-dot" style="background:#e11d48"></div><span class="src-name">Partech</span><span class="src-badge live">live</span></div>
             <div class="src-chip active" id="src-alven" onclick="toggleSource('alven');updateFundGroupUI()"><div class="src-dot" style="background:#059669"></div><span class="src-name">Alven</span><span class="src-badge live">live</span></div>
+            <div class="src-chip active" id="src-xange" onclick="toggleSource('xange');updateFundGroupUI()"><div class="src-dot" style="background:#f97316"></div><span class="src-name">XAnge</span><span class="src-badge live">live</span></div>
           </div>
         </div>
       </div>
@@ -357,8 +358,8 @@ var filters = {category:[],location:[],age:[]};
 var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
-var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven'];
-var FUND_SOURCES  = ['elaia','daphni','partech','alven'];
+var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange'];
+var FUND_SOURCES  = ['elaia','daphni','partech','alven','xange'];
 var fundsExpanded = false;
 
 function initials(c) {
@@ -545,7 +546,7 @@ function resetAll() {
   document.getElementById('nocrm-btn').className='esn-btn';
   document.getElementById('nocrm-check').textContent='';
   document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';
-  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven'];
+  activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange'];
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
   document.getElementById('src-afjv').className='src-chip active';
