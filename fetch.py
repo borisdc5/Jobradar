@@ -2735,6 +2735,133 @@ def fetch_wld(max_scroll=10):
     print(f'  [WLD] {len(jobs)} CDI WeLoveDevs (dédupliqués)')
     return jobs
 
+# ── Fonds d'investissements (Consider) ───────────────────────────────────────
+#
+# Boards Consider : POST {base_url}/api-boards/search-jobs
+# Pagination : cursor-based via meta.sequence.
+# Ajouter un fonds = 1 ligne dans CONSIDER_BOARDS.
+
+CONSIDER_BOARDS = [
+    # (display_name, source_id, board_id, base_url)
+    ('Alven', 'alven', 'alven', 'https://jobs.alven.co'),
+]
+
+def fetch_consider(display_name: str, source_id: str, board_id: str, base_url: str) -> list:
+    """Generic fetcher for Consider-hosted VC job boards."""
+    api_url  = base_url + '/api-boards/search-jobs'
+    headers  = {
+        'User-Agent':   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept':       'application/json',
+        'Content-Type': 'application/json',
+        'Origin':       base_url,
+        'Referer':      base_url + '/jobs',
+    }
+    board_obj = {'id': board_id, 'isParent': True}
+
+    jobs, seen, sequence, total = [], set(), None, None
+    PAGE_SIZE = 60
+
+    while True:
+        meta_param: dict = {'size': PAGE_SIZE}
+        if sequence:
+            meta_param['sequence'] = sequence
+
+        body = json.dumps({
+            'board':   board_obj,
+            'query':   {'locations': ['France']},
+            'meta':    meta_param,
+            'grouped': False,
+        }).encode()
+        req = urllib.request.Request(api_url, data=body, method='POST', headers=headers)
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            data = json.loads(resp.read())
+        except Exception as e:
+            print(f'  [{display_name}] erreur: {e}')
+            break
+
+        hits = data.get('jobs', [])
+        if total is None:
+            total = data.get('total', 0)
+
+        if not hits:
+            break
+
+        for j in hits:
+            jid = str(j.get('jobId') or j.get('url') or '')
+            if not jid or jid in seen:
+                continue
+            seen.add(jid)
+
+            title   = (j.get('title') or '').strip()
+            company = (j.get('companyName') or '').strip()
+            if not title or not company:
+                continue
+
+            link = j.get('applyUrl') or j.get('url') or ''
+
+            # Location
+            norm_locs = j.get('normalizedLocations') or []
+            raw_locs  = j.get('locations') or []
+            if j.get('remote'):
+                location = 'Remote'
+            elif norm_locs:
+                loc_label = norm_locs[0].get('label', '') if isinstance(norm_locs[0], dict) else str(norm_locs[0])
+                location = loc_label.split(',')[0].strip()
+                location = ms_normalize_location(location, '')
+            elif raw_locs:
+                location = raw_locs[0].split(',')[0].strip()
+                location = ms_normalize_location(location, '')
+            else:
+                location = 'France'
+
+            # Age
+            ts = j.get('timeStamp') or ''
+            try:
+                ds = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', ts)
+                dp = datetime.fromisoformat(ds.replace('Z', '+00:00'))
+                age = max(0, (datetime.now(timezone.utc) - dp).days)
+            except Exception:
+                age = 99
+
+            # Logo
+            logos = j.get('companyLogos') or {}
+            li_logo = logos.get('linkedin') or {}
+            mn_logo = logos.get('manual') or {}
+            logo = (li_logo.get('src') if isinstance(li_logo, dict) else None) or \
+                   (mn_logo.get('src') if isinstance(mn_logo, dict) else None)
+
+            # Taille entreprise (staffCount direct)
+            nb_emp = j.get('companyStaffCount')
+            if nb_emp:
+                _cache_size(company, int(nb_emp))
+
+            jobs.append({
+                'id':           950000 + len(jobs),
+                'title':        title,
+                'company':      company,
+                'link':         link,
+                'desc':         '',
+                'location':     location,
+                'category':     categorize(title, ''),
+                'daysAgo':      age,
+                'logo':         logo,
+                'company_size': int(nb_emp) if nb_emp else None,
+                'isESN':        is_esn_company(company),
+                'isCabinet':    is_cabinet(company),
+                'source':       source_id,
+            })
+
+        sequence = (data.get('meta') or {}).get('sequence')
+        print(f'  [{display_name}] +{len(hits)} → {len(jobs)} / {total}')
+
+        if not sequence or len(jobs) >= total:
+            break
+        time.sleep(0.3)
+
+    print(f'  [{display_name}] total: {len(jobs)} offres')
+    return jobs
+
 # ── Fonds d'investissements (Getro) ──────────────────────────────────────────
 #
 # Boards Getro : POST https://api.getro.com/api/v2/collections/{network_id}/search/jobs
@@ -3549,6 +3676,14 @@ if __name__ == '__main__':
     for (fname, fid, furl) in FUND_BOARDS:
         try:
             fj = fetch_welcomekit(fname, fid, furl)
+            jobs += fj
+        except Exception as e:
+            print(f'  {fname} erreur: {e}')
+
+    print('Fetch Fonds d\'investissements (Consider)...')
+    for (fname, fid, fbid, furl) in CONSIDER_BOARDS:
+        try:
+            fj = fetch_consider(fname, fid, fbid, furl)
             jobs += fj
         except Exception as e:
             print(f'  {fname} erreur: {e}')
