@@ -2745,7 +2745,8 @@ CONSIDER_BOARDS = [
     # (display_name, source_id, board_id, base_url)
     ('Alven',  'alven',  'alven',  'https://jobs.alven.co'),
     ('XAnge',  'xange',  'xange',  'https://jobs.xange.vc'),
-    ('Serena', 'serena', 'serena', 'https://careers.serena.vc'),
+    ('Serena',      'serena',  'serena',      'https://careers.serena.vc'),
+    ('360 Capital', '360cap',  '360-capital', 'https://jobs.360cap.vc'),
 ]
 
 def fetch_consider(display_name: str, source_id: str, board_id: str, base_url: str) -> list:
