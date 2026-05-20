@@ -76,7 +76,7 @@ CABINETS = [
     'surfjob','easy-talent','easy talent','rheso','le bureau des talents','bureau des talents',
     'darwin partners','mercato de l\'emploi','danem people france','recrut\'',
     'easypartner','sotalent','so talent','jobgether',
-    'job link group','jobglober','henoris','ak recrutement',
+    'job link group','jobglober','henoris','ak recrutement','silkhom',
 ]
 
 ESNS = [
