@@ -77,6 +77,7 @@ CABINETS = [
     'darwin partners','mercato de l\'emploi','danem people france','recrut\'',
     'easypartner','sotalent','so talent','jobgether',
     'job link group','jobglober','henoris','ak recrutement','silkhom',
+    'externatic','protectic','yeets','pasteque.io','pasteque','databeans',
 ]
 
 ESNS = [
@@ -143,6 +144,7 @@ ESNS = [
     'skills and affinity','skill now','serv\'it','servit','maten',
     'skills nantes','kpmg','infotel','econocom','qim info','acensi',
     'mvip consulting','sohoft',
+    'externatic','protectic','yeets','pasteque.io','pasteque','databeans',
     'cgi','safran','thales','shape it','smile group','smile',
 ]
 
