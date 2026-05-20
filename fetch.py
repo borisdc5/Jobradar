@@ -140,7 +140,7 @@ ESNS = [
     '5 degrés','5 degres','consulting efficiency','obeya it','futurwork',
     'acatus','avnir engineering','sweet it','apya','nexoris','bk consulting',
     'frydom','seven','go&dev','la tribu',
-    'skills and affinity','skill now','serv\'it','servit',
+    'skills and affinity','skill now','serv\'it','servit','maten',
     'cgi','safran','thales','shape it','smile group','smile',
 ]
 
