@@ -170,6 +170,36 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 /* ── Fraîcheur données ───────────────────────────────────────── */
 .freshness-box{background:var(--bg3);border-radius:var(--radius);padding:10px 12px;font-size:11px;color:var(--txt2);line-height:1.7;}
 .freshness-box strong{color:var(--txt);font-weight:600;}
+/* ── Hamburger (mobile only) ─────────────────────────────────── */
+.menu-btn{display:none;width:34px;height:34px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;cursor:pointer;align-items:center;justify-content:center;font-size:18px;color:var(--txt2);flex-shrink:0;}
+.sb-close{display:none;position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;font-size:16px;color:var(--txt2);align-items:center;justify-content:center;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:999;}
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media(max-width:768px){
+  .app{flex-direction:column;height:auto;min-height:100vh;overflow:visible;}
+  .sidebar{position:fixed;left:-290px;top:0;bottom:0;width:280px;min-width:280px;z-index:1000;transition:left .25s ease;overflow-y:auto;}
+  .sidebar.sb-open{left:0;}
+  .sidebar-overlay.sb-open{display:block;}
+  .sb-close{display:flex;}
+  .sidebar .sb-head{padding-right:46px;}
+  .main{flex:1;overflow:visible;height:auto;}
+  .menu-btn{display:flex;}
+  .topbar{flex-wrap:nowrap;gap:8px;padding:10px 12px;}
+  .search-wrap input{font-size:12px;}
+  .sort-sel{font-size:11px;padding:7px 6px;max-width:110px;}
+  .view-btns{display:none;}
+  .stats-bar{overflow-x:auto;flex-wrap:nowrap;padding:6px 12px;gap:6px;}
+  .stat{padding:4px 8px;flex-shrink:0;}
+  .stat-n{font-size:14px;}
+  .results-bar{padding:6px 12px;}
+  .jobs-wrap{padding:10px 12px;gap:8px;overflow:visible;flex:none;}
+  .job-card{gap:8px;padding:12px;}
+  .job-card.half{width:100%;}
+  .co-logo{width:34px;height:34px;}
+  .jtitle{font-size:12px;}
+  .jco{font-size:12px;}
+  .crm-indicators{flex-wrap:wrap;}
+}
 </style>
 </head>
 <body>
@@ -185,7 +215,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   </div>
 </div>
 <div class="app">
-  <aside class="sidebar">
+  <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <button class="sb-close" id="sb-close" onclick="closeSidebar()">✕</button>
     <div class="sb-head">
       <div class="logo">
         <div class="logo-mark"><svg viewBox="0 0 16 16"><path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z"/></svg></div>
@@ -337,6 +369,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   </aside>
   <main class="main">
     <div class="topbar">
+      <button class="menu-btn" onclick="openSidebar()">&#9776;</button>
       <div class="search-wrap">
         <span class="search-icon">&#8981;</span>
         <input type="text" id="search-input" placeholder="Rechercher poste, studio..." oninput="renderJobs()">
@@ -367,6 +400,14 @@ var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','l
 var FUND_SOURCES  = ['elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia'];
 var fundsExpanded = false;
 
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('sb-open');
+  document.getElementById('sb-overlay').classList.add('sb-open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('sb-open');
+  document.getElementById('sb-overlay').classList.remove('sb-open');
+}
 function initials(c) {
   var p=(c||'?').split(/[\s\-_&]/).filter(function(x){return x.length>0;});
   var r=''; for(var i=0;i<Math.min(p.length,2);i++) r+=p[i][0];
