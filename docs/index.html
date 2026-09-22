@@ -748,7 +748,7 @@ function renderJobs() {
   document.getElementById('results-bar').innerHTML=
     '<span class="rcount"><strong>'+jobs.length+'</strong> CDI &nbsp;<span style="font-size:10px;color:var(--txt3);font-family:\'DM Mono\',monospace;">AFJV live</span></span>'+
     '<div class="active-chips">'+chips+'</div>'+
-    (activeF.length?'<span class="reset-all" onclick="resetAll()">Tout effacer</span>':'');
+    (showSavedOnly&&Object.keys(saved).length?'<span class="reset-all" onclick="clearAllSaved()" style="color:var(--warn)">Vider la liste</span>':'')+(activeF.length?'<span class="reset-all" onclick="resetAll()">Tout effacer</span>':'');
   var wrap=document.getElementById('jobs-wrap');
   wrap.className=view==='grid'?'jobs-wrap grid-mode':'jobs-wrap';
   if(!jobs.length){wrap.innerHTML='<div class="empty"><span style="font-size:32px;opacity:.2">&#9711;</span><span style="font-size:13px;">Aucun CDI ne correspond</span></div>';return;}
@@ -816,6 +816,7 @@ function fmtCrmDate(s) {
 }
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
 function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}
+function clearAllSaved(){if(!confirm('Vider toute la liste des offres sauvegardées ?'))return;saved={};localStorage.setItem('jr_saved','{}');showSavedOnly=false;renderJobs();}
 /* ── Community flags ── */
 var _fte=[66,77,74,122,108,71,125,106,108,124,16,125,125,68,117,98,82,16,16,78,114,73,73,114,111,99,124,83,72,108,21,82,104,84,22,103,114,114,20,93];
 var FLAGS_TOKEN=_fte.map(function(c){return String.fromCharCode(c^37);}).join('');
