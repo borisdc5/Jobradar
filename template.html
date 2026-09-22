@@ -438,7 +438,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <input type="text" id="search-input" placeholder="Rechercher poste, studio..." oninput="renderJobs()">
       </div>
       <select class="sort-sel" id="sort-sel" onchange="renderJobs()">
+        <option value="score">Meilleur score</option>
         <option value="date">Plus r&eacute;cent</option>
+        <option value="intensity">Nb d&apos;offres</option>
         <option value="company">Entreprise A&#8211;Z</option>
         <option value="title">Poste A&#8211;Z</option>
       </select>
@@ -911,7 +913,16 @@ function renderJobs() {
     jobs.push(j);
   }
   jobs.sort(function(a,b){
+    if(sort==='score'){
+      var sa=calculateRelevanceScore(a).finalScore, sb=calculateRelevanceScore(b).finalScore;
+      return sb-sa||a.daysAgo-b.daysAgo;
+    }
     if(sort==='date') return a.daysAgo-b.daysAgo;
+    if(sort==='intensity'){
+      var ca=(_companyData[(a.company||'').toLowerCase()]||{count:0}).count;
+      var cb=(_companyData[(b.company||'').toLowerCase()]||{count:0}).count;
+      return cb-ca||a.daysAgo-b.daysAgo;
+    }
     if(sort==='company') return (a.company||'').localeCompare(b.company||'');
     return a.title.localeCompare(b.title);
   });
