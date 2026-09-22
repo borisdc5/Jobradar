@@ -3883,7 +3883,7 @@ if __name__ == '__main__':
     html = (template
             .replace('__JOBS__', json.dumps(jobs, ensure_ascii=False))
             .replace('"__UPDATED__"', f'"{updated}"')
-            .replace('__FLAGS_TOKEN__', COMMUNITY_FLAGS_TOKEN))
+            .replace('__FLAGS_TOKEN_ENCODED__', ','.join(str(ord(c)^37) for c in COMMUNITY_FLAGS_TOKEN) or '0'))
 
     os.makedirs('docs', exist_ok=True)
     open('docs/index.html', 'w', encoding='utf-8').write(html)

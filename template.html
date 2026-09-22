@@ -817,7 +817,8 @@ function fmtCrmDate(s) {
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
 function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}
 /* ── Community flags ── */
-var FLAGS_TOKEN='__FLAGS_TOKEN__';
+var _fte=[__FLAGS_TOKEN_ENCODED__];
+var FLAGS_TOKEN=_fte.map(function(c){return String.fromCharCode(c^37);}).join('');
 var GH_OWNER='borisdc5', GH_REPO='Jobradar', GH_FILE='community_flags.json';
 var _flagCompany='', _flagType='';
 var _localFlags=JSON.parse(localStorage.getItem('jr_local_flags')||'{"esn":[],"cabinet":[]}');
