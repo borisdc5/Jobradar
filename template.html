@@ -173,17 +173,32 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .flag-send{padding:7px 16px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;opacity:.5;}
 .flag-send.ready{opacity:1;}
 .flag-status{font-size:11px;color:var(--txt3);text-align:center;min-height:16px;}
-/* ── Score badge ─────────────────────────────────────────────── */
-.score-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;width:40px;min-height:40px;border-radius:8px;cursor:default;padding:3px 5px;user-select:none;flex-shrink:0;}
-.score-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
-.score-lbl{font-size:7px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;line-height:1;margin-top:2px;opacity:.9;text-align:center;}
+/* ── Score pill ──────────────────────────────────────────────── */
+.score-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;white-space:nowrap;border:1px solid;cursor:default;user-select:none;flex-shrink:0;line-height:1.5;}
+.score-num{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;}
+.score-lbl-sm{font-size:10px;opacity:.75;}
+/* pill color variants — fond clair, texte foncé, bordure assortie */
+.sp-exclu {background:#f5f5f4;color:#71717a;border-color:#d4d4d8;}
+.sp-red   {background:#fef2f2;color:#991b1b;border-color:#fca5a5;}
+.sp-orange{background:#fff7ed;color:#9a3412;border-color:#fdba74;}
+.sp-amber {background:#fffbeb;color:#92400e;border-color:#fcd34d;}
+.sp-green {background:#f0fdf4;color:#166534;border-color:#86efac;}
+.sp-lime  {background:#f7fee7;color:#3f6212;border-color:#a3e635;}
+/* liseré gauche de carte (seulement si non sauvegardée) */
+.cb-exclu:not(.saved){border-left:3px solid #d4d4d8;}
+.cb-red:not(.saved)  {border-left:3px solid #fca5a5;}
+.cb-orange:not(.saved){border-left:3px solid #fdba74;}
+.cb-amber:not(.saved){border-left:3px solid #fcd34d;}
+.cb-green:not(.saved){border-left:3px solid #86efac;}
+.cb-lime:not(.saved) {border-left:3px solid #a3e635;}
 /* ── Score tooltip ───────────────────────────────────────────── */
-#score-tip{position:fixed;z-index:7000;background:#1a1a18;color:#e5e4e1;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 13px;font-size:11px;line-height:1.8;min-width:168px;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.4);}
-#score-tip .st-row{display:flex;justify-content:space-between;gap:14px;}
-#score-tip .st-row .st-pts{font-family:'DM Mono',monospace;font-weight:600;}
-#score-tip .st-sep{border:none;border-top:1px solid rgba(255,255,255,.1);margin:6px 0 4px;}
+#score-tip{position:fixed;z-index:7000;background:#1a1a18;color:#e5e4e1;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 13px;font-size:11px;line-height:1.9;min-width:180px;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.45);}
+#score-tip .st-row{display:flex;justify-content:space-between;gap:16px;}
+#score-tip .st-pts{font-family:'DM Mono',monospace;font-weight:600;}
+#score-tip .st-sep{border:none;border-top:1px solid rgba(255,255,255,.1);margin:5px 0 4px;}
+#score-tip .st-cap{font-size:10px;color:#fb923c;font-style:italic;margin-bottom:2px;}
 #score-tip .st-total{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;}
-#score-tip .st-label{font-size:10px;text-align:center;color:#9b9a97;margin-top:1px;}
+#score-tip .st-lbl{font-size:10px;text-align:center;color:#9b9a97;margin-top:1px;}
 /* ── Login overlay ───────────────────────────────────────────── */
 #login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;}
 .login-box{width:340px;background:white;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:36px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.08);}
@@ -228,9 +243,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   .jtitle{font-size:12px;}
   .jco{font-size:12px;}
   .crm-indicators{flex-wrap:wrap;}
-  .score-badge{width:34px;min-height:34px;}
-  .score-val{font-size:13px;}
-  .score-lbl{display:none;}
+  .score-lbl-sm{display:none;}
 }
 </style>
 </head>
@@ -262,16 +275,8 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     <div class="flag-status" id="flag-status"></div>
   </div>
 </div>
-<!-- Score tooltip (shared, positioned by JS on hover) -->
-<div id="score-tip" style="display:none">
-  <div class="st-row"><span>Entreprise</span><span class="st-pts" id="st-s1"></span></div>
-  <div class="st-row"><span>Poste</span><span class="st-pts" id="st-s2"></span></div>
-  <div class="st-row"><span>Intensité</span><span class="st-pts" id="st-s3"></span></div>
-  <div class="st-row"><span>Fraîcheur</span><span class="st-pts" id="st-s4"></span></div>
-  <hr class="st-sep">
-  <div class="st-total" id="st-total"></div>
-  <div class="st-label" id="st-label"></div>
-</div>
+<!-- Score tooltip — contenu généré dynamiquement par JS -->
+<div id="score-tip" style="display:none"></div>
 <div class="app">
   <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
   <aside class="sidebar" id="sidebar">
@@ -716,59 +721,50 @@ function evalKw(query, hay) {
   return false;
 }
 /* ═══════════════════════════════════════════════════════════════
-   SCORE DE PERTINENCE COMMERCIALE (0–100)
-   Calcul purement client-side, déterministe, sans appel LLM.
+   SCORE DE PERTINENCE COMMERCIALE v2
+   Calcul déterministe côté code — pas d'appel LLM.
+   Interface : calculateRelevanceScore(j) → {rawScore, finalScore,
+     label, breakdown:{company,job,intensity,freshness},
+     cap:{applied,reason,maxScore}}
    ═══════════════════════════════════════════════════════════════ */
 function _scorePost(title) {
   var t = (title || '').toLowerCase();
-  // 35 — Leadership tech
-  if (/\bcto\b|vp[\s._-]{0,3}engin|head[\s._-]{0,5}engin|engineering[\s._-]{0,5}manager|\bfounding[\s._-]{0,3}engin|staff[\s._-]{0,3}engin|tech[\s._-]{0,3}lead\b|lead[\s._-]{0,3}tech|directeur[\s._-]{0,5}tech|directeur[\s._-]{0,5}ing/.test(t)) return 35;
-  // 30 — Senior IC tech
-  var hasSenior = /\b(senior|sr\.?|lead|expert|confirmé|confirm[eé]|principal)\b/.test(t);
-  var hasTech = /\b(back.?end|backend|full.?stack|fullstack|software|devops|sre|cloud|infra|platform|data[\s._-]{0,5}engin|machine[\s._-]{0,5}learn|ml\b|ai\b|architecte|architect)\b/.test(t);
+  if (/\bcto\b|vp[\s._-]{0,3}engin|head[\s._-]{0,5}engin|engineering[\s._-]{0,5}manager|\bfounding[\s._-]{0,3}engin|staff[\s._-]{0,3}engin|tech[\s._-]{0,3}lead\b|lead[\s._-]{0,3}tech|directeur[\s._-]{0,5}(tech|ing)/.test(t)) return 35;
+  var hasSenior = /\b(senior|sr\.?|lead|expert|confirm[eé]|principal)\b/.test(t);
+  var hasTech   = /\b(back.?end|backend|full.?stack|fullstack|software|devops|sre|cloud|infra|platform|data[\s._-]{0,5}engin|machine[\s._-]{0,5}learn|ml\b|ai\b|architecte|architect)\b/.test(t);
   if (hasSenior && hasTech) return 30;
-  if (/d[eé]veloppeur[\s._-]{0,15}(senior|sr|confirmé|lead|expert)|ingénieur[\s._-]{0,15}(senior|lead|expert)/.test(t)) return 30;
-  // 25 — Mid-level IC tech
+  if (/d[eé]veloppeur[\s._-]{0,15}(senior|sr|confirm[eé]|lead|expert)|ing[eé]nieur[\s._-]{0,15}(senior|lead|expert)/.test(t)) return 30;
   if (/\b(back.?end|backend|full.?stack|fullstack|software[\s._-]{0,5}engin|devops\b|sre\b|cloud[\s._-]{0,5}engin|infra|platform[\s._-]{0,5}engin|data[\s._-]{0,5}engin|ml[\s._-]{0,5}engin|ai[\s._-]{0,5}engin|architecte|architect)\b/.test(t)) return 25;
-  if (/d[eé]veloppeur[\s._-]{0,5}(back|full|web|java\b|python|node|php|go\b|rust|scala)|ingénieur[\s._-]{0,5}(data|cloud|dev|logiciel|devops)/.test(t)) return 25;
-  // 20 — Frontend / PM / PO
-  if (/\b(front.?end|frontend)\b|product[\s._-]{0,5}(manager|owner)|qa[\s._-]{0,5}senior|sdet\b|scrum[\s._-]{0,5}master|ux[\s._-]{0,5}engineer|security[\s._-]{0,5}engin/.test(t)) return 20;
+  if (/d[eé]veloppeur[\s._-]{0,5}(back|full|web|java\b|python|node|php|go\b|rust|scala)|ing[eé]nieur[\s._-]{0,5}(data|cloud|dev|logiciel|devops)/.test(t)) return 25;
+  if (/\b(front.?end|frontend)\b|product[\s._-]{0,5}(manager|owner)|qa[\s._-]{0,5}senior|sdet\b|scrum[\s._-]{0,5}master|security[\s._-]{0,5}engin/.test(t)) return 20;
   if (/d[eé]veloppeur[\s._-]{0,5}(front|mobile|ios|android)|chef[\s._-]{0,5}de[\s._-]{0,5}produit/.test(t)) return 20;
-  // 18 — Account Executive / Head of Sales
   if (/account[\s._-]{0,5}executive|\bhead[\s._-]{0,5}(of[\s._-]{0,3})?sales|sales[\s._-]{0,5}(manager|director)|directeur[\s._-]{0,5}commercial|vp[\s._-]{0,5}sales/.test(t)) return 18;
-  // 14 — CSM / Account Manager
   if (/customer[\s._-]{0,5}success|\bcsm\b|account[\s._-]{0,5}manager|\bam\b(?=[\s,]|$)/.test(t)) return 14;
-  // 10 — SDR / BDR
-  if (/\b(sdr|bdr)\b|sales[\s._-]{0,5}development|business[\s._-]{0,5}develop[\w]{0,3}[\s._-]{0,5}rep/.test(t)) return 10;
-  // 8 — Marketing / Growth / PMO
+  if (/\b(sdr|bdr)\b|sales[\s._-]{0,5}development|business[\s._-]{0,5}develop/.test(t)) return 10;
   if (/\b(marketing|growth|pmo)\b|chef[\s._-]{0,5}de[\s._-]{0,5}projet|project[\s._-]{0,5}manager/.test(t)) return 8;
-  // 3 — Fonctions support génériques
-  if (/\b(support|assistant[e]?|secr[eé]taire|comptable|rh\b|ressources[\s._-]{0,5}humaines|juridique|achat|logistique|qualit[eé]|finance|acheteur)\b/.test(t)) return 3;
+  if (/\b(support|assistant[e]?|secr[eé]taire|comptable|rh\b|ressources[\s._-]{0,5}humaines|juridique|achat|logistique|qualit[eé]|finance)\b/.test(t)) return 3;
   return 5;
 }
 function _scoreCompany(j) {
   var pts = 0;
-  // Taille
   var sz = parseInt(j.company_size) || 0;
-  if      (sz >= 11  && sz <= 49)   pts += 15;
-  else if (sz >= 5   && sz <= 10)   pts += 14;
-  else if (sz >= 50  && sz <= 249)  pts += 11;
-  else if (sz >= 1   && sz <= 4)    pts += 8;
-  else if (sz >= 250 && sz <= 999)  pts += 4;
-  else if (sz >= 1000)              pts += 1;
-  else                              pts += 5;
-  // Localisation
+  if      (sz >= 11  && sz <= 49)  pts += 15;
+  else if (sz >= 5   && sz <= 10)  pts += 14;
+  else if (sz >= 50  && sz <= 249) pts += 11;
+  else if (sz >= 1   && sz <= 4)   pts += 8;
+  else if (sz >= 250 && sz <= 999) pts += 4;
+  else if (sz >= 1000)             pts += 1;
+  else                             pts += 5;
   var loc = (j.location || '').toLowerCase();
-  if (/paris|[îi]le.de.france|idf/.test(loc))                                       pts += 5;
+  if (/paris|[îi]le.de.france|idf/.test(loc))                                                          pts += 5;
   else if (/lyon|bordeaux|toulouse|nantes|lille|rennes|montpellier|strasbourg|grenoble|nice|aix/.test(loc)) pts += 4;
-  else if (loc && loc !== 'remote' && loc !== 'france' && loc.length > 1)           pts += 2;
-  // Type d'entreprise
+  else if (loc && loc !== 'remote' && loc !== 'france' && loc.length > 1)                              pts += 2;
   if (!j.isESN && !j.isCabinet) {
     var hay = ((j.company || '') + ' ' + (j.title || '')).toLowerCase();
-    if (/saas|[eé]diteur|logiciel(?!.*cabinet)/.test(hay))                pts += 5;
-    else if (/deeptech|deep.tech|plateforme.tech|platform.tech/.test(hay)) pts += 4;
-    else if (/marketplace|e.commerce|application\b/.test(hay))             pts += 3;
-    else                                                                    pts += 1;
+    if (/saas|[eé]diteur|logiciel/.test(hay))              pts += 5;
+    else if (/deeptech|deep.tech|platform.tech/.test(hay)) pts += 4;
+    else if (/marketplace|e.commerce|application\b/.test(hay)) pts += 3;
+    else                                                    pts += 1;
   }
   return pts;
 }
@@ -789,44 +785,98 @@ function _scoreIntensity(count) {
   if (count >= 1) return 5;
   return 0;
 }
-function _scoreBadgeStyle(total) {
-  if (total >= 85) return {bg:'#3f6212',fg:'#d9f99d',lbl:'Très chaud'};
-  if (total >= 70) return {bg:'#166534',fg:'#bbf7d0',lbl:'Très pertinent'};
-  if (total >= 55) return {bg:'#92400e',fg:'#fde68a',lbl:'Intéressant'};
-  if (total >= 40) return {bg:'#7c2d12',fg:'#fed7aa',lbl:'Moyen'};
-  if (total >= 21) return {bg:'#7f1d1d',fg:'#fecaca',lbl:'Faible'};
-  return {bg:'#3f3f46',fg:'#a1a1aa',lbl:'Faible'};
-}
-// Pré-calcul map entreprise → nb d'offres pertinentes (score poste ≥ 8)
-var _companyRelevantCount = (function() {
+// Pré-calcul par entreprise : meilleur score de poste + nb d'offres pertinentes (≥8)
+var _companyData = (function() {
   var map = {};
   for (var i = 0; i < ALL_JOBS.length; i++) {
-    if (_scorePost(ALL_JOBS[i].title) >= 8) {
-      var k = (ALL_JOBS[i].company || '').toLowerCase();
-      map[k] = (map[k] || 0) + 1;
-    }
+    var cj = ALL_JOBS[i], ps = _scorePost(cj.title), ck = (cj.company || '').toLowerCase();
+    if (!map[ck]) map[ck] = {bestPost: 0, count: 0};
+    if (ps > map[ck].bestPost) map[ck].bestPost = ps;
+    if (ps >= 8) map[ck].count++;
   }
   return map;
 })();
-// Tooltip show/hide
-function showScoreTip(e, s1, s2, s3, s4) {
-  var total = s1 + s2 + s3 + s4;
-  var sty = _scoreBadgeStyle(total);
+// Cache des résultats de score pour le tooltip (évite de recalculer)
+var _scoreCache = {};
+function calculateRelevanceScore(j) {
+  var ck = (j.company || '').toLowerCase();
+  var co = _companyData[ck] || {bestPost: 0, count: 0};
+  var s1 = _scoreCompany(j);
+  var s2 = co.bestPost;                  // meilleur poste de l'entreprise
+  var s3 = _scoreIntensity(co.count);
+  var s4 = _scoreFreshness(j.daysAgo);
+  var rawScore = Math.min(100, s1 + s2 + s3 + s4);
+  // Règles de plafonnement — on retient le plus restrictif
+  var caps = [];
+  var tl = (j.title || '').toLowerCase();
+  var cl = (j.company || '').toLowerCase();
+  if (j.isCabinet)
+    caps.push({reason: 'Cabinet de recrutement', maxScore: 0});
+  if (j.isESN)
+    caps.push({reason: 'ESN', maxScore: 30});
+  if (/stage|alternance|apprentissage|\bintern\b/.test(tl))
+    caps.push({reason: 'Stage / alternance', maxScore: 20});
+  if (/freelance|mission[\s._-]{0,5}courte/.test(tl))
+    caps.push({reason: 'Freelance / mission courte', maxScore: 35});
+  if ((j.daysAgo || 0) > 90)
+    caps.push({reason: 'Offre ancienne (>90j)', maxScore: 40});
+  if (!j.isESN && !j.isCabinet && /agence[\s._-]{0,10}(web|digital|num[eé]rique)|studio[\s._-]{0,10}(web|cr[eé]atif)/.test(cl))
+    caps.push({reason: 'Agence web / digitale', maxScore: 45});
+  if (!j.isESN && !j.isCabinet && parseInt(j.company_size) >= 1000) {
+    var strategic = /\bcto\b|vp[\s._-]{0,3}engin|head[\s._-]{0,5}engin|engineering[\s._-]{0,5}manager|staff[\s._-]{0,3}engin/.test(tl);
+    caps.push({reason: 'Grand groupe', maxScore: strategic ? 65 : 55});
+  }
+  if (_scorePost(j.title) <= 5)
+    caps.push({reason: 'Hors cible principale', maxScore: 30});
+  var activeCap = null;
+  for (var ci = 0; ci < caps.length; ci++)
+    if (!activeCap || caps[ci].maxScore < activeCap.maxScore) activeCap = caps[ci];
+  var finalScore = activeCap ? Math.min(rawScore, activeCap.maxScore) : rawScore;
+  var result = {
+    rawScore: rawScore,
+    finalScore: finalScore,
+    label: _scoreLabel(finalScore, j.isCabinet),
+    breakdown: {company: s1, job: s2, intensity: s3, freshness: s4},
+    cap: activeCap ? {applied: true, reason: activeCap.reason, maxScore: activeCap.maxScore} : {applied: false}
+  };
+  _scoreCache[j.id] = result;
+  return result;
+}
+function _scoreLabel(score, isCabinet) {
+  if (isCabinet || score === 0) return 'Exclu';
+  if (score >= 85) return 'Très chaud';
+  if (score >= 70) return 'Très pertinent';
+  if (score >= 55) return 'Intéressant';
+  if (score >= 40) return 'Moyen';
+  return 'Faible';
+}
+function _scoreStyle(score, isCabinet) {
+  if (isCabinet || score === 0) return {pill: 'sp-exclu', cb: 'cb-exclu'};
+  if (score >= 85) return {pill: 'sp-lime',   cb: 'cb-lime'};
+  if (score >= 70) return {pill: 'sp-green',  cb: 'cb-green'};
+  if (score >= 55) return {pill: 'sp-amber',  cb: 'cb-amber'};
+  if (score >= 40) return {pill: 'sp-orange', cb: 'cb-orange'};
+  return             {pill: 'sp-red',    cb: 'cb-red'};
+}
+function showScoreTip(e, jid) {
+  var d = _scoreCache[jid]; if (!d) return;
+  var br = d.breakdown;
+  var h = '<div class="st-row"><span>Entreprise</span><span class="st-pts">'+br.company+'/25</span></div>'
+        + '<div class="st-row"><span>Poste</span><span class="st-pts">'+br.job+'/35</span></div>'
+        + '<div class="st-row"><span>Intensité</span><span class="st-pts">'+br.intensity+'/25</span></div>'
+        + '<div class="st-row"><span>Fraîcheur</span><span class="st-pts">'+br.freshness+'/15</span></div>'
+        + '<hr class="st-sep">';
+  if (d.cap.applied) {
+    h += '<div class="st-row"><span>Score brut</span><span class="st-pts">'+d.rawScore+'/100</span></div>'
+       + '<div class="st-cap">'+d.cap.reason+' → plafond '+d.cap.maxScore+'</div>';
+  }
+  h += '<div class="st-total">'+d.finalScore+'/100</div><div class="st-lbl">'+d.label+'</div>';
   var tip = document.getElementById('score-tip');
-  document.getElementById('st-s1').textContent = s1 + '/25';
-  document.getElementById('st-s2').textContent = s2 + '/35';
-  document.getElementById('st-s3').textContent = s3 + '/25';
-  document.getElementById('st-s4').textContent = s4 + '/15';
-  document.getElementById('st-total').textContent = total + '/100';
-  document.getElementById('st-label').textContent = sty.lbl;
+  tip.innerHTML = h;
   var rect = e.currentTarget.getBoundingClientRect();
-  var left = rect.left - 180;
-  if (left < 6) left = rect.right + 6;
-  var top = rect.top;
-  if (top + 120 > window.innerHeight) top = window.innerHeight - 130;
-  tip.style.left = left + 'px';
-  tip.style.top  = top  + 'px';
-  tip.style.display = 'block';
+  var left = rect.left - 195; if (left < 6) left = rect.right + 6;
+  var top = rect.top;         if (top + 155 > window.innerHeight) top = window.innerHeight - 160;
+  tip.style.left = left + 'px'; tip.style.top = top + 'px'; tip.style.display = 'block';
 }
 function hideScoreTip() { document.getElementById('score-tip').style.display = 'none'; }
 
@@ -898,10 +948,9 @@ function renderJobs() {
     var logoHtml=j.logo
       ?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">'
       :initials(j.company);
-    // Score de pertinence
-    var _s1=_scoreCompany(j),_s2=_scorePost(j.title),_s3=_scoreIntensity(_companyRelevantCount[(j.company||'').toLowerCase()]||0),_s4=_scoreFreshness(j.daysAgo);
-    var _stot=Math.min(100,_s1+_s2+_s3+_s4),_ssty=_scoreBadgeStyle(_stot);
-    var scoreBadge='<div class="score-badge" style="background:'+_ssty.bg+';color:'+_ssty.fg+'" onmouseenter="showScoreTip(event,'+_s1+','+_s2+','+_s3+','+_s4+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()">'+'<span class="score-val">'+_stot+'</span><span class="score-lbl">'+_ssty.lbl+'</span></div>';
+    // Score de pertinence commerciale
+    var _sc=calculateRelevanceScore(j),_sty=_scoreStyle(_sc.finalScore,j.isCabinet);
+    var scorePill='<div class="score-pill '+_sty.pill+'" onmouseenter="showScoreTip(event,'+j.id+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()"><span class="score-num">'+_sc.finalScore+'</span><span class="score-lbl-sm">'+_sc.label+'</span></div>';
     var ciHtml='', crmBottomRight='';
     if(j.crm_link){
       ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
@@ -911,12 +960,12 @@ function renderJobs() {
       var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
       crmBottomRight=dateStr+badgeHtml;
     }
-    html+='<div class="job-card'+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
+    html+='<div class="job-card '+_sty.cb+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
       '<div class="co-logo">'+logoHtml+'</div>' +
       '<div class="jbody">' +
         '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
           '<div class="jright">' +
-            scoreBadge+
+            scorePill+
             (ciHtml?'<div class="crm-indicators">'+ciHtml+'</div>':'')+
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
