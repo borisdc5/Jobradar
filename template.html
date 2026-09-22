@@ -829,8 +829,11 @@ function openFlagModal(e,company){
   document.getElementById('flag-co-name').textContent=company;
   document.getElementById('flag-esn').className='flag-choice esn';
   document.getElementById('flag-cab').className='flag-choice cab';
-  document.getElementById('flag-send').className='flag-send';
+  var sendBtn=document.getElementById('flag-send');
+  sendBtn.className='flag-send';
+  sendBtn.disabled=false;
   document.getElementById('flag-status').textContent='';
+  document.getElementById('flag-status').style.color='';
   document.getElementById('flag-overlay').classList.add('open');
 }
 function closeFlagModal(){document.getElementById('flag-overlay').classList.remove('open');}
