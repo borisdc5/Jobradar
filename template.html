@@ -155,6 +155,24 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .crm-client{background:#0F2E1A;color:#6EE7A0;border:1px solid #1E5C36;}
 .crm-prospect{background:#2E1A00;color:#FFB347;border:1px solid #5C3A00;}
 .crm-known{background:#1A1A2E;color:#A0A8CC;border:1px solid #2E3460;}
+/* ── Flag button ─────────────────────────────────────────────── */
+.flag-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;transition:all .12s;opacity:.45;}
+.flag-btn:hover{opacity:1;border-color:#f97316;}
+/* ── Flag modal ──────────────────────────────────────────────── */
+#flag-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:none;align-items:center;justify-content:center;}
+#flag-overlay.open{display:flex;}
+.flag-box{background:white;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:24px 24px 20px;width:320px;display:flex;flex-direction:column;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+.flag-title{font-size:13px;font-weight:600;color:var(--txt);}
+.flag-co{font-size:12px;color:var(--txt2);background:var(--bg2);border-radius:6px;padding:6px 10px;font-weight:500;}
+.flag-choices{display:flex;gap:8px;}
+.flag-choice{flex:1;padding:10px;border-radius:var(--radius);border:1.5px solid var(--border2);background:white;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;color:var(--txt);}
+.flag-choice.esn:hover,.flag-choice.esn.sel{background:#0c1a2e;border-color:#1d4ed8;color:#60a5fa;}
+.flag-choice.cab:hover,.flag-choice.cab.sel{background:var(--red-bg);border-color:var(--red);color:var(--red-txt);}
+.flag-actions{display:flex;gap:8px;justify-content:flex-end;}
+.flag-cancel{padding:7px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:transparent;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--txt2);}
+.flag-send{padding:7px 16px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;opacity:.5;}
+.flag-send.ready{opacity:1;}
+.flag-status{font-size:11px;color:var(--txt3);text-align:center;min-height:16px;}
 /* ── Login overlay ───────────────────────────────────────────── */
 #login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;}
 .login-box{width:340px;background:white;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:36px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.08);}
@@ -212,6 +230,22 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     <input class="login-input" id="pwd-input" type="password" placeholder="••••••••" onkeydown="tryLogin(event)" autofocus>
     <button class="login-btn" onclick="tryLogin()">Accéder →</button>
     <span class="login-err" id="pwd-err">Mot de passe incorrect</span>
+  </div>
+</div>
+<!-- Flag overlay -->
+<div id="flag-overlay" onclick="if(event.target===this)closeFlagModal()">
+  <div class="flag-box">
+    <div class="flag-title">Signaler cette entreprise</div>
+    <div class="flag-co" id="flag-co-name"></div>
+    <div class="flag-choices">
+      <button class="flag-choice esn" id="flag-esn" onclick="selectFlagType('esn')">🔵 ESN</button>
+      <button class="flag-choice cab" id="flag-cab" onclick="selectFlagType('cabinet')">🔴 Cabinet</button>
+    </div>
+    <div class="flag-actions">
+      <button class="flag-cancel" onclick="closeFlagModal()">Annuler</button>
+      <button class="flag-send" id="flag-send" onclick="submitFlag()">Envoyer →</button>
+    </div>
+    <div class="flag-status" id="flag-status"></div>
   </div>
 </div>
 <div class="app">
@@ -667,6 +701,10 @@ function renderJobs() {
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
     if(activeSources.indexOf(j.source)===-1) continue;
+    var _cn=(j.company||'').toLowerCase();
+    var _localESN=_localFlags.esn.some(function(f){return _cn.indexOf(f)!==-1;});
+    var _localCab=_localFlags.cabinet.some(function(f){return _cn.indexOf(f)!==-1;});
+    if(_localESN||_localCab) continue;
     if(hideESN&&j.isESN) continue;
     if(hideCabinet&&j.isCabinet) continue;
     if(showSavedOnly&&!saved[j.id]) continue;
@@ -738,6 +776,7 @@ function renderJobs() {
             (ciHtml?'<div class="crm-indicators">'+ciHtml+'</div>':'')+
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
+              '<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Signaler ESN ou cabinet">&#128681;</button>' +
             '</div>' +
             (crmBottomRight?'<div class="crm-btm-right">'+crmBottomRight+'</div>':'')+
           '</div>' +
@@ -777,6 +816,62 @@ function fmtCrmDate(s) {
 }
 function openJob(enc){var u=decodeURIComponent(enc);if(u&&u!=='#')window.open(u,'_blank','noopener');}
 function doSave(e,id){e.stopPropagation();saved[id]=!saved[id];if(!saved[id])delete saved[id];localStorage.setItem('jr_saved',JSON.stringify(saved));renderJobs();}
+/* ── Community flags ── */
+var FLAGS_TOKEN='__FLAGS_TOKEN__';
+var GH_OWNER='borisdc5', GH_REPO='Jobradar', GH_FILE='community_flags.json';
+var _flagCompany='', _flagType='';
+var _localFlags=JSON.parse(localStorage.getItem('jr_local_flags')||'{"esn":[],"cabinet":[]}');
+
+function openFlagModal(e,company){
+  e.stopPropagation();
+  _flagCompany=company; _flagType='';
+  document.getElementById('flag-co-name').textContent=company;
+  document.getElementById('flag-esn').className='flag-choice esn';
+  document.getElementById('flag-cab').className='flag-choice cab';
+  document.getElementById('flag-send').className='flag-send';
+  document.getElementById('flag-status').textContent='';
+  document.getElementById('flag-overlay').classList.add('open');
+}
+function closeFlagModal(){document.getElementById('flag-overlay').classList.remove('open');}
+function selectFlagType(t){
+  _flagType=t;
+  document.getElementById('flag-esn').className='flag-choice esn'+(t==='esn'?' sel':'');
+  document.getElementById('flag-cab').className='flag-choice cab'+(t==='cabinet'?' sel':'');
+  document.getElementById('flag-send').className='flag-send ready';
+}
+async function submitFlag(){
+  if(!_flagType||!_flagCompany) return;
+  var st=document.getElementById('flag-status');
+  var btn=document.getElementById('flag-send');
+  btn.disabled=true; st.textContent='Envoi en cours…';
+  var name=_flagCompany.toLowerCase().trim();
+  try {
+    var apiBase='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_FILE;
+    var headers={'Authorization':'token '+FLAGS_TOKEN,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    var r=await fetch(apiBase,{headers:headers});
+    if(!r.ok) throw new Error('Lecture impossible ('+r.status+')');
+    var data=await r.json();
+    var content=JSON.parse(atob(data.content.replace(/\n/g,'')));
+    var sha=data.sha;
+    if(!content.esn) content.esn=[];
+    if(!content.cabinet) content.cabinet=[];
+    var list=_flagType==='esn'?content.esn:content.cabinet;
+    if(!list.includes(name)) list.push(name);
+    var body=JSON.stringify({message:'🚩 Flag: '+_flagCompany+' → '+_flagType,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:sha});
+    var w=await fetch(apiBase,{method:'PUT',headers:headers,body:body});
+    if(!w.ok) throw new Error('Écriture échouée ('+w.status+')');
+    // Store locally so card hides immediately
+    if(!_localFlags[_flagType].includes(name)) _localFlags[_flagType].push(name);
+    localStorage.setItem('jr_local_flags',JSON.stringify(_localFlags));
+    st.textContent='✓ Signalé — sera appliqué ce soir';
+    st.style.color='var(--accent)';
+    setTimeout(function(){closeFlagModal();renderJobs();},1200);
+  } catch(err) {
+    st.textContent='Erreur : '+err.message;
+    st.style.color='var(--red)';
+    btn.disabled=false;
+  }
+}
 /* ── Auth ── */
 var _ak='jr_auth_v1', _ex='VUw5OTkh';
 function _initAuth(){

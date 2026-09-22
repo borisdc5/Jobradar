@@ -12,9 +12,22 @@ FT_API_URL   = 'https://api.francetravail.io/partenaire/offresdemploi/v2/offres/
 
 FT_CLIENT_ID     = os.getenv('FT_CLIENT_ID', '')
 FT_CLIENT_SECRET = os.getenv('FT_CLIENT_SECRET', '')
-APEC_EMAIL       = os.getenv('APEC_EMAIL', '')
-APEC_PASSWORD    = os.getenv('APEC_PASSWORD', '')
-RECRUITCRM_TOKEN = os.getenv('RECRUITCRM_API_KEY', '')
+APEC_EMAIL           = os.getenv('APEC_EMAIL', '')
+APEC_PASSWORD        = os.getenv('APEC_PASSWORD', '')
+RECRUITCRM_TOKEN     = os.getenv('RECRUITCRM_API_KEY', '')
+COMMUNITY_FLAGS_TOKEN = os.getenv('COMMUNITY_FLAGS_TOKEN', '')
+
+# ── Load community flags (signalements consultants) ───────────────────────────
+_flags_path = os.path.join(os.path.dirname(__file__), 'community_flags.json')
+try:
+    with open(_flags_path, encoding='utf-8') as _f:
+        _community_flags = json.load(_f)
+    _flag_esn = [s.lower().strip() for s in _community_flags.get('esn', [])]
+    _flag_cab = [s.lower().strip() for s in _community_flags.get('cabinet', [])]
+    if _flag_esn or _flag_cab:
+        print(f'Community flags: {len(_flag_esn)} ESN, {len(_flag_cab)} cabinets signalés')
+except Exception:
+    _flag_esn, _flag_cab = [], []
 
 CABINETS = [
     # Intérim / staffing majeurs
@@ -147,6 +160,10 @@ ESNS = [
     'externatic','protectic','yeets','pasteque.io','pasteque','databeans',
     'cgi','safran','thales','shape it','smile group','smile',
 ]
+
+# Merge community flags into lists
+CABINETS = list(set(CABINETS + _flag_cab))
+ESNS     = list(set(ESNS     + _flag_esn))
 
 def is_cabinet(company):
     c = (company or '').lower()
@@ -3865,7 +3882,8 @@ if __name__ == '__main__':
     template = open('template.html', encoding='utf-8').read()
     html = (template
             .replace('__JOBS__', json.dumps(jobs, ensure_ascii=False))
-            .replace('"__UPDATED__"', f'"{updated}"'))
+            .replace('"__UPDATED__"', f'"{updated}"')
+            .replace('__FLAGS_TOKEN__', COMMUNITY_FLAGS_TOKEN))
 
     os.makedirs('docs', exist_ok=True)
     open('docs/index.html', 'w', encoding='utf-8').write(html)
