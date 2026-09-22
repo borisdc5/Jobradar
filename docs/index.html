@@ -173,6 +173,17 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .flag-send{padding:7px 16px;border-radius:var(--radius);border:none;background:var(--accent);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity .15s;opacity:.5;}
 .flag-send.ready{opacity:1;}
 .flag-status{font-size:11px;color:var(--txt3);text-align:center;min-height:16px;}
+/* ── Score badge ─────────────────────────────────────────────── */
+.score-badge{display:flex;flex-direction:column;align-items:center;justify-content:center;width:40px;min-height:40px;border-radius:8px;cursor:default;padding:3px 5px;user-select:none;flex-shrink:0;}
+.score-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;}
+.score-lbl{font-size:7px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;line-height:1;margin-top:2px;opacity:.9;text-align:center;}
+/* ── Score tooltip ───────────────────────────────────────────── */
+#score-tip{position:fixed;z-index:7000;background:#1a1a18;color:#e5e4e1;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 13px;font-size:11px;line-height:1.8;min-width:168px;pointer-events:none;box-shadow:0 6px 24px rgba(0,0,0,.4);}
+#score-tip .st-row{display:flex;justify-content:space-between;gap:14px;}
+#score-tip .st-row .st-pts{font-family:'DM Mono',monospace;font-weight:600;}
+#score-tip .st-sep{border:none;border-top:1px solid rgba(255,255,255,.1);margin:6px 0 4px;}
+#score-tip .st-total{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;text-align:center;}
+#score-tip .st-label{font-size:10px;text-align:center;color:#9b9a97;margin-top:1px;}
 /* ── Login overlay ───────────────────────────────────────────── */
 #login-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center;}
 .login-box{width:340px;background:white;border:1px solid var(--border2);border-radius:var(--radius-lg);padding:36px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,.08);}
@@ -217,6 +228,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   .jtitle{font-size:12px;}
   .jco{font-size:12px;}
   .crm-indicators{flex-wrap:wrap;}
+  .score-badge{width:34px;min-height:34px;}
+  .score-val{font-size:13px;}
+  .score-lbl{display:none;}
 }
 </style>
 </head>
@@ -247,6 +261,16 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
     </div>
     <div class="flag-status" id="flag-status"></div>
   </div>
+</div>
+<!-- Score tooltip (shared, positioned by JS on hover) -->
+<div id="score-tip" style="display:none">
+  <div class="st-row"><span>Entreprise</span><span class="st-pts" id="st-s1"></span></div>
+  <div class="st-row"><span>Poste</span><span class="st-pts" id="st-s2"></span></div>
+  <div class="st-row"><span>Intensité</span><span class="st-pts" id="st-s3"></span></div>
+  <div class="st-row"><span>Fraîcheur</span><span class="st-pts" id="st-s4"></span></div>
+  <hr class="st-sep">
+  <div class="st-total" id="st-total"></div>
+  <div class="st-label" id="st-label"></div>
 </div>
 <div class="app">
   <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
@@ -691,6 +715,121 @@ function evalKw(query, hay) {
   }
   return false;
 }
+/* ═══════════════════════════════════════════════════════════════
+   SCORE DE PERTINENCE COMMERCIALE (0–100)
+   Calcul purement client-side, déterministe, sans appel LLM.
+   ═══════════════════════════════════════════════════════════════ */
+function _scorePost(title) {
+  var t = (title || '').toLowerCase();
+  // 35 — Leadership tech
+  if (/\bcto\b|vp[\s._-]{0,3}engin|head[\s._-]{0,5}engin|engineering[\s._-]{0,5}manager|\bfounding[\s._-]{0,3}engin|staff[\s._-]{0,3}engin|tech[\s._-]{0,3}lead\b|lead[\s._-]{0,3}tech|directeur[\s._-]{0,5}tech|directeur[\s._-]{0,5}ing/.test(t)) return 35;
+  // 30 — Senior IC tech
+  var hasSenior = /\b(senior|sr\.?|lead|expert|confirmé|confirm[eé]|principal)\b/.test(t);
+  var hasTech = /\b(back.?end|backend|full.?stack|fullstack|software|devops|sre|cloud|infra|platform|data[\s._-]{0,5}engin|machine[\s._-]{0,5}learn|ml\b|ai\b|architecte|architect)\b/.test(t);
+  if (hasSenior && hasTech) return 30;
+  if (/d[eé]veloppeur[\s._-]{0,15}(senior|sr|confirmé|lead|expert)|ingénieur[\s._-]{0,15}(senior|lead|expert)/.test(t)) return 30;
+  // 25 — Mid-level IC tech
+  if (/\b(back.?end|backend|full.?stack|fullstack|software[\s._-]{0,5}engin|devops\b|sre\b|cloud[\s._-]{0,5}engin|infra|platform[\s._-]{0,5}engin|data[\s._-]{0,5}engin|ml[\s._-]{0,5}engin|ai[\s._-]{0,5}engin|architecte|architect)\b/.test(t)) return 25;
+  if (/d[eé]veloppeur[\s._-]{0,5}(back|full|web|java\b|python|node|php|go\b|rust|scala)|ingénieur[\s._-]{0,5}(data|cloud|dev|logiciel|devops)/.test(t)) return 25;
+  // 20 — Frontend / PM / PO
+  if (/\b(front.?end|frontend)\b|product[\s._-]{0,5}(manager|owner)|qa[\s._-]{0,5}senior|sdet\b|scrum[\s._-]{0,5}master|ux[\s._-]{0,5}engineer|security[\s._-]{0,5}engin/.test(t)) return 20;
+  if (/d[eé]veloppeur[\s._-]{0,5}(front|mobile|ios|android)|chef[\s._-]{0,5}de[\s._-]{0,5}produit/.test(t)) return 20;
+  // 18 — Account Executive / Head of Sales
+  if (/account[\s._-]{0,5}executive|\bhead[\s._-]{0,5}(of[\s._-]{0,3})?sales|sales[\s._-]{0,5}(manager|director)|directeur[\s._-]{0,5}commercial|vp[\s._-]{0,5}sales/.test(t)) return 18;
+  // 14 — CSM / Account Manager
+  if (/customer[\s._-]{0,5}success|\bcsm\b|account[\s._-]{0,5}manager|\bam\b(?=[\s,]|$)/.test(t)) return 14;
+  // 10 — SDR / BDR
+  if (/\b(sdr|bdr)\b|sales[\s._-]{0,5}development|business[\s._-]{0,5}develop[\w]{0,3}[\s._-]{0,5}rep/.test(t)) return 10;
+  // 8 — Marketing / Growth / PMO
+  if (/\b(marketing|growth|pmo)\b|chef[\s._-]{0,5}de[\s._-]{0,5}projet|project[\s._-]{0,5}manager/.test(t)) return 8;
+  // 3 — Fonctions support génériques
+  if (/\b(support|assistant[e]?|secr[eé]taire|comptable|rh\b|ressources[\s._-]{0,5}humaines|juridique|achat|logistique|qualit[eé]|finance|acheteur)\b/.test(t)) return 3;
+  return 5;
+}
+function _scoreCompany(j) {
+  var pts = 0;
+  // Taille
+  var sz = parseInt(j.company_size) || 0;
+  if      (sz >= 11  && sz <= 49)   pts += 15;
+  else if (sz >= 5   && sz <= 10)   pts += 14;
+  else if (sz >= 50  && sz <= 249)  pts += 11;
+  else if (sz >= 1   && sz <= 4)    pts += 8;
+  else if (sz >= 250 && sz <= 999)  pts += 4;
+  else if (sz >= 1000)              pts += 1;
+  else                              pts += 5;
+  // Localisation
+  var loc = (j.location || '').toLowerCase();
+  if (/paris|[îi]le.de.france|idf/.test(loc))                                       pts += 5;
+  else if (/lyon|bordeaux|toulouse|nantes|lille|rennes|montpellier|strasbourg|grenoble|nice|aix/.test(loc)) pts += 4;
+  else if (loc && loc !== 'remote' && loc !== 'france' && loc.length > 1)           pts += 2;
+  // Type d'entreprise
+  if (!j.isESN && !j.isCabinet) {
+    var hay = ((j.company || '') + ' ' + (j.title || '')).toLowerCase();
+    if (/saas|[eé]diteur|logiciel(?!.*cabinet)/.test(hay))                pts += 5;
+    else if (/deeptech|deep.tech|plateforme.tech|platform.tech/.test(hay)) pts += 4;
+    else if (/marketplace|e.commerce|application\b/.test(hay))             pts += 3;
+    else                                                                    pts += 1;
+  }
+  return pts;
+}
+function _scoreFreshness(daysAgo) {
+  if (daysAgo === undefined || daysAgo === null) return 5;
+  if (daysAgo <= 3)  return 15;
+  if (daysAgo <= 7)  return 12;
+  if (daysAgo <= 14) return 9;
+  if (daysAgo <= 30) return 5;
+  if (daysAgo <= 60) return 2;
+  return 0;
+}
+function _scoreIntensity(count) {
+  if (count >= 6) return 25;
+  if (count >= 4) return 20;
+  if (count >= 3) return 15;
+  if (count >= 2) return 10;
+  if (count >= 1) return 5;
+  return 0;
+}
+function _scoreBadgeStyle(total) {
+  if (total >= 85) return {bg:'#3f6212',fg:'#d9f99d',lbl:'Très chaud'};
+  if (total >= 70) return {bg:'#166534',fg:'#bbf7d0',lbl:'Très pertinent'};
+  if (total >= 55) return {bg:'#92400e',fg:'#fde68a',lbl:'Intéressant'};
+  if (total >= 40) return {bg:'#7c2d12',fg:'#fed7aa',lbl:'Moyen'};
+  if (total >= 21) return {bg:'#7f1d1d',fg:'#fecaca',lbl:'Faible'};
+  return {bg:'#3f3f46',fg:'#a1a1aa',lbl:'Faible'};
+}
+// Pré-calcul map entreprise → nb d'offres pertinentes (score poste ≥ 8)
+var _companyRelevantCount = (function() {
+  var map = {};
+  for (var i = 0; i < ALL_JOBS.length; i++) {
+    if (_scorePost(ALL_JOBS[i].title) >= 8) {
+      var k = (ALL_JOBS[i].company || '').toLowerCase();
+      map[k] = (map[k] || 0) + 1;
+    }
+  }
+  return map;
+})();
+// Tooltip show/hide
+function showScoreTip(e, s1, s2, s3, s4) {
+  var total = s1 + s2 + s3 + s4;
+  var sty = _scoreBadgeStyle(total);
+  var tip = document.getElementById('score-tip');
+  document.getElementById('st-s1').textContent = s1 + '/25';
+  document.getElementById('st-s2').textContent = s2 + '/35';
+  document.getElementById('st-s3').textContent = s3 + '/25';
+  document.getElementById('st-s4').textContent = s4 + '/15';
+  document.getElementById('st-total').textContent = total + '/100';
+  document.getElementById('st-label').textContent = sty.lbl;
+  var rect = e.currentTarget.getBoundingClientRect();
+  var left = rect.left - 180;
+  if (left < 6) left = rect.right + 6;
+  var top = rect.top;
+  if (top + 120 > window.innerHeight) top = window.innerHeight - 130;
+  tip.style.left = left + 'px';
+  tip.style.top  = top  + 'px';
+  tip.style.display = 'block';
+}
+function hideScoreTip() { document.getElementById('score-tip').style.display = 'none'; }
+
 function renderJobs() {
   var search=(document.getElementById('search-input').value||'').toLowerCase();
   var kw=(document.getElementById('kw').value||'').trim();
@@ -759,6 +898,10 @@ function renderJobs() {
     var logoHtml=j.logo
       ?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">'
       :initials(j.company);
+    // Score de pertinence
+    var _s1=_scoreCompany(j),_s2=_scorePost(j.title),_s3=_scoreIntensity(_companyRelevantCount[(j.company||'').toLowerCase()]||0),_s4=_scoreFreshness(j.daysAgo);
+    var _stot=Math.min(100,_s1+_s2+_s3+_s4),_ssty=_scoreBadgeStyle(_stot);
+    var scoreBadge='<div class="score-badge" style="background:'+_ssty.bg+';color:'+_ssty.fg+'" onmouseenter="showScoreTip(event,'+_s1+','+_s2+','+_s3+','+_s4+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()">'+'<span class="score-val">'+_stot+'</span><span class="score-lbl">'+_ssty.lbl+'</span></div>';
     var ciHtml='', crmBottomRight='';
     if(j.crm_link){
       ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
@@ -773,6 +916,7 @@ function renderJobs() {
       '<div class="jbody">' +
         '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
           '<div class="jright">' +
+            scoreBadge+
             (ciHtml?'<div class="crm-indicators">'+ciHtml+'</div>':'')+
             '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
               '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
