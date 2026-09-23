@@ -76,27 +76,29 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .jobs-wrap.grid-mode{flex-direction:row;flex-wrap:wrap;align-content:flex-start;}
 .jobs-wrap::-webkit-scrollbar{width:4px;}
 .jobs-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
-.job-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;background:white;cursor:pointer;transition:all .15s;display:flex;gap:12px;}
-.job-card:hover{border-color:var(--accent);transform:translateY(-1px);}
+.job-card{border:1px solid var(--border);border-radius:var(--radius-lg);padding:8px 11px;background:white;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;flex-direction:column;gap:3px;}
+.job-card:hover{border-color:var(--accent);box-shadow:0 1px 6px rgba(0,0,0,.06);}
 .job-card.saved{border-left:3px solid var(--accent);}
 .job-card.half{width:calc(50% - 4px);}
-.co-logo{width:40px;height:40px;border-radius:9px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--txt2);flex-shrink:0;overflow:hidden;}
-.co-logo img{width:100%;height:100%;object-fit:contain;padding:4px;}
-.jbody{flex:1;min-width:0;}
-.jtop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:3px;}
-.jtitle{font-size:13px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.jco{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:7px;}
-.jmeta{display:flex;flex-wrap:wrap;gap:5px;}
+/* Row 1 : logo · titre · score */
+.jrow1{display:flex;align-items:center;gap:7px;}
+.co-logo{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--txt2);flex-shrink:0;overflow:hidden;}
+.co-logo img{width:100%;height:100%;object-fit:contain;padding:3px;}
+.jtitle{flex:1;min-width:0;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* Row 2 : entreprise · localisation · taille · catégorie · source */
+.jrow2{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.jco{font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;}
+/* Row 3 : date · CRM · actions */
+.jrow3{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.jact{display:flex;align-items:center;gap:4px;margin-left:auto;}
 .pill{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg2);color:var(--txt2);border:1px solid var(--border);}
 .p-green{background:var(--accent-bg);color:var(--accent-txt);border-color:var(--accent);}
 .p-blue{background:var(--blue-bg);color:var(--blue-txt);border-color:#B5D4F4;}
 .p-purple{background:var(--purple-bg);color:var(--purple-txt);border-color:#CECBF6;}
 .p-red{background:var(--red-bg);color:var(--red-txt);border-color:#F7C1C1;}
 .p-size{background:#f1f5f9;color:#64748b;border-color:#cbd5e1;font-size:10px;}
-.jright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
-.jright-btm{display:flex;align-items:center;gap:6px;}
 .jdate{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;white-space:nowrap;}
-.save-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:14px;line-height:1;transition:all .12s;}
+.save-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:12px;line-height:1;transition:all .12s;}
 .save-btn:hover,.save-btn.on{border-color:var(--accent);color:var(--accent);}
 .save-btn.on{background:var(--accent-bg);}
 .crm-indicators{display:flex;gap:4px;align-items:center;flex-wrap:nowrap;}
@@ -237,11 +239,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   .stat-n{font-size:14px;}
   .results-bar{padding:6px 12px;}
   .jobs-wrap{padding:10px 12px;gap:8px;overflow:visible;flex:none;}
-  .job-card{gap:8px;padding:12px;}
+  .job-card{gap:2px;padding:7px 10px;}
   .job-card.half{width:100%;}
-  .co-logo{width:34px;height:34px;}
+  .co-logo{width:22px;height:22px;}
   .jtitle{font-size:12px;}
-  .jco{font-size:12px;}
+  .jco{font-size:11px;}
   .crm-indicators{flex-wrap:wrap;}
   .score-lbl-sm{display:none;}
 }
@@ -962,36 +964,38 @@ function renderJobs() {
     // Score de pertinence commerciale
     var _sc=calculateRelevanceScore(j),_sty=_scoreStyle(_sc.finalScore,j.isCabinet);
     var scorePill='<div class="score-pill '+_sty.pill+'" onmouseenter="showScoreTip(event,'+j.id+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()"><span class="score-num">'+_sc.finalScore+'</span><span class="score-lbl-sm">'+_sc.label+'</span></div>';
-    var ciHtml='', crmBottomRight='';
+    var crmChips='', crmDate='', crmBadge='';
     if(j.crm_link){
-      ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
-      ciHtml+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
-      ciHtml+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
-      var dateStr=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' &middot; '+j.crm_updated_by:'')+'</span>':'');
-      var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
-      crmBottomRight=dateStr+badgeHtml;
+      crmChips=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
+      crmChips+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
+      crmChips+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
+      crmDate=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' &middot; '+j.crm_updated_by:'')+'</span>':'');
+      crmBadge='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
     }
+    var sourceTag=j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':j.source==='sf'?'<span class="sf-tag"><span class="sf-dot"></span>station f</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>';
     html+='<div class="job-card '+_sty.cb+(sv?' saved':'')+gc+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">' +
-      '<div class="co-logo">'+logoHtml+'</div>' +
-      '<div class="jbody">' +
-        '<div class="jtop"><span class="jtitle">'+j.title+'</span>' +
-          '<div class="jright">' +
-            scorePill+
-            (ciHtml?'<div class="crm-indicators">'+ciHtml+'</div>':'')+
-            '<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
-              '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
-              '<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Signaler ESN ou cabinet">&#128681;</button>' +
-            '</div>' +
-            (crmBottomRight?'<div class="crm-btm-right">'+crmBottomRight+'</div>':'')+
-          '</div>' +
-        '</div>' +
-        '<div class="jco">'+j.company+'</div>' +
-        '<div class="jmeta">'+locPill+
-          (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
-          (j.isESN?'<span class="pill p-blue">ESN</span>':'')+
-          (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
-          (sizeBucket(j.company_size)?'<span class="pill p-size">'+sizeBucket(j.company_size)+'</span>':'')+
-          (j.source==='ft'?'<span class="ft-tag"><span class="ft-dot"></span>france travail</span>':j.source==='ms'?'<span class="ms-tag"><span class="ms-dot"></span>makesense</span>':j.source==='sjh'?'<span class="sjh-tag"><span class="sjh-dot"></span>sport jobs</span>':j.source==='hw'?'<span class="hw-tag"><span class="hw-dot"></span>hellowork</span>':j.source==='lir'?'<span class="lir-tag"><span class="lir-dot"></span>industrie recrute</span>':j.source==='apec'?'<span class="apec-tag"><span class="apec-dot"></span>apec</span>':j.source==='fj'?'<span class="fj-tag"><span class="fj-dot"></span>fashionjobs</span>':j.source==='indeed'?'<span class="indeed-tag"><span class="indeed-dot"></span>indeed</span>':j.source==='wld'?'<span class="wld-tag"><span class="wld-dot"></span>welovedevs</span>':j.source==='cw'?'<span class="cw-tag"><span class="cw-dot"></span>collective.work</span>':j.source==='lj'?'<span class="lj-tag"><span class="lj-dot"></span>lesjeudis</span>':j.source==='wttj'?'<span class="wttj-tag"><span class="wttj-dot"></span>wttj</span>':j.source==='li'?'<span class="li-tag"><span class="li-dot"></span>linkedin</span>':j.source==='sf'?'<span class="sf-tag"><span class="sf-dot"></span>station f</span>':'<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>') +
+      '<div class="jrow1">' +
+        '<div class="co-logo">'+logoHtml+'</div>' +
+        '<span class="jtitle">'+j.title+'</span>' +
+        scorePill+
+      '</div>' +
+      '<div class="jrow2">' +
+        '<span class="jco">'+j.company+'</span>' +
+        locPill+
+        (j.category?'<span class="pill p-purple">'+j.category+'</span>':'')+
+        (j.isESN?'<span class="pill p-blue">ESN</span>':'')+
+        (j.isCabinet?'<span class="pill p-red">cabinet</span>':'')+
+        (sizeBucket(j.company_size)?'<span class="pill p-size">'+sizeBucket(j.company_size)+'</span>':'')+
+        sourceTag+
+      '</div>' +
+      '<div class="jrow3">' +
+        '<span class="jdate">'+daysLabel(j.daysAgo)+'</span>' +
+        (crmDate?crmDate:'')+
+        (crmChips?'<div class="crm-indicators">'+crmChips+'</div>':'')+
+        '<div class="jact">' +
+          (crmBadge?crmBadge:'')+
+          '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
+          '<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Signaler ESN ou cabinet">&#128681;</button>' +
         '</div>' +
       '</div>' +
     '</div>';
