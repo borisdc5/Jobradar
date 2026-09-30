@@ -247,6 +247,74 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   .crm-indicators{flex-wrap:wrap;}
   .score-lbl-sm{display:none;}
 }
+
+/* ══════════════════════════════════════════════
+   JOBRADAR SALES AGENT — CSS Phase 1
+   ══════════════════════════════════════════════ */
+.prospect-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;height:22px;border-radius:5px;border:1px solid rgba(29,158,117,.45);background:rgba(225,245,238,.6);color:var(--accent-txt);font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:all .12s;flex-shrink:0;}
+.prospect-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.prospect-btn.in-basket{background:var(--accent);color:#fff;border-color:var(--accent);}
+.basket-chip{display:none;align-items:center;gap:6px;padding:4px 10px;background:var(--accent);color:#fff;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;position:fixed;bottom:20px;right:20px;z-index:4000;box-shadow:0 4px 16px rgba(29,158,117,.4);}
+.basket-chip.visible{display:flex;}
+/* Sales Panel overlay */
+.sp-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:5000;}
+.sp-overlay.open{display:block;}
+/* Sales Panel drawer */
+.sales-panel{position:fixed;top:0;right:-680px;width:660px;height:100vh;background:#fff;border-left:1px solid var(--border2);z-index:5100;display:flex;flex-direction:column;transition:right .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 32px rgba(0,0,0,.12);}
+.sales-panel.open{right:0;}
+/* Panel header */
+.sp-hdr{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sp-hdr-logo{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--txt2);flex-shrink:0;overflow:hidden;}
+.sp-hdr-logo img{width:100%;height:100%;object-fit:contain;padding:3px;}
+.sp-hdr-name{font-size:15px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-hdr-meta{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;white-space:nowrap;}
+.sp-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:16px;flex-shrink:0;}
+.sp-close:hover{background:var(--bg2);}
+/* Step nav */
+.sp-steps{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+.sp-step-btn{flex:1;padding:10px 6px;font-size:11px;font-weight:500;font-family:'DM Sans',sans-serif;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--txt3);white-space:nowrap;transition:all .12s;text-align:center;}
+.sp-step-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.sp-step-btn.done{color:var(--txt2);}
+.sp-step-btn:disabled{cursor:default;opacity:.4;}
+/* Content area */
+.sp-content{flex:1;overflow-y:auto;padding:18px;}
+/* Step blocks */
+.sp-section{margin-bottom:18px;}
+.sp-section-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px;}
+.sp-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.sp-stat{flex:1;min-width:100px;background:var(--bg2);border-radius:10px;padding:10px 12px;text-align:center;}
+.sp-stat-n{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt);}
+.sp-stat-l{font-size:10px;color:var(--txt3);margin-top:2px;}
+.sp-job-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:var(--bg2);margin-bottom:4px;font-size:12px;}
+.sp-job-title{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-job-meta{font-size:10px;color:var(--txt3);white-space:nowrap;font-family:'DM Mono',monospace;}
+.sp-crm-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:500;}
+.sp-crm-client{background:#052e16;color:#4ade80;}
+.sp-crm-prospect{background:#1c1a4f;color:#a5b4fc;}
+.sp-crm-known{background:var(--bg3);color:var(--txt2);}
+.sp-crm-unknown{background:var(--bg2);color:var(--txt3);}
+.sp-contact-row{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.sp-contact-avatar{width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--txt2);flex-shrink:0;}
+.sp-contact-info{flex:1;min-width:0;}
+.sp-contact-name{font-size:12px;font-weight:600;}
+.sp-contact-role{font-size:11px;color:var(--txt3);}
+.sp-contact-src{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;margin-top:2px;}
+.sp-msg-card{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.sp-msg-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--txt2);}
+.sp-msg-day{font-family:'DM Mono',monospace;font-size:10px;background:var(--accent-bg);color:var(--accent-txt);padding:2px 7px;border-radius:4px;}
+.sp-msg-body{padding:12px;font-size:12px;color:var(--txt);line-height:1.7;white-space:pre-wrap;}
+.sp-alert{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;}
+.sp-alert-warn{background:var(--warn-bg);color:var(--warn-txt);border:1px solid rgba(186,117,23,.25);}
+.sp-alert-info{background:var(--blue-bg);color:var(--blue-txt);border:1px solid rgba(24,95,165,.2);}
+.sp-alert-ok{background:var(--accent-bg);color:var(--accent-txt);border:1px solid rgba(29,158,117,.2);}
+/* Footer */
+.sp-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg2);}
+.sp-btn-sec{padding:7px 14px;border-radius:7px;border:1px solid var(--border2);background:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sp-btn-sec:hover{background:var(--bg3);}
+.sp-btn-prim{padding:7px 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sp-btn-prim:hover{opacity:.9;}
+.sp-btn-prim:disabled{opacity:.4;cursor:default;}
+@media(max-width:700px){.sales-panel{width:100%;right:-100%;}.sales-panel.open{right:0;}}
 </style>
 </head>
 <body>
@@ -279,6 +347,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 </div>
 <!-- Score tooltip — contenu généré dynamiquement par JS -->
 <div id="score-tip" style="display:none"></div>
+<!-- ══ JOBRADAR SALES AGENT — Panneau latéral ══ -->
+<div class="sp-overlay" id="sp-overlay" onclick="closeSalesPanel()"></div>
+<div class="sales-panel" id="sales-panel">
+  <div class="sp-hdr">
+    <div class="sp-hdr-logo" id="sp-hdr-logo"></div>
+    <div style="flex:1;min-width:0;">
+      <div class="sp-hdr-name" id="sp-hdr-name"></div>
+      <div class="sp-hdr-meta" id="sp-hdr-meta"></div>
+    </div>
+    <button class="sp-close" onclick="closeSalesPanel()">✕</button>
+  </div>
+  <div class="sp-steps" id="sp-steps">
+    <button class="sp-step-btn active" onclick="goToStep(1)">1. Opportunité</button>
+    <button class="sp-step-btn" onclick="goToStep(2)" id="sp-step2-btn">2. CRM</button>
+    <button class="sp-step-btn" onclick="goToStep(3)" id="sp-step3-btn">3. Stratégie</button>
+    <button class="sp-step-btn" onclick="goToStep(4)" id="sp-step4-btn">4. Validation</button>
+  </div>
+  <div class="sp-content" id="sp-content"></div>
+  <div class="sp-footer">
+    <button class="sp-btn-sec" id="sp-prev-btn" onclick="spPrev()">← Précédent</button>
+    <button class="sp-btn-prim" id="sp-next-btn" onclick="spNext()">Suivant →</button>
+  </div>
+</div>
+<!-- Basket flottant (multi-sélection) -->
+<div class="basket-chip" id="basket-chip" onclick="openBasketPanel()">
+  <span id="basket-count">0</span> entreprise(s) — Préparer →
+</div>
 <div class="app">
   <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
   <aside class="sidebar" id="sidebar">
@@ -994,6 +1089,7 @@ function renderJobs() {
         (crmChips?'<div class="crm-indicators">'+crmChips+'</div>':'')+
         '<div class="jact">' +
           (crmBadge?crmBadge:'')+
+          (!j.isCabinet?'<button class="prospect-btn'+((_prospectBasket[(j.company||'').toLowerCase()])?' in-basket':'')+'" onclick="prospectClick(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">⚡ Prospecter</button>':'')+
           '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
           '<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Signaler ESN ou cabinet">&#128681;</button>' +
         '</div>' +
@@ -1107,6 +1203,399 @@ function tryLogin(e){
     document.getElementById('pwd-input').focus();
   }
 }
+/* ═══════════════════════════════════════════════════════════════
+   JOBRADAR SALES AGENT — Phase 1 : UI + préparation campagnes
+   Aucun email réel. Toutes les données sont simulées ou issues
+   de ALL_JOBS / crm_cache déjà chargés.
+   ═══════════════════════════════════════════════════════════════ */
+var SALES_AGENT_ENABLED = true;
+var _prospectBasket = {};   // { companyLower: true } pour multi-sélection
+var _spCurrentStep = 1;
+var _spCompanyName = '';
+var _spJobs = [];
+
+// ── Regroupement par entreprise ────────────────────────────────
+function _getCompanyJobs(companyName) {
+  var key = (companyName || '').toLowerCase().trim();
+  return ALL_JOBS.filter(function(j) {
+    return (j.company || '').toLowerCase().trim() === key;
+  });
+}
+
+function _dedupeJobs(jobs) {
+  // Déduplique les offres avec le même titre (même poste sur plusieurs sources)
+  var seen = {}, result = [];
+  for (var i = 0; i < jobs.length; i++) {
+    var t = (jobs[i].title || '').toLowerCase().replace(/\s+/g,' ').trim();
+    if (!seen[t]) { seen[t] = true; result.push(jobs[i]); }
+  }
+  return result;
+}
+
+function _categorizeJobs(jobs) {
+  var cats = {};
+  jobs.forEach(function(j) {
+    var c = j.category || 'Autre';
+    cats[c] = (cats[c] || 0) + 1;
+  });
+  return Object.entries(cats).sort(function(a,b){return b[1]-a[1];});
+}
+
+// ── Logique du bouton ──────────────────────────────────────────
+function prospectClick(e, companyName) {
+  e.stopPropagation();
+  if (!SALES_AGENT_ENABLED) return;
+  var key = (companyName || '').toLowerCase();
+  if (_prospectBasket[key]) {
+    // Déjà dans le panier → ouvre directement le panel
+    openSalesPanel(companyName);
+  } else {
+    openSalesPanel(companyName);
+  }
+}
+
+// ── Ouverture / fermeture du panneau ──────────────────────────
+function openSalesPanel(companyName) {
+  if (!SALES_AGENT_ENABLED) return;
+  _spCompanyName = companyName;
+  _spJobs = _dedupeJobs(_getCompanyJobs(companyName));
+  _spCurrentStep = 1;
+  // Header
+  var sample = _spJobs[0] || {};
+  var logoEl = document.getElementById('sp-hdr-logo');
+  if (sample.logo) {
+    logoEl.innerHTML = '<img src="'+sample.logo+'" alt="" onerror="this.parentNode.textContent=\''+_initials(companyName)+'\'">';
+  } else {
+    logoEl.textContent = _initials(companyName);
+  }
+  document.getElementById('sp-hdr-name').textContent = companyName;
+  document.getElementById('sp-hdr-meta').textContent =
+    _spJobs.length + ' offre' + (_spJobs.length>1?'s':'') + ' · ' +
+    (sample.crm_status ? sample.crm_status : 'Non référencé CRM');
+  // Reset steps
+  ['sp-step2-btn','sp-step3-btn','sp-step4-btn'].forEach(function(id){
+    document.getElementById(id).classList.remove('active','done');
+  });
+  _renderStep(1);
+  document.getElementById('sp-overlay').classList.add('open');
+  document.getElementById('sales-panel').classList.add('open');
+}
+
+function closeSalesPanel() {
+  document.getElementById('sp-overlay').classList.remove('open');
+  document.getElementById('sales-panel').classList.remove('open');
+}
+
+function goToStep(n) {
+  if (n < 1 || n > 4) return;
+  _spCurrentStep = n;
+  _renderStep(n);
+}
+
+function spNext() {
+  if (_spCurrentStep < 4) goToStep(_spCurrentStep + 1);
+}
+function spPrev() {
+  if (_spCurrentStep > 1) goToStep(_spCurrentStep - 1);
+}
+
+function _renderStep(n) {
+  // Update step tab styles
+  var btns = document.querySelectorAll('.sp-step-btn');
+  btns.forEach(function(b, i) {
+    b.classList.remove('active','done');
+    if (i+1 === n) b.classList.add('active');
+    else if (i+1 < n) b.classList.add('done');
+  });
+  // Footer buttons
+  document.getElementById('sp-prev-btn').style.visibility = n > 1 ? 'visible' : 'hidden';
+  var nextBtn = document.getElementById('sp-next-btn');
+  if (n === 4) {
+    nextBtn.textContent = '✓ Préparer la campagne';
+    nextBtn.style.background = '#166534';
+  } else {
+    nextBtn.textContent = 'Suivant →';
+    nextBtn.style.background = '';
+  }
+  // Render content
+  var content = document.getElementById('sp-content');
+  switch(n) {
+    case 1: content.innerHTML = _buildStep1(); break;
+    case 2: content.innerHTML = _buildStep2(); break;
+    case 3: content.innerHTML = _buildStep3(); break;
+    case 4: content.innerHTML = _buildStep4(); break;
+  }
+}
+
+function _initials(name) {
+  return (name || '?').split(/[\s\-&]+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
+}
+
+// ── Step 1 : Opportunité ───────────────────────────────────────
+function _buildStep1() {
+  var jobs = _spJobs;
+  if (!jobs.length) return '<p style="color:var(--txt3);padding:20px;text-align:center;">Aucune offre trouvée pour cette entreprise.</p>';
+  var cats = _categorizeJobs(jobs);
+  var locs = [...new Set(jobs.map(function(j){return j.location||'';}).filter(Boolean))];
+  var sources = [...new Set(jobs.map(function(j){return j.source||'afjv';}))];
+  var sample = jobs[0];
+  var crmBadge = sample.crm_link
+    ? '<span class="sp-crm-badge '+(sample.is_client?'sp-crm-client':sample.crm_status==='Prospect'?'sp-crm-prospect':'sp-crm-known')+'">'+
+      (sample.is_client?'★ Client actif':sample.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</span>'
+    : '<span class="sp-crm-badge sp-crm-unknown">✗ Non référencé CRM</span>';
+
+  var score = _scoreCache[jobs[0].id] ? _scoreCache[jobs[0].id].finalScore : calculateRelevanceScore(jobs[0]).finalScore;
+
+  var html = '<div class="sp-section">';
+  html += '<div class="sp-stat-row">';
+  html += '<div class="sp-stat"><div class="sp-stat-n">'+jobs.length+'</div><div class="sp-stat-l">offre'+(jobs.length>1?'s':'')+' distincte'+(jobs.length>1?'s':'')+'</div></div>';
+  html += '<div class="sp-stat"><div class="sp-stat-n">'+cats.length+'</div><div class="sp-stat-l">catégorie'+(cats.length>1?'s':'')+'</div></div>';
+  html += '<div class="sp-stat"><div class="sp-stat-n">'+score+'</div><div class="sp-stat-l">score radar</div></div>';
+  html += '</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">'+crmBadge;
+  if (sample.crm_consultant) html += '<span style="font-size:11px;color:var(--txt3);">Responsable : <strong>'+sample.crm_consultant+'</strong></span>';
+  html += '</div></div>';
+
+  html += '<div class="sp-section"><div class="sp-section-title">Postes identifiés</div>';
+  jobs.forEach(function(j) {
+    html += '<div class="sp-job-row">';
+    html += '<span class="sp-job-title">'+j.title+'</span>';
+    html += '<span class="sp-job-meta">'+daysLabel(j.daysAgo||0)+'</span>';
+    if (j.category) html += '<span class="pill p-purple" style="font-size:9px;">'+j.category+'</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  if (cats.length) {
+    html += '<div class="sp-section"><div class="sp-section-title">Fonctions recherchées</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    cats.forEach(function(c){
+      html += '<span class="pill p-purple">'+c[0]+' <strong style="font-family:\'DM Mono\',monospace;font-size:9px;">×'+c[1]+'</strong></span>';
+    });
+    html += '</div></div>';
+  }
+
+  if (locs.length) {
+    html += '<div class="sp-section"><div class="sp-section-title">Localisations</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    locs.forEach(function(l){ html += '<span class="pill">'+l+'</span>'; });
+    html += '</div></div>';
+  }
+
+  html += '<div class="sp-section"><div class="sp-section-title">Sources</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+  sources.forEach(function(s){ html += '<span class="pill p-blue">'+s+'</span>'; });
+  html += '</div></div>';
+
+  return html;
+}
+
+// ── Step 2 : CRM ───────────────────────────────────────────────
+function _buildStep2() {
+  var sample = _spJobs[0] || {};
+  var html = '<div class="sp-section">';
+
+  if (!sample.crm_link) {
+    html += '<div class="sp-alert sp-alert-info">ℹ️ Cette entreprise n\'est pas encore référencée dans Recruit CRM. Elle peut être ajoutée manuellement.</div>';
+  } else {
+    var statusLabel = sample.is_client ? '★ Client actif' : sample.crm_status === 'Prospect' ? '◎ Prospect' : sample.crm_status || 'Connu';
+    html += '<div class="sp-section-title">Statut commercial</div>';
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">';
+    html += '<span class="sp-crm-badge '+(sample.is_client?'sp-crm-client':sample.crm_status==='Prospect'?'sp-crm-prospect':'sp-crm-known')+'">'+statusLabel+'</span>';
+    html += '<a href="'+sample.crm_link+'" target="_blank" rel="noopener" style="font-size:11px;color:var(--accent);text-decoration:none;" onclick="event.stopPropagation()">Ouvrir dans Recruit CRM →</a>';
+    html += '</div>';
+
+    html += '<div class="sp-section-title">Données Recruit CRM</div>';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:14px;">';
+    var rows = [
+      ['T&Cs signés', sample.crm_tc === true ? '✓ Oui' : sample.crm_tc === false ? '✗ Non' : '— Inconnu'],
+      ['Mission ouverte', sample.crm_open_job ? '✓ Oui' : 'Non'],
+      ['Consultant responsable', sample.crm_consultant || '—'],
+      ['Dernière mise à jour', sample.crm_last_updated ? sample.crm_last_updated.split('T')[0] : '—'],
+      ['Mis à jour par', sample.crm_updated_by || '—'],
+    ];
+    rows.forEach(function(r) {
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:6px 4px;color:var(--txt3);width:50%;">'+r[0]+'</td>';
+      html += '<td style="padding:6px 4px;font-weight:500;">'+r[1]+'</td></tr>';
+    });
+    html += '</table>';
+
+    if (sample.is_client) {
+      html += '<div class="sp-alert sp-alert-ok">✓ Client actif avec mission ouverte. Vérifier avec le consultant responsable avant de prospecter.</div>';
+    } else if (sample.crm_tc) {
+      html += '<div class="sp-alert sp-alert-info">ℹ️ T&Cs signés — relation commerciale établie. Approche directe possible.</div>';
+    }
+  }
+
+  html += '</div>';
+  html += '<div class="sp-section"><div class="sp-section-title">Contacts (Phase 2)</div>';
+  html += '<div class="sp-alert sp-alert-info">Les contacts Recruit CRM seront chargés en Phase 2 (intégration API /contacts). Pour l\'instant, consulter directement la fiche CRM.</div>';
+  html += '</div>';
+
+  return html;
+}
+
+// ── Step 3 : Stratégie ────────────────────────────────────────
+function _buildStep3() {
+  var jobs = _spJobs;
+  var sample = jobs[0] || {};
+  var cats = _categorizeJobs(jobs);
+  var mainCat = cats.length ? cats[0][0] : 'Recrutement';
+  var score = _scoreCache[jobs[0] && jobs[0].id] ? _scoreCache[jobs[0].id].finalScore : 0;
+
+  // Interlocuteurs suggérés selon les catégories détectées
+  var contacts = _suggestContacts(cats, sample);
+
+  var html = '<div class="sp-section">';
+  html += '<div class="sp-section-title">Analyse de l\'opportunité</div>';
+  html += '<div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:12px;line-height:1.8;margin-bottom:14px;">';
+  html += '<strong>'+_spCompanyName+'</strong> recrute actuellement sur <strong>'+jobs.length+' poste'+(jobs.length>1?'s':'')+' distinct'+(jobs.length>1?'s':'')+'</strong>';
+  if (cats.length) html += ', principalement en <strong>'+cats.slice(0,2).map(function(c){return c[0];}).join(' et ')+'</strong>';
+  html += '.<br>';
+  if (sample.crm_link) {
+    if (sample.is_client) html += 'C\'est un <strong>client actif</strong> — approche à valider avec le consultant responsable.';
+    else if (sample.crm_tc) html += 'T&Cs signés — relation commerciale établie, approche directe recommandée.';
+    else if (sample.crm_status === 'Prospect') html += 'Déjà identifié comme <strong>prospect</strong> dans Recruit CRM.';
+    else html += 'Entreprise connue dans Recruit CRM — à qualifier.';
+  } else {
+    html += 'Entreprise non encore référencée dans Recruit CRM — à créer lors du premier contact.';
+  }
+  html += '</div></div>';
+
+  html += '<div class="sp-section"><div class="sp-section-title">Interlocuteurs suggérés</div>';
+  contacts.forEach(function(c) {
+    html += '<div class="sp-contact-row">';
+    html += '<div class="sp-contact-avatar">'+_initials(c.name)+'</div>';
+    html += '<div class="sp-contact-info">';
+    html += '<div class="sp-contact-name">'+c.name+'</div>';
+    html += '<div class="sp-contact-role">'+c.role+'</div>';
+    html += '<div class="sp-contact-src">Source : '+c.source+' · '+c.reason+'</div>';
+    html += '</div></div>';
+  });
+  html += '<div class="sp-alert sp-alert-info" style="margin-top:8px;">ℹ️ Les contacts réels seront chargés depuis Recruit CRM en Phase 2. Ces suggestions sont basées sur les fonctions typiques pour ce type de recrutement.</div>';
+  html += '</div>';
+
+  html += '<div class="sp-section"><div class="sp-section-title">Argumentaire suggéré</div>';
+  html += '<div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:12px;line-height:1.8;">';
+  html += _buildPitch(mainCat, jobs.length, _spCompanyName, sample);
+  html += '</div></div>';
+
+  return html;
+}
+
+function _suggestContacts(cats, sample) {
+  var catNames = cats.map(function(c){return (c[0]||'').toLowerCase();});
+  var contacts = [];
+  var isTech = catNames.some(function(c){return /data|tech|dev|cloud|infra|product|digital|ia|ai/.test(c);});
+  var isBiz  = catNames.some(function(c){return /sales|business|commercial|marché|trade/.test(c);});
+  if (isTech) {
+    contacts.push({name:'CTO / VP Engineering', role:'Directeur Technique', source:'Recommandation typique', reason:'Recrutements techniques détectés'});
+    contacts.push({name:'Head of Data / Head of Product', role:'Manager technique senior', source:'Recommandation typique', reason:'Postes '+cats[0][0]+' identifiés'});
+  } else if (isBiz) {
+    contacts.push({name:'VP Sales / Directeur Commercial', role:'Direction commerciale', source:'Recommandation typique', reason:'Recrutements commerciaux détectés'});
+  }
+  contacts.push({name:'Talent Acquisition Manager / DRH', role:'Direction des Ressources Humaines', source:'Recommandation typique', reason:'Interlocuteur recrutement systématique'});
+  if (sample.crm_consultant) {
+    contacts.unshift({name:sample.crm_consultant, role:'Consultant Recruit CRM', source:'Recruit CRM', reason:'Responsable du compte'});
+  }
+  return contacts.slice(0,4);
+}
+
+function _buildPitch(cat, nb, company, sample) {
+  var expertise = cat.toLowerCase().indexOf('data') >= 0 ? 'profils Data & Tech'
+    : cat.toLowerCase().indexOf('product') >= 0 ? 'profils Product'
+    : cat.toLowerCase().indexOf('sales') >= 0 || cat.toLowerCase().indexOf('business') >= 0 ? 'profils commerciaux'
+    : 'profils spécialisés';
+  var txt = 'Bonjour,\n\nNous avons identifié que '+company+' recrute activement sur '+nb+' poste'+(nb>1?'s':'')+' en ce moment';
+  txt += (cat && cat !== 'Autre') ? ', notamment en '+cat+'.' : '.';
+  txt += '\n\nUrban Linker accompagne les entreprises tech et digitales sur le recrutement de '+expertise+'. ';
+  if (sample.crm_tc) txt += 'Nous avons déjà collaboré ensemble et connaissons vos exigences. ';
+  txt += '\n\nSeriez-vous disponible pour un échange de 15 minutes afin de voir si nous pouvons vous aider à accélérer ces recrutements ?';
+  return txt.replace(/\n/g,'<br>');
+}
+
+// ── Step 4 : Validation (séquence simulée) ────────────────────
+function _buildStep4() {
+  var sample = _spJobs[0] || {};
+  var cats = _categorizeJobs(_spJobs);
+
+  // Alerte si client actif
+  var html = '';
+  if (sample.is_client) {
+    html += '<div class="sp-alert sp-alert-warn">⚠️ Client actif détecté — validation du consultant responsable obligatoire avant lancement.</div>';
+  }
+
+  html += '<div class="sp-section"><div class="sp-section-title">Récapitulatif</div>';
+  html += '<table style="width:100%;font-size:12px;border-collapse:collapse;margin-bottom:14px;">';
+  var rows2 = [
+    ['Entreprise', _spCompanyName],
+    ['Offres regroupées', _spJobs.length + ' poste'+ (_spJobs.length>1?'s':'')],
+    ['Catégories', cats.map(function(c){return c[0];}).join(', ') || '—'],
+    ['Statut CRM', sample.crm_status || 'Non référencé'],
+    ['Consultant', sample.crm_consultant || '—'],
+    ['Canal', 'Gmail (Phase 3)'],
+  ];
+  rows2.forEach(function(r) {
+    html += '<tr style="border-bottom:1px solid var(--border);">';
+    html += '<td style="padding:6px 4px;color:var(--txt3);width:40%;">'+r[0]+'</td>';
+    html += '<td style="padding:6px 4px;font-weight:500;">'+r[1]+'</td></tr>';
+  });
+  html += '</table></div>';
+
+  html += '<div class="sp-section"><div class="sp-section-title">Séquence prévue (simulée — Phase 3 pour envoi réel)</div>';
+  var seq = [
+    {day:'J+0', action:'Premier e-mail personnalisé', status:'En attente de connexion Gmail'},
+    {day:'J+3', action:'Relance #1 si pas de réponse', status:'Programmée après J+0'},
+    {day:'J+7', action:'Relance #2', status:'Programmée après relance #1'},
+    {day:'J+11', action:'Dernier e-mail', status:'Programmée après relance #2'},
+    {day:'J+15', action:'Clôture automatique', status:'Si aucune réponse'},
+  ];
+  seq.forEach(function(s) {
+    html += '<div class="sp-msg-card">';
+    html += '<div class="sp-msg-hdr"><span class="sp-msg-day">'+s.day+'</span><span style="flex:1;">'+s.action+'</span><span style="font-size:10px;color:var(--txt3);">'+s.status+'</span></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="sp-section">';
+  html += '<div class="sp-alert sp-alert-info">📧 Connexion Gmail requise pour lancer des envois réels (Phase 3). Cette vue est une prévisualisation de la stratégie.</div>';
+  html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+  html += '<button class="sp-btn-sec" style="flex:1;" onclick="addToBasket()">+ Ajouter au panier</button>';
+  html += '<button class="sp-btn-prim" style="flex:2;opacity:.5;cursor:not-allowed;" disabled title="Connexion Gmail requise (Phase 3)">🔒 Valider et lancer (Phase 3)</button>';
+  html += '</div></div>';
+
+  return html;
+}
+
+function addToBasket() {
+  var key = (_spCompanyName || '').toLowerCase();
+  _prospectBasket[key] = true;
+  _updateBasketChip();
+  renderJobs();
+  var btn = document.querySelector('.sp-btn-sec');
+  if (btn) { btn.textContent = '✓ Dans le panier'; btn.style.color = 'var(--accent)'; }
+}
+
+function _updateBasketChip() {
+  var n = Object.keys(_prospectBasket).length;
+  var chip = document.getElementById('basket-chip');
+  document.getElementById('basket-count').textContent = n;
+  chip.className = 'basket-chip' + (n > 0 ? ' visible' : '');
+}
+
+function openBasketPanel() {
+  // Ouvre le panel sur la première entreprise du panier
+  var keys = Object.keys(_prospectBasket);
+  if (!keys.length) return;
+  // Cherche le vrai nom (case-sensitive) dans ALL_JOBS
+  var realName = '';
+  for (var i=0; i<ALL_JOBS.length; i++) {
+    if ((ALL_JOBS[i].company||'').toLowerCase() === keys[0]) { realName = ALL_JOBS[i].company; break; }
+  }
+  if (realName) openSalesPanel(realName);
+}
+
 _initAuth();
 populateConsultants();
 renderJobs();
