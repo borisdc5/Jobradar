@@ -247,6 +247,74 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
   .crm-indicators{flex-wrap:wrap;}
   .score-lbl-sm{display:none;}
 }
+
+/* ══════════════════════════════════════════════
+   JOBRADAR SALES AGENT — CSS Phase 1
+   ══════════════════════════════════════════════ */
+.prospect-btn{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;height:22px;border-radius:5px;border:1px solid rgba(29,158,117,.45);background:rgba(225,245,238,.6);color:var(--accent-txt);font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;transition:all .12s;flex-shrink:0;}
+.prospect-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.prospect-btn.in-basket{background:var(--accent);color:#fff;border-color:var(--accent);}
+.basket-chip{display:none;align-items:center;gap:6px;padding:4px 10px;background:var(--accent);color:#fff;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;position:fixed;bottom:20px;right:20px;z-index:4000;box-shadow:0 4px 16px rgba(29,158,117,.4);}
+.basket-chip.visible{display:flex;}
+/* Sales Panel overlay */
+.sp-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.32);z-index:5000;}
+.sp-overlay.open{display:block;}
+/* Sales Panel drawer */
+.sales-panel{position:fixed;top:0;right:-680px;width:660px;height:100vh;background:#fff;border-left:1px solid var(--border2);z-index:5100;display:flex;flex-direction:column;transition:right .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 32px rgba(0,0,0,.12);}
+.sales-panel.open{right:0;}
+/* Panel header */
+.sp-hdr{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sp-hdr-logo{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--txt2);flex-shrink:0;overflow:hidden;}
+.sp-hdr-logo img{width:100%;height:100%;object-fit:contain;padding:3px;}
+.sp-hdr-name{font-size:15px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-hdr-meta{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;white-space:nowrap;}
+.sp-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--txt3);font-size:16px;flex-shrink:0;}
+.sp-close:hover{background:var(--bg2);}
+/* Step nav */
+.sp-steps{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
+.sp-step-btn{flex:1;padding:10px 6px;font-size:11px;font-weight:500;font-family:'DM Sans',sans-serif;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--txt3);white-space:nowrap;transition:all .12s;text-align:center;}
+.sp-step-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.sp-step-btn.done{color:var(--txt2);}
+.sp-step-btn:disabled{cursor:default;opacity:.4;}
+/* Content area */
+.sp-content{flex:1;overflow-y:auto;padding:18px;}
+/* Step blocks */
+.sp-section{margin-bottom:18px;}
+.sp-section-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px;}
+.sp-stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+.sp-stat{flex:1;min-width:100px;background:var(--bg2);border-radius:10px;padding:10px 12px;text-align:center;}
+.sp-stat-n{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt);}
+.sp-stat-l{font-size:10px;color:var(--txt3);margin-top:2px;}
+.sp-job-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:var(--bg2);margin-bottom:4px;font-size:12px;}
+.sp-job-title{flex:1;font-weight:500;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sp-job-meta{font-size:10px;color:var(--txt3);white-space:nowrap;font-family:'DM Mono',monospace;}
+.sp-crm-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:500;}
+.sp-crm-client{background:#052e16;color:#4ade80;}
+.sp-crm-prospect{background:#1c1a4f;color:#a5b4fc;}
+.sp-crm-known{background:var(--bg3);color:var(--txt2);}
+.sp-crm-unknown{background:var(--bg2);color:var(--txt3);}
+.sp-contact-row{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.sp-contact-avatar{width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--txt2);flex-shrink:0;}
+.sp-contact-info{flex:1;min-width:0;}
+.sp-contact-name{font-size:12px;font-weight:600;}
+.sp-contact-role{font-size:11px;color:var(--txt3);}
+.sp-contact-src{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace;margin-top:2px;}
+.sp-msg-card{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.sp-msg-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2);font-size:11px;font-weight:600;color:var(--txt2);}
+.sp-msg-day{font-family:'DM Mono',monospace;font-size:10px;background:var(--accent-bg);color:var(--accent-txt);padding:2px 7px;border-radius:4px;}
+.sp-msg-body{padding:12px;font-size:12px;color:var(--txt);line-height:1.7;white-space:pre-wrap;}
+.sp-alert{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:10px;}
+.sp-alert-warn{background:var(--warn-bg);color:var(--warn-txt);border:1px solid rgba(186,117,23,.25);}
+.sp-alert-info{background:var(--blue-bg);color:var(--blue-txt);border:1px solid rgba(24,95,165,.2);}
+.sp-alert-ok{background:var(--accent-bg);color:var(--accent-txt);border:1px solid rgba(29,158,117,.2);}
+/* Footer */
+.sp-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;background:var(--bg2);}
+.sp-btn-sec{padding:7px 14px;border-radius:7px;border:1px solid var(--border2);background:#fff;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sp-btn-sec:hover{background:var(--bg3);}
+.sp-btn-prim{padding:7px 18px;border-radius:7px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.sp-btn-prim:hover{opacity:.9;}
+.sp-btn-prim:disabled{opacity:.4;cursor:default;}
+@media(max-width:700px){.sales-panel{width:100%;right:-100%;}.sales-panel.open{right:0;}}
 </style>
 </head>
 <body>
@@ -279,6 +347,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 </div>
 <!-- Score tooltip — contenu généré dynamiquement par JS -->
 <div id="score-tip" style="display:none"></div>
+<!-- ══ JOBRADAR SALES AGENT — Panneau latéral ══ -->
+<div class="sp-overlay" id="sp-overlay" onclick="closeSalesPanel()"></div>
+<div class="sales-panel" id="sales-panel">
+  <div class="sp-hdr">
+    <div class="sp-hdr-logo" id="sp-hdr-logo"></div>
+    <div style="flex:1;min-width:0;">
+      <div class="sp-hdr-name" id="sp-hdr-name"></div>
+      <div class="sp-hdr-meta" id="sp-hdr-meta"></div>
+    </div>
+    <button class="sp-close" onclick="closeSalesPanel()">✕</button>
+  </div>
+  <div class="sp-steps" id="sp-steps">
+    <button class="sp-step-btn active" onclick="goToStep(1)">1. Opportunité</button>
+    <button class="sp-step-btn" onclick="goToStep(2)" id="sp-step2-btn">2. CRM</button>
+    <button class="sp-step-btn" onclick="goToStep(3)" id="sp-step3-btn">3. Stratégie</button>
+    <button class="sp-step-btn" onclick="goToStep(4)" id="sp-step4-btn">4. Validation</button>
+  </div>
+  <div class="sp-content" id="sp-content"></div>
+  <div class="sp-footer">
+    <button class="sp-btn-sec" id="sp-prev-btn" onclick="spPrev()">← Précédent</button>
+    <button class="sp-btn-prim" id="sp-next-btn" onclick="spNext()">Suivant →</button>
+  </div>
+</div>
+<!-- Basket flottant (multi-sélection) -->
+<div class="basket-chip" id="basket-chip" onclick="openBasketPanel()">
+  <span id="basket-count">0</span> entreprise(s) — Préparer →
+</div>
 <div class="app">
   <div class="sidebar-overlay" id="sb-overlay" onclick="closeSidebar()"></div>
   <aside class="sidebar" id="sidebar">
@@ -994,6 +1089,7 @@ function renderJobs() {
         (crmChips?'<div class="crm-indicators">'+crmChips+'</div>':'')+
         '<div class="jact">' +
           (crmBadge?crmBadge:'')+
+          (!j.isCabinet?'<button class="prospect-btn'+((_prospectBasket[(j.company||'').toLowerCase()])?' in-basket':'')+'" onclick="prospectClick(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">⚡ Prospecter</button>':'')+
           '<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>' +
           '<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" title="Signaler ESN ou cabinet">&#128681;</button>' +
         '</div>' +
@@ -1107,6 +1203,733 @@ function tryLogin(e){
     document.getElementById('pwd-input').focus();
   }
 }
+/* ═══════════════════════════════════════════════════════════════
+   JOBRADAR SALES AGENT — V2
+   Intelligence commerciale, messages éditables, séquence adaptée.
+   Aucun email réel envoyé. Connexion Gmail = Phase 3.
+   ═══════════════════════════════════════════════════════════════ */
+var SALES_AGENT_ENABLED = true;
+var _prospectBasket = {};
+
+// ── État global du panneau (persiste entre étapes) ─────────────
+var _sp = {
+  company: '',
+  jobs: [],          // offres dédupliquées
+  families: [],      // [{id,label,jobs,ulFit}]
+  angles: [],        // angles sélectionnés [{id,label,families,reason}]
+  contacts: [],      // [{name,role,category,reason,selected}]
+  customArg: '',     // argument libre du consultant
+  sequence: [],      // [{day,label,recipient,subject,body,edited}]
+  crmData: null,     // données CRM (sample job)
+  proStatus: '',     // 'ok'|'check'|'blocked'
+  currentStep: 1,
+};
+
+// ══════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════
+function _initials(name) {
+  return (name||'?').split(/[\s\-&]+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase()||'?';
+}
+function _getCompanyJobs(co) {
+  var k=(co||'').toLowerCase().trim();
+  return ALL_JOBS.filter(function(j){return (j.company||'').toLowerCase().trim()===k;});
+}
+function _dedupeJobs(jobs) {
+  var seen={},res=[];
+  jobs.forEach(function(j){
+    var t=(j.title||'').toLowerCase().replace(/\s+/g,' ').trim();
+    if(!seen[t]){seen[t]=true;res.push(j);}
+  });
+  return res;
+}
+
+// ── Familles métiers UL ────────────────────────────────────────
+var _UL_FAMILIES = [
+  {id:'tech',    label:'Engineering / Tech',  patterns:/\bdév|développ|engineer|software|backend|frontend|fullstack|mobile|cloud|devops|infra|architect|data engineer/i, fit:5},
+  {id:'data',    label:'Data / IA',            patterns:/\bdata|ia\b|ai\b|machine learn|deep learn|analytics|scientist|analyst|bi\b|intelligence artificielle/i,         fit:5},
+  {id:'product', label:'Produit',              patterns:/\bproduct|produit|po\b|product owner|product manager|ux|design/i,                                                fit:4},
+  {id:'cyber',   label:'Cybersécurité',        patterns:/\bcyber|sécurité|security|soc\b|pentest|rssi|iam\b/i,                                                            fit:3},
+  {id:'biz',     label:'Business / Commercial',patterns:/\baccount|sales|commercial|bizdev|business dev|partner|partnerships|client/i,                                    fit:3},
+  {id:'cs',      label:'Customer Success',     patterns:/\bcustomer success|csm\b|account manag/i,                                                                        fit:2},
+  {id:'mkt',     label:'Marketing',            patterns:/\bmarket|communication|content|growth|seo|seo\b/i,                                                               fit:2},
+  {id:'rh',      label:'RH / Talent',          patterns:/\brh\b|recrutement|talent|people|drh|hr\b/i,                                                                     fit:1},
+  {id:'mgmt',    label:'Management / Direction',patterns:/\bdirector|directeur|cto\b|cpo\b|vp\b|head of|responsable|manager(?!.*account)|lead(?!.*tech)/i,                fit:2},
+];
+
+function _buildFamilies(jobs) {
+  var fmap = {};
+  jobs.forEach(function(j) {
+    var matched = false;
+    for (var i=0; i<_UL_FAMILIES.length; i++) {
+      if (_UL_FAMILIES[i].patterns.test(j.title)) {
+        var fid = _UL_FAMILIES[i].id;
+        if (!fmap[fid]) fmap[fid] = {id:fid,label:_UL_FAMILIES[i].label,fit:_UL_FAMILIES[i].fit,jobs:[]};
+        fmap[fid].jobs.push(j);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      // fallback: use existing category field
+      var cat = j.category || 'Autre';
+      if (!fmap['_'+cat]) fmap['_'+cat] = {id:'_'+cat,label:cat,fit:1,jobs:[]};
+      fmap['_'+cat].jobs.push(j);
+    }
+  });
+  return Object.values(fmap).sort(function(a,b){return b.fit-a.fit||b.jobs.length-a.jobs.length;});
+}
+
+// ── Score intérêt commercial (distinct du score JobRadar) ──────
+function _commercialScore(families, crmData) {
+  var s = 0;
+  // Pertinence UL
+  families.forEach(function(f){ s += f.fit * Math.min(f.jobs.length,3); });
+  // Volume
+  var total = families.reduce(function(a,f){return a+f.jobs.length;},0);
+  if (total >= 5) s += 10;
+  else if (total >= 3) s += 6;
+  else s += 2;
+  // Récence
+  var minDays = Math.min.apply(null, families.flatMap(function(f){return f.jobs.map(function(j){return j.daysAgo||99;});}));
+  if (minDays <= 7) s += 10;
+  else if (minDays <= 30) s += 6;
+  else if (minDays <= 60) s += 2;
+  // Historique CRM
+  if (crmData && crmData.crm_tc) s += 8;
+  if (crmData && crmData.crm_open_job) s += 5;
+  return Math.min(s, 100);
+}
+
+// ── Angles commerciaux ─────────────────────────────────────────
+function _buildAngles(families, crmData) {
+  var angles = [];
+  // Angle principal par famille forte
+  var topFams = families.filter(function(f){return f.fit>=3;}).slice(0,2);
+  topFams.forEach(function(f) {
+    var titles = f.jobs.slice(0,2).map(function(j){return j.title;}).join(', ');
+    angles.push({
+      id: f.id,
+      label: f.label,
+      families: [f],
+      reason: f.jobs.length+' poste'+(f.jobs.length>1?'s':'')+' identifié'+(f.jobs.length>1?'s':'')+' : '+titles,
+      fit: f.fit,
+    });
+  });
+  // Angle réactivation si historique CRM fort
+  if (crmData && (crmData.crm_tc || crmData.crm_status==='Prospect') && angles.length) {
+    angles.push({
+      id:'reactiv',
+      label:'Réactivation de la relation',
+      families:[],
+      reason:'Relation commerciale déjà établie ('+(crmData.crm_tc?'T&Cs signés':'prospect')+')'+(crmData.crm_consultant?' — responsable : '+crmData.crm_consultant:''),
+      fit: crmData.crm_tc ? 4 : 3,
+    });
+  }
+  // Regrouper les familles faibles en "Autres recrutements"
+  var weakFams = families.filter(function(f){return f.fit<3;});
+  if (weakFams.length && !angles.some(function(a){return a.id==='other';})) {
+    var titles2 = weakFams.flatMap(function(f){return f.jobs.slice(0,1);}).map(function(j){return j.title;}).join(', ');
+    angles.push({
+      id:'other',
+      label:'Autres recrutements',
+      families:weakFams,
+      reason:'Postes hors cœur de cible UL : '+titles2,
+      fit:1,
+    });
+  }
+  return angles.slice(0,3);
+}
+
+// ── Statut prospection ─────────────────────────────────────────
+function _proStatus(crmData) {
+  if (!crmData || !crmData.crm_link) return {status:'check', label:'Vérification nécessaire', reason:'Entreprise non référencée CRM'};
+  if (crmData.is_client) return {status:'blocked', label:'Prospection bloquée', reason:'Client actif avec mission ouverte — contacter le consultant responsable'};
+  if (crmData.crm_tc) return {status:'ok', label:'Prospection autorisée', reason:'T&Cs signés, pas de mission ouverte'};
+  return {status:'check', label:'Vérification nécessaire', reason:'Tracking commercial non vérifié — valider avant lancement'};
+}
+
+// ── Interlocuteurs suggérés (exclusion consultant interne) ──────
+var _FAMILY_CONTACTS = {
+  tech:    ['CTO','VP Engineering','Engineering Manager','Head of Engineering'],
+  data:    ['Head of Data','VP Data','Chief Data Officer','CTO'],
+  product: ['CPO','Head of Product','VP Product'],
+  cyber:   ['CISO','Head of Security','CTO'],
+  biz:     ['VP Sales','Head of Sales','Director of Partnerships'],
+  cs:      ['VP Customer Success','Head of CS'],
+  mkt:     ['CMO','Head of Marketing'],
+  mgmt:    ['DG','CEO','COO'],
+};
+
+function _buildContacts(selectedAngles, crmData) {
+  var internalConsultant = (crmData && crmData.crm_consultant || '').toLowerCase();
+  var contacts = [];
+  var seen = {};
+  // Contacts depuis familles des angles sélectionnés
+  selectedAngles.forEach(function(angle) {
+    if (angle.id === 'reactiv') return;
+    var roles = _FAMILY_CONTACTS[angle.id] || [];
+    roles.slice(0,2).forEach(function(role) {
+      if (!seen[role]) {
+        seen[role] = true;
+        contacts.push({
+          name: role,
+          category: 'TO_FIND',
+          reason: 'Fonction impliquée par les recrutements '+angle.label,
+          selected: true,
+        });
+      }
+    });
+  });
+  // Toujours proposer Talent Acquisition (si pas déjà présent)
+  if (!seen['Talent Acquisition Manager']) {
+    contacts.push({name:'Talent Acquisition Manager', category:'TO_FIND', reason:'Interlocuteur recrutement systématique', selected: false});
+  }
+  // Exclure consultant interne
+  contacts = contacts.filter(function(c){
+    return (c.name||'').toLowerCase() !== internalConsultant;
+  });
+  return contacts;
+}
+
+// ── Génération séquence ────────────────────────────────────────
+function _buildSequence(angles, crmData, contacts) {
+  var strategy = 'cold';
+  if (crmData && crmData.is_client) strategy = 'client';
+  else if (crmData && crmData.crm_tc) strategy = 'reactiv';
+  else if (crmData && crmData.crm_status === 'Prospect') strategy = 'prospect';
+
+  var mainAngle = angles[0] || {label:'recrutements détectés', families:[]};
+  var mainContact = (contacts.find(function(c){return c.selected;}) || contacts[0] || {}).name || '[Prénom]';
+  var co = _sp.company;
+  var mainTitles = mainAngle.families.flatMap(function(f){return f.jobs.slice(0,2).map(function(j){return j.title;});}).slice(0,2).join(' et ');
+  if (!mainTitles) mainTitles = mainAngle.label;
+
+  var msgs = [];
+  // ── J+0 ──
+  var body0 = '';
+  if (strategy === 'client') {
+    body0 = 'Bonjour,\n\nJe vois que '+co+' recrute actuellement un·e '+mainTitles+'. On a déjà travaillé ensemble, donc je voulais vous contacter directement — j\'ai des profils pertinents sous la main.\n\nOn peut en parler rapidement ?';
+  } else if (strategy === 'reactiv') {
+    body0 = 'Bonjour,\n\nJe me permets de vous recontacter — '+co+' recrute sur '+mainTitles+' et c\'est exactement là où Urban Linker est le plus utile.\n\nOn avait été en contact il y a quelque temps, est-ce que ça vaut une conversation ?';
+  } else if (strategy === 'prospect') {
+    body0 = 'Bonjour,\n\nJ\'ai vu que '+co+' cherche un·e '+mainTitles+'. Urban Linker travaille régulièrement sur ce type de profil — on place des candidats dans des entreprises avec les mêmes enjeux.\n\n15 minutes pour voir si on peut vous aider ?';
+  } else {
+    body0 = 'Bonjour,\n\nJe voulais vous contacter au sujet de votre recrutement de '+mainTitles+'. Urban Linker est spécialisé sur ces profils — c\'est notre cœur de métier depuis plusieurs années.\n\nSeriez-vous disponible rapidement pour en discuter ?';
+  }
+  msgs.push({day:0, label:'Premier contact', recipient:mainContact, subject:'Votre recrutement '+mainTitles.split(' et ')[0], body:body0, edited:false});
+
+  // ── J+3 ──
+  var body3 = 'Bonjour,\n\nJe me permets de revenir suite à mon précédent message. Je sais que vous êtes probablement sollicité·e, donc je serai bref : avez-vous le temps de discuter 15 minutes cette semaine ?\n\nBonne journée,';
+  if (strategy !== 'cold') body3 = 'Bonjour,\n\nJuste un suivi de mon message précédent — j\'ai quelques candidats disponibles rapidement sur le profil '+mainTitles+'.\n\nEst-ce que ça vous intéresse de jeter un œil ?';
+  msgs.push({day:3, label:'Relance #1', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:body3, edited:false});
+
+  // J+7 uniquement pour cold/prospect
+  if (strategy === 'cold' || strategy === 'prospect') {
+    var body7 = 'Bonjour,\n\nJe tente une dernière fois — si le besoin est toujours d\'actualité, Urban Linker peut vous présenter des candidats qualifiés sous 2 semaines.\n\nSi le timing n\'est pas bon, pas de problème, je resterai disponible.';
+    msgs.push({day:7, label:'Relance #2', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:body7, edited:false});
+    msgs.push({day:14, label:'Clôture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ne veux pas vous encombrer — je ferme ce sujet de mon côté. Si un besoin se manifeste à l\'avenir, n\'hésitez pas à revenir vers moi.\n\nBonne continuation,', edited:false});
+  } else {
+    msgs.push({day:10, label:'Clôture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ferme ce fil de mon côté — n\'hésitez pas si le besoin évolue.\n\nBonne journée,', edited:false});
+  }
+  return msgs;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PANEL : OUVERTURE / FERMETURE / NAVIGATION
+// ══════════════════════════════════════════════════════════════
+function prospectClick(e, companyName) {
+  e.stopPropagation();
+  if (!SALES_AGENT_ENABLED) return;
+  openSalesPanel(companyName);
+}
+
+function openSalesPanel(companyName) {
+  if (!SALES_AGENT_ENABLED) return;
+  // Recalcule seulement si entreprise différente
+  if (_sp.company !== companyName) {
+    _sp.company = companyName;
+    _sp.jobs = _dedupeJobs(_getCompanyJobs(companyName));
+    _sp.families = _buildFamilies(_sp.jobs);
+    _sp.crmData = _sp.jobs[0] || null;
+    _sp.angles = _buildAngles(_sp.families, _sp.crmData);
+    // Pré-sélectionner les 2 premiers angles pertinents
+    _sp.angles.forEach(function(a,i){ a.selected = i < 2 && a.id !== 'other'; });
+    _sp.contacts = _buildContacts(_sp.angles.filter(function(a){return a.selected;}), _sp.crmData);
+    var ps = _proStatus(_sp.crmData);
+    _sp.proStatus = ps.status;
+    _sp.sequence = [];
+    _sp.customArg = '';
+  }
+  _sp.currentStep = 1;
+
+  // Header
+  var sample = _sp.crmData || {};
+  var logoEl = document.getElementById('sp-hdr-logo');
+  if (sample.logo) {
+    logoEl.innerHTML = '<img src="'+sample.logo+'" alt="" onerror="this.parentNode.textContent=\''+_initials(companyName)+'\'">';
+  } else {
+    logoEl.textContent = _initials(companyName);
+  }
+  document.getElementById('sp-hdr-name').textContent = companyName;
+  var ps = _proStatus(_sp.crmData);
+  var psColor = ps.status==='ok'?'var(--accent)':ps.status==='blocked'?'var(--red)':'var(--warn)';
+  document.getElementById('sp-hdr-meta').innerHTML =
+    _sp.jobs.length+' offre'+(_sp.jobs.length>1?'s':'')+' · '+
+    '<span style="color:'+psColor+';font-weight:600;">'+ps.label+'</span>';
+
+  _renderStep(1);
+  document.getElementById('sp-overlay').classList.add('open');
+  document.getElementById('sales-panel').classList.add('open');
+}
+
+function closeSalesPanel() {
+  document.getElementById('sp-overlay').classList.remove('open');
+  document.getElementById('sales-panel').classList.remove('open');
+}
+
+function goToStep(n) {
+  if (n < 1 || n > 4) return;
+  // Avant Step 3 : recalculer contacts selon angles sélectionnés
+  if (n === 3) {
+    var selAngles = _sp.angles.filter(function(a){return a.selected;});
+    if (!selAngles.length) selAngles = [_sp.angles[0]];
+    _sp.contacts = _buildContacts(selAngles, _sp.crmData);
+  }
+  // Avant Step 4 : (re)générer séquence si pas encore éditée
+  if (n === 4 && !_sp.sequence.length) {
+    var selA = _sp.angles.filter(function(a){return a.selected;});
+    _sp.sequence = _buildSequence(selA, _sp.crmData, _sp.contacts);
+  }
+  _sp.currentStep = n;
+  _renderStep(n);
+}
+function spNext() { goToStep(_sp.currentStep + 1); }
+function spPrev() { goToStep(_sp.currentStep - 1); }
+
+function _renderStep(n) {
+  var btns = document.querySelectorAll('.sp-step-btn');
+  btns.forEach(function(b,i){
+    b.classList.remove('active','done');
+    if (i+1===n) b.classList.add('active');
+    else if (i+1<n) b.classList.add('done');
+  });
+  document.getElementById('sp-prev-btn').style.visibility = n > 1 ? 'visible' : 'hidden';
+  var nextBtn = document.getElementById('sp-next-btn');
+  if (n === 4) { nextBtn.textContent = '💾 Sauvegarder brouillon'; nextBtn.style.background = '#166534'; }
+  else { nextBtn.textContent = 'Suivant →'; nextBtn.style.background = ''; }
+  var content = document.getElementById('sp-content');
+  switch(n) {
+    case 1: content.innerHTML = _buildStep1(); break;
+    case 2: content.innerHTML = _buildStep2(); break;
+    case 3: content.innerHTML = _buildStep3(); break;
+    case 4: content.innerHTML = _buildStep4(); break;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 1 — OPPORTUNITÉ (familles + angles sélectionnables)
+// ══════════════════════════════════════════════════════════════
+function _buildStep1() {
+  var jobs = _sp.jobs;
+  if (!jobs.length) return '<p style="padding:24px;text-align:center;color:var(--txt3);">Aucune offre trouvée.</p>';
+  var crm = _sp.crmData || {};
+  var ps = _proStatus(crm);
+  var cscore = _commercialScore(_sp.families, crm);
+
+  // Status chips
+  var psColor = ps.status==='ok'?'var(--accent)':ps.status==='blocked'?'var(--red)':'var(--warn)';
+  var html = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px;">';
+  // CRM badge
+  if (crm.crm_link) {
+    var crmLabel = crm.is_client?'★ Client actif':crm.crm_status==='Prospect'?'◎ Prospect':'📁 CRM';
+    var crmCls = crm.is_client?'sp-crm-client':crm.crm_status==='Prospect'?'sp-crm-prospect':'sp-crm-known';
+    html += '<span class="sp-crm-badge '+crmCls+'">'+crmLabel+'</span>';
+  } else {
+    html += '<span class="sp-crm-badge sp-crm-unknown">✗ Non CRM</span>';
+  }
+  // Status chips compacts
+  html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;padding:2px 7px;border-radius:4px;background:var(--bg2);color:var(--txt3);">INTÉRÊT <strong style="color:var(--txt);">'+cscore+'/100</strong></span>';
+  html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;padding:2px 7px;border-radius:4px;background:var(--bg2);color:'+psColor+'">'+ps.label.toUpperCase()+'</span>';
+  if (crm.crm_consultant) html += '<span style="font-size:10px;color:var(--txt3);">Resp. : <strong>'+crm.crm_consultant+'</strong></span>';
+  html += '</div>';
+
+  // Familles
+  html += '<div class="sp-section"><div class="sp-section-title">Recrutements par pôle</div>';
+  _sp.families.forEach(function(f) {
+    var recents = f.jobs.filter(function(j){return (j.daysAgo||99)<=14;}).length;
+    html += '<div style="margin-bottom:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">';
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);">';
+    html += '<span style="font-size:12px;font-weight:600;flex:1;">'+f.label+'</span>';
+    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--txt3);">'+f.jobs.length+' poste'+(f.jobs.length>1?'s':'');
+    if (recents) html += ' · <span style="color:var(--accent);">'+recents+' récent'+(recents>1?'s':'')+'</span>';
+    html += '</span>';
+    var fitColors = ['','','var(--accent)','var(--accent)','var(--accent)','var(--accent)'];
+    html += '<span style="font-size:10px;color:'+(fitColors[f.fit]||'var(--txt3)')+'">'+('★'.repeat(Math.min(f.fit,3)))+'</span>';
+    html += '</div>';
+    f.jobs.forEach(function(j) {
+      var fresh = (j.daysAgo||99) <= 7 ? ' style="color:var(--accent)"' : (j.daysAgo||99) > 60 ? ' style="color:var(--txt3)"' : '';
+      html += '<div class="sp-job-row" style="border-radius:0;background:transparent;border-top:1px solid var(--border);">';
+      html += '<a href="'+j.link+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="flex:1;min-width:0;font-size:12px;font-weight:500;color:var(--txt);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+j.title+'</a>';
+      html += '<span class="sp-job-meta"'+fresh+'>'+daysLabel(j.daysAgo||0)+'</span>';
+      if (j.location) html += '<span class="sp-job-meta">'+j.location+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Angles commerciaux
+  html += '<div class="sp-section"><div class="sp-section-title" style="display:flex;align-items:center;gap:6px;">Angles commerciaux suggérés <span style="font-size:10px;font-weight:400;color:var(--txt3);">Sélectionner les angles à développer</span></div>';
+  _sp.angles.forEach(function(angle) {
+    var sel = angle.selected;
+    html += '<div onclick="spToggleAngle(\''+angle.id+'\')" style="cursor:pointer;display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:8px;border:1.5px solid '+(sel?'var(--accent)':'var(--border)')+';background:'+(sel?'var(--accent-bg)':'#fff')+';margin-bottom:6px;">';
+    html += '<span style="font-size:14px;margin-top:1px;">'+(sel?'☑':'☐')+'</span>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="font-size:12px;font-weight:600;color:'+(sel?'var(--accent-txt)':'var(--txt)')+'">'+angle.label+'</div>';
+    html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">'+angle.reason+'</div>';
+    html += '</div></div>';
+  });
+  if (!_sp.angles.some(function(a){return a.selected;})) {
+    html += '<div class="sp-alert sp-alert-warn">⚠️ Sélectionner au moins un angle pour continuer.</div>';
+  }
+  html += '</div>';
+
+  return html;
+}
+
+function spToggleAngle(id) {
+  _sp.angles.forEach(function(a){if(a.id===id) a.selected=!a.selected;});
+  // Reset séquence si angles changent
+  _sp.sequence = [];
+  _renderStep(1);
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 2 — CRM (info séparées : administratif vs commercial)
+// ══════════════════════════════════════════════════════════════
+function _buildStep2() {
+  var crm = _sp.crmData || {};
+  var ps = _proStatus(crm);
+  var psColor = ps.status==='ok'?'#166534':ps.status==='blocked'?'#991b1b':'#92400e';
+  var psBg   = ps.status==='ok'?'#f0fdf4':ps.status==='blocked'?'#fef2f2':'#fffbeb';
+
+  var html = '';
+
+  // Statut prospection (en haut, toujours visible)
+  html += '<div style="background:'+psBg+';border-radius:8px;padding:10px 12px;margin-bottom:14px;display:flex;align-items:flex-start;gap:8px;">';
+  html += '<span style="font-size:16px;">'+(ps.status==='ok'?'✓':ps.status==='blocked'?'✗':'⚠')+'</span>';
+  html += '<div><div style="font-size:12px;font-weight:700;color:'+psColor+';">'+ps.label+'</div>';
+  html += '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">'+ps.reason+'</div></div></div>';
+
+  if (!crm.crm_link) {
+    html += '<div class="sp-section"><div class="sp-alert sp-alert-info">Entreprise non encore référencée dans Recruit CRM. Elle peut être créée lors du premier contact réel.</div></div>';
+  } else {
+    // Infos administratives
+    html += '<div class="sp-section"><div class="sp-section-title">Informations administratives</div>';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    [
+      ['Statut CRM', crm.crm_status || '—'],
+      ['T&Cs signés', crm.crm_tc===true?'✓ Oui':crm.crm_tc===false?'✗ Non':'— Inconnu'],
+      ['Consultant responsable', crm.crm_consultant || '—'],
+      ['Fiche CRM', '<a href="'+crm.crm_link+'" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;" onclick="event.stopPropagation()">Ouvrir →</a>'],
+    ].forEach(function(r){
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:6px 4px;color:var(--txt3);width:50%;">'+r[0]+'</td>';
+      html += '<td style="padding:6px 4px;font-weight:500;">'+r[1]+'</td></tr>';
+    });
+    html += '</table></div>';
+
+    // Infos commerciales
+    html += '<div class="sp-section"><div class="sp-section-title">Informations commerciales</div>';
+    html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+    [
+      ['Mission ouverte', crm.crm_open_job ? '✓ Oui (cf. fiche CRM)' : 'Non détectée'],
+      ['Dernier échange', crm.crm_last_updated ? 'Fiche modifiée le '+crm.crm_last_updated.split('T')[0]+(crm.crm_updated_by?' par '+crm.crm_updated_by:'') : '—'],
+      ['Historique complet', 'Non disponible — voir fiche CRM'],
+      ['Campagne JobRadar', 'Aucune campagne en cours'],
+    ].forEach(function(r){
+      html += '<tr style="border-bottom:1px solid var(--border);">';
+      html += '<td style="padding:6px 4px;color:var(--txt3);width:50%;">'+r[0]+'</td>';
+      html += '<td style="padding:6px 4px;font-weight:500;">'+r[1]+'</td></tr>';
+    });
+    html += '</table>';
+    html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--txt3);margin-top:6px;padding:4px 6px;background:var(--bg2);border-radius:4px;">⚠ Tracking commercial non vérifié — validation nécessaire (API RCRM /activities en Phase 2)</div>';
+    html += '</div>';
+  }
+
+  html += '<div class="sp-section"><div class="sp-section-title">Contacts (Phase 2)</div>';
+  html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--txt3);padding:6px 8px;background:var(--bg2);border-radius:5px;">CONTACTS : NON CONNECTÉS — Intégration API RCRM /contacts prévue en Phase 2</div>';
+  html += '</div>';
+
+  return html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 3 — STRATÉGIE (contacts + messages + argument libre)
+// ══════════════════════════════════════════════════════════════
+function _buildStep3() {
+  var selAngles = _sp.angles.filter(function(a){return a.selected;});
+  if (!selAngles.length) return '<div class="sp-alert sp-alert-warn" style="margin:20px;">⚠️ Aucun angle sélectionné. Retournez à l\'étape 1.</div>';
+  var crm = _sp.crmData || {};
+  var ps = _proStatus(crm);
+
+  var html = '';
+
+  // Stratégie déterminée
+  var strategy = crm.is_client?'client':crm.crm_tc?'reactiv':crm.crm_status==='Prospect'?'prospect':'cold';
+  var stratLabels = {cold:'Prospection à froid',reactiv:'Réactivation',client:'Client actif',prospect:'Prospect connu'};
+  var stratColors = {cold:'var(--txt2)',reactiv:'var(--blue)',client:'var(--accent)',prospect:'var(--warn)'};
+
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">';
+  html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;padding:2px 8px;border-radius:4px;background:var(--bg2);color:'+stratColors[strategy]+'">STRATÉGIE : '+stratLabels[strategy].toUpperCase()+'</span>';
+  selAngles.forEach(function(a){ html += '<span class="pill p-purple">'+a.label+'</span>'; });
+  html += '</div>';
+
+  // Contacts
+  html += '<div class="sp-section"><div class="sp-section-title">Interlocuteurs</div>';
+  _sp.contacts.forEach(function(c, idx) {
+    var catLabel = c.category==='CRM'?'CONTACT CRM':c.category==='EXT'?'CONTACT EXTERNE':'FONCTION À RECHERCHER';
+    var catColor = c.category==='CRM'?'var(--accent)':c.category==='EXT'?'var(--blue)':'var(--txt3)';
+    html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1.5px solid '+(c.selected?'var(--accent)':'var(--border)')+';border-radius:8px;margin-bottom:5px;cursor:pointer;background:'+(c.selected?'var(--accent-bg)':'#fff')+'" onclick="spToggleContact('+idx+')">';
+    html += '<span style="font-size:13px;margin-top:1px;">'+(c.selected?'☑':'☐')+'</span>';
+    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">';
+    html += '<span style="font-size:12px;font-weight:600;">'+c.name+'</span>';
+    html += '<span style="font-size:9px;font-family:\'DM Mono\',monospace;color:'+catColor+';background:var(--bg2);padding:1px 5px;border-radius:3px;">'+catLabel+'</span>';
+    html += '</div>';
+    html += '<div style="font-size:11px;color:var(--txt3);">'+c.reason+'</div>';
+    html += '</div></div>';
+  });
+  html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--txt3);padding:5px 7px;background:var(--bg2);border-radius:4px;margin-top:5px;">Les contacts CRM réels seront disponibles en Phase 2. Le consultant responsable est exclu de cette liste.</div>';
+  html += '</div>';
+
+  // Argument libre
+  html += '<div class="sp-section"><div class="sp-section-title">Argument complémentaire <span style="font-weight:400;text-transform:none;font-size:11px;">(optionnel)</span></div>';
+  html += '<textarea id="sp-custom-arg" placeholder="Ex : J\'ai des candidats disponibles rapidement sur ce profil. / Je connais personnellement cet interlocuteur." style="width:100%;height:60px;font-size:12px;font-family:\'DM Sans\',sans-serif;padding:8px;border:1px solid var(--border2);border-radius:7px;resize:vertical;outline:none;line-height:1.5;" oninput="_sp.customArg=this.value">'+(_sp.customArg||'')+'</textarea>';
+  html += '</div>';
+
+  // Aperçu message J+0
+  if (!_sp.sequence.length) {
+    var selA = _sp.angles.filter(function(a){return a.selected;});
+    _sp.sequence = _buildSequence(selA, crm, _sp.contacts);
+  }
+  var msg0 = _sp.sequence[0];
+  if (msg0) {
+    html += '<div class="sp-section"><div class="sp-section-title">Aperçu — Premier message</div>';
+    html += '<div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--txt);">'+msg0.body+'</div>';
+    html += '<div style="font-size:10px;color:var(--txt3);margin-top:5px;">Destinataire suggéré : '+msg0.recipient+' · Objet : '+msg0.subject+'</div>';
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function spToggleContact(idx) {
+  if (_sp.contacts[idx]) {
+    _sp.contacts[idx].selected = !_sp.contacts[idx].selected;
+    _sp.sequence = []; // reset séquence si contacts changent
+  }
+  _renderStep(3);
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP 4 — VALIDATION (cartes éditables + checklist)
+// ══════════════════════════════════════════════════════════════
+function _buildStep4() {
+  var crm = _sp.crmData || {};
+  var ps = _proStatus(crm);
+  var selAngles = _sp.angles.filter(function(a){return a.selected;});
+  var selContacts = _sp.contacts.filter(function(c){return c.selected;});
+  if (!_sp.sequence.length) {
+    _sp.sequence = _buildSequence(selAngles, crm, _sp.contacts);
+  }
+
+  var html = '';
+
+  // ── A. Résumé commercial ──
+  html += '<div class="sp-section"><div class="sp-section-title">A · Résumé commercial</div>';
+  html += '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+  var sumRows = [
+    ['Entreprise', _sp.company],
+    ['Angles sélectionnés', selAngles.map(function(a){return a.label;}).join(', ')||'—'],
+    ['Interlocuteurs', selContacts.map(function(c){return c.name;}).join(', ')||'—'],
+    ['Stratégie', crm.is_client?'Client actif':crm.crm_tc?'Réactivation':crm.crm_status==='Prospect'?'Prospect connu':'Prospection à froid'],
+    ['Statut CRM', crm.crm_status||'Non référencé'],
+    ['Consultant responsable', crm.crm_consultant||'—'],
+  ];
+  sumRows.forEach(function(r){
+    html += '<tr style="border-bottom:1px solid var(--border);">';
+    html += '<td style="padding:5px 4px;color:var(--txt3);width:45%;">'+r[0]+'</td>';
+    html += '<td style="padding:5px 4px;font-weight:500;">'+r[1]+'</td></tr>';
+  });
+  html += '</table></div>';
+
+  // ── B. Plan ──
+  html += '<div class="sp-section"><div class="sp-section-title">B · Plan</div>';
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">';
+  html += '<div class="sp-stat" style="min-width:60px;"><div class="sp-stat-n">'+_sp.sequence.length+'</div><div class="sp-stat-l">messages</div></div>';
+  html += '<div class="sp-stat" style="min-width:60px;"><div class="sp-stat-n">'+selContacts.length+'</div><div class="sp-stat-l">destinataire'+(selContacts.length>1?'s':'')+'</div></div>';
+  var totalDays = _sp.sequence.length ? _sp.sequence[_sp.sequence.length-1].day : 0;
+  html += '<div class="sp-stat" style="min-width:60px;"><div class="sp-stat-n">'+totalDays+'j</div><div class="sp-stat-l">durée</div></div>';
+  html += '</div>';
+  if (_sp.customArg) {
+    html += '<div style="font-size:11px;font-style:italic;color:var(--txt2);padding:6px 8px;background:var(--bg2);border-radius:6px;margin-top:4px;">💬 Argument ajouté : «'+_sp.customArg+'»</div>';
+  }
+  html += '</div>';
+
+  // ── C. Séquence (cartes éditables) ──
+  html += '<div class="sp-section"><div class="sp-section-title" style="display:flex;align-items:center;justify-content:space-between;">C · Séquence <button onclick="spAddMessage()" style="font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid var(--border2);background:#fff;cursor:pointer;font-family:\'DM Sans\',sans-serif;">+ Ajouter</button></div>';
+  _sp.sequence.forEach(function(msg, idx) {
+    var edited = msg.edited ? ' · <span style="color:var(--warn);">modifié</span>' : '';
+    html += '<div class="sp-msg-card" id="sp-msg-'+idx+'">';
+    // Header
+    html += '<div class="sp-msg-hdr">';
+    html += '<span class="sp-msg-day">J+'+msg.day+'</span>';
+    html += '<span style="flex:1;">'+msg.label+'</span>';
+    html += '<span style="font-size:10px;color:var(--txt3);">→ '+msg.recipient+edited+'</span>';
+    html += '<button onclick="spRemoveMessage('+idx+')" style="background:none;border:none;cursor:pointer;color:var(--txt3);font-size:13px;padding:0 4px;" title="Supprimer">✕</button>';
+    html += '</div>';
+    // Body (éditable)
+    html += '<div style="padding:10px;">';
+    html += '<div style="font-size:10px;color:var(--txt3);margin-bottom:4px;display:flex;gap:8px;">';
+    html += '<span>Objet : <strong>'+msg.subject+'</strong></span>';
+    html += '<span>|</span>';
+    html += '<label style="display:flex;align-items:center;gap:3px;">Délai : <input type="number" min="0" max="90" value="'+msg.day+'" style="width:40px;font-size:11px;padding:1px 4px;border:1px solid var(--border2);border-radius:4px;" onchange="spUpdateDay('+idx+',this.value)"></label>';
+    html += '<span>|</span>';
+    html += '<input type="text" value="'+msg.recipient+'" placeholder="Destinataire" style="font-size:11px;flex:1;border:1px solid var(--border2);border-radius:4px;padding:1px 5px;" onchange="spUpdateRecipient('+idx+',this.value)">';
+    html += '</div>';
+    html += '<textarea id="sp-body-'+idx+'" style="width:100%;height:90px;font-size:12px;font-family:\'DM Sans\',sans-serif;padding:7px;border:1px solid var(--border);border-radius:6px;resize:vertical;line-height:1.7;" onchange="spUpdateBody('+idx+',this.value)">'+msg.body+'</textarea>';
+    html += '<div style="display:flex;gap:6px;margin-top:5px;">';
+    html += '<button onclick="spRegenMessage('+idx+')" style="font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid var(--border2);background:#fff;cursor:pointer;font-family:\'DM Sans\',sans-serif;">↻ Régénérer</button>';
+    html += '</div></div></div>';
+  });
+  html += '</div>';
+
+  // ── D. Actions CRM (simulées) ──
+  html += '<div class="sp-section"><div class="sp-section-title">D · Actions Recruit CRM <span style="font-size:9px;font-family:\'DM Mono\',monospace;background:var(--bg3);padding:1px 5px;border-radius:3px;">SIMULATION</span></div>';
+  var crmActions = ['Lancement de campagne','Premier e-mail envoyé'].concat(
+    _sp.sequence.slice(1).map(function(m){return 'Relance J+'+m.day;})
+  ).concat(['Clôture']);
+  crmActions.forEach(function(a){
+    html += '<div style="font-size:11px;display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);color:var(--txt3);">';
+    html += '<span>📋</span><span>[JOBRADAR] '+a+' — '+_sp.company+'</span></div>';
+  });
+  html += '<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--txt3);margin-top:6px;padding:4px 6px;background:var(--bg2);border-radius:4px;">Écriture réelle dans RCRM disponible en Phase 2 (API /activities)</div>';
+  html += '</div>';
+
+  // ── E. Checklist ──
+  html += '<div class="sp-section"><div class="sp-section-title">E · Vérification avant lancement</div>';
+  var checks = [
+    {ok: selAngles.length > 0,       label:'Angle commercial sélectionné'},
+    {ok: selContacts.length > 0,     label:'Interlocuteur identifié'},
+    {ok: _sp.sequence.length > 0,    label:'Séquence non vide'},
+    {ok: ps.status !== 'blocked',    label:'Pas de blocage commercial connu'},
+    {ok: false,                       label:'Connexion Gmail (Phase 3)'},
+    {ok: false,                       label:'Écriture RCRM vérifiée (Phase 2)'},
+  ];
+  checks.forEach(function(c){
+    html += '<div style="display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 0;">';
+    html += '<span style="font-size:13px;color:'+(c.ok?'var(--accent)':'var(--txt3)')+'">'+(c.ok?'✓':'○')+'</span>';
+    html += '<span style="color:'+(c.ok?'var(--txt)':'var(--txt3)')+'">'+c.label+'</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // ── Boutons ──
+  html += '<div style="display:flex;gap:8px;margin-top:4px;">';
+  html += '<button class="sp-btn-sec" style="flex:1;" onclick="spSaveDraft()">💾 Sauvegarder brouillon</button>';
+  html += '<button class="sp-btn-prim" style="flex:2;opacity:.45;cursor:not-allowed;" disabled title="Connexion Gmail requise (Phase 3)">🔒 Valider et lancer (Phase 3)</button>';
+  html += '</div>';
+
+  return html;
+}
+
+// ── Actions sur la séquence ────────────────────────────────────
+function spUpdateBody(idx, val) {
+  if (_sp.sequence[idx]) { _sp.sequence[idx].body = val; _sp.sequence[idx].edited = true; }
+}
+function spUpdateDay(idx, val) {
+  if (_sp.sequence[idx]) { _sp.sequence[idx].day = parseInt(val)||0; }
+  // Re-trier par jour
+  _sp.sequence.sort(function(a,b){return a.day-b.day;});
+}
+function spUpdateRecipient(idx, val) {
+  if (_sp.sequence[idx]) { _sp.sequence[idx].recipient = val; _sp.sequence[idx].edited = true; }
+}
+function spRemoveMessage(idx) {
+  _sp.sequence.splice(idx, 1);
+  _renderStep(4);
+}
+function spAddMessage() {
+  var lastDay = _sp.sequence.length ? _sp.sequence[_sp.sequence.length-1].day : 0;
+  var crm = _sp.crmData || {};
+  var recipient = (_sp.contacts.find(function(c){return c.selected;})||{}).name || '[Prénom]';
+  var mainTitle = _sp.families[0] ? _sp.families[0].jobs[0].title : 'votre besoin';
+  _sp.sequence.push({
+    day: lastDay+7,
+    label:'Relance additionnelle',
+    recipient: recipient,
+    subject:'Re : '+mainTitle,
+    body:'Bonjour,\n\n[Message à rédiger]',
+    edited:false
+  });
+  _renderStep(4);
+}
+function spRegenMessage(idx) {
+  if (!_sp.sequence[idx] || _sp.sequence[idx].edited) {
+    if (!confirm('Ce message a été modifié manuellement. Régénérer quand même ?')) return;
+  }
+  var selA = _sp.angles.filter(function(a){return a.selected;});
+  var fresh = _buildSequence(selA, _sp.crmData||{}, _sp.contacts);
+  if (fresh[idx]) {
+    _sp.sequence[idx] = fresh[idx];
+    document.getElementById('sp-body-'+idx).value = fresh[idx].body;
+    _sp.sequence[idx].edited = false;
+  }
+  _renderStep(4);
+}
+function spSaveDraft() {
+  _sp.draft = {
+    company: _sp.company,
+    angles: _sp.angles.filter(function(a){return a.selected;}).map(function(a){return a.label;}),
+    sequence: _sp.sequence.length,
+    savedAt: new Date().toLocaleString('fr-FR'),
+  };
+  // Mémoriser dans localStorage
+  try {
+    var drafts = JSON.parse(localStorage.getItem('jr_sa_drafts')||'{}');
+    drafts[_sp.company.toLowerCase()] = {company:_sp.company, savedAt:_sp.draft.savedAt, steps:_sp.sequence.length};
+    localStorage.setItem('jr_sa_drafts', JSON.stringify(drafts));
+  } catch(e){}
+  _prospectBasket[_sp.company.toLowerCase()] = true;
+  _updateBasketChip();
+  renderJobs();
+  // Feedback
+  var btn = document.querySelector('.sp-btn-sec');
+  if (btn) { btn.textContent = '✓ Brouillon sauvegardé'; btn.style.color='var(--accent)'; setTimeout(function(){btn.textContent='💾 Sauvegarder brouillon';btn.style.color='';},2000); }
+}
+
+// ── Panier ─────────────────────────────────────────────────────
+function addToBasket() { spSaveDraft(); }
+
+function _updateBasketChip() {
+  var n = Object.keys(_prospectBasket).length;
+  var chip = document.getElementById('basket-chip');
+  document.getElementById('basket-count').textContent = n;
+  chip.className = 'basket-chip' + (n > 0 ? ' visible' : '');
+}
+
+function openBasketPanel() {
+  var keys = Object.keys(_prospectBasket);
+  if (!keys.length) return;
+  var realName = '';
+  for (var i=0;i<ALL_JOBS.length;i++) {
+    if ((ALL_JOBS[i].company||'').toLowerCase()===keys[0]){realName=ALL_JOBS[i].company;break;}
+  }
+  if (realName) openSalesPanel(realName);
+}
+
 _initAuth();
 populateConsultants();
 renderJobs();
