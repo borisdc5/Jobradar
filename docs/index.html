@@ -1409,28 +1409,28 @@ function _buildSequence(angles, crmData, contacts) {
   // ── J+0 ──
   var body0 = '';
   if (strategy === 'client') {
-    body0 = 'Bonjour,\n\nJe vois que '+co+' recrute actuellement un·e '+mainTitles+'. On a déjà travaillé ensemble, donc je voulais vous contacter directement — j\'ai des profils pertinents sous la main.\n\nOn peut en parler rapidement ?';
+    body0 = 'Bonjour,\n\nJe vois que '+co+' recrute actuellement sur '+mainTitles+'. On a deja travaille ensemble et je voulais vous contacter directement : j\'ai des profils pertinents sous la main.\n\nOn peut en parler rapidement ?';
   } else if (strategy === 'reactiv') {
-    body0 = 'Bonjour,\n\nJe me permets de vous recontacter — '+co+' recrute sur '+mainTitles+' et c\'est exactement là où Urban Linker est le plus utile.\n\nOn avait été en contact il y a quelque temps, est-ce que ça vaut une conversation ?';
+    body0 = 'Bonjour,\n\nJe me permets de vous recontacter car '+co+' recrute sur '+mainTitles+' et c\'est exactement la ou Urban Linker est le plus utile.\n\nOn avait ete en contact il y a quelque temps, est-ce que ca vaut une conversation ?';
   } else if (strategy === 'prospect') {
-    body0 = 'Bonjour,\n\nJ\'ai vu que '+co+' cherche un·e '+mainTitles+'. Urban Linker travaille régulièrement sur ce type de profil — on place des candidats dans des entreprises avec les mêmes enjeux.\n\n15 minutes pour voir si on peut vous aider ?';
+    body0 = 'Bonjour,\n\nJ\'ai vu que '+co+' cherche un profil '+mainTitles+'. Urban Linker travaille regulierement sur ce type de poste et place des candidats dans des entreprises avec les memes enjeux.\n\n15 minutes pour voir si on peut vous aider ?';
   } else {
-    body0 = 'Bonjour,\n\nJe voulais vous contacter au sujet de votre recrutement de '+mainTitles+'. Urban Linker est spécialisé sur ces profils — c\'est notre cœur de métier depuis plusieurs années.\n\nSeriez-vous disponible rapidement pour en discuter ?';
+    body0 = 'Bonjour,\n\nJe voulais vous contacter au sujet de votre recrutement de '+mainTitles+'. Urban Linker est specialise sur ces profils et c\'est notre coeur de metier depuis plusieurs annees.\n\nSeriez-vous disponible rapidement pour en discuter ?';
   }
   msgs.push({day:0, label:'Premier contact', recipient:mainContact, subject:'Votre recrutement '+mainTitles.split(' et ')[0], body:body0, edited:false});
 
   // ── J+3 ──
-  var body3 = 'Bonjour,\n\nJe me permets de revenir suite à mon précédent message. Je sais que vous êtes probablement sollicité·e, donc je serai bref : avez-vous le temps de discuter 15 minutes cette semaine ?\n\nBonne journée,';
-  if (strategy !== 'cold') body3 = 'Bonjour,\n\nJuste un suivi de mon message précédent — j\'ai quelques candidats disponibles rapidement sur le profil '+mainTitles+'.\n\nEst-ce que ça vous intéresse de jeter un œil ?';
+  var body3 = 'Bonjour,\n\nJe me permets de revenir suite a mon precedent message. Je sais que vous etes probablement tres sollicite, donc je serai bref : avez-vous le temps de discuter 15 minutes cette semaine ?\n\nBonne journee,';
+  if (strategy !== 'cold') body3 = 'Bonjour,\n\nJuste un suivi rapide : j\'ai quelques candidats disponibles rapidement sur le profil '+mainTitles+'.\n\nEst-ce que ca vous interesse de jeter un oeil ?';
   msgs.push({day:3, label:'Relance #1', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:body3, edited:false});
 
   // J+7 uniquement pour cold/prospect
   if (strategy === 'cold' || strategy === 'prospect') {
-    var body7 = 'Bonjour,\n\nJe tente une dernière fois — si le besoin est toujours d\'actualité, Urban Linker peut vous présenter des candidats qualifiés sous 2 semaines.\n\nSi le timing n\'est pas bon, pas de problème, je resterai disponible.';
+    var body7 = 'Bonjour,\n\nJe tente une derniere fois. Si le besoin est toujours d\'actualite, Urban Linker peut vous presenter des candidats qualifies sous 2 semaines.\n\nSi le timing n\'est pas bon, pas de probleme, je resterai disponible.';
     msgs.push({day:7, label:'Relance #2', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:body7, edited:false});
-    msgs.push({day:14, label:'Clôture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ne veux pas vous encombrer — je ferme ce sujet de mon côté. Si un besoin se manifeste à l\'avenir, n\'hésitez pas à revenir vers moi.\n\nBonne continuation,', edited:false});
+    msgs.push({day:14, label:'Cloture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ne veux pas vous encombrer et je ferme ce sujet de mon cote. Si un besoin se manifeste a l\'avenir, n\'hesitez pas a revenir vers moi.\n\nBonne continuation,', edited:false});
   } else {
-    msgs.push({day:10, label:'Clôture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ferme ce fil de mon côté — n\'hésitez pas si le besoin évolue.\n\nBonne journée,', edited:false});
+    msgs.push({day:10, label:'Cloture', recipient:mainContact, subject:'Re : Votre recrutement '+mainTitles.split(' et ')[0], body:'Bonjour,\n\nJe ferme ce fil de mon cote. N\'hesitez pas si le besoin evolue.\n\nBonne journee,', edited:false});
   }
   return msgs;
 }
