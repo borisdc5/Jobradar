@@ -91,6 +91,10 @@ CABINETS = [
     'easypartner','sotalent','so talent','jobgether',
     'job link group','jobglober','henoris','ak recrutement','silkhom',
     'externatic','protectic','yeets','pasteque.io','pasteque','databeans',
+    'les nouveaux héritiers','les nouveaux heritiers','alphika epsyl','talent in sight',
+    'actua','cos2biz','audaxio','sander','brainfield',
+    'reseau talents','réseau talents','actual talents','actual talents services','nextep rh','talents it',
+    'hyde recruit','gouvernance it','consulting services','lords it','margo',
 ]
 
 ESNS = [
@@ -159,6 +163,9 @@ ESNS = [
     'mvip consulting','sohoft',
     'externatic','protectic','yeets','pasteque.io','pasteque','databeans',
     'cgi','safran','thales','shape it','smile group','smile',
+    'winside','tohtem inov team','osmozium','genwaves',
+    'thelesys','techteam','lr technologies','agap2it','wikeys','nugbe','askills',
+    'e-kent','o2max','valoway','neapsys','n.g.i. consulting','ngi consulting',
 ]
 
 # Merge community flags into lists
@@ -2017,7 +2024,7 @@ def fetch_apec(max_results=300):
                 'id': 700000 + len(jobs),
                 'title': title,
                 'company': company,
-                'link': f'{APEC_BASE}/candidat/recherche-emploi.html/offre/{r.get("numeroOffre", "")}',
+                'link': f'{APEC_BASE}/candidat/recherche-emploi.html/emploi/detail-offre/{r.get("numeroOffre", "")}',
                 'desc': re.sub(r'<[^>]+>', ' ', r.get('texteOffre', '')).strip()[:200],
                 'location': location,
                 'category': categorize(title, ''),
@@ -2449,74 +2456,79 @@ def _wld_days_ago(hit):
     return 999  # pas de date → sera éliminé par le filtre global 90j
 
 LJ_BASE = 'https://lesjeudis.com'
-LJ_JOBS_URL = LJ_BASE + '/jobs?page={page}'
+LJ_JOBS_URL = LJ_BASE + '/emploi/informatique?page={page}'
 LJ_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,*/*',
-    'Accept-Language': 'fr-FR,fr;q=0.9',
+    'Accept': 'text/x-component',
+    'RSC': '1',
 }
 
-def fetch_lesjeudis(max_pages=15):
-    """Scrape LesJeudis CDI jobs via __NEXT_DATA__ (no Playwright needed)."""
+def fetch_lesjeudis(max_pages=50):
+    """Scrape LesJeudis CDI jobs via Next.js RSC payload."""
     jobs, seen_ids = [], set()
     for page in range(1, max_pages + 1):
         url = LJ_JOBS_URL.format(page=page)
         req = urllib.request.Request(url, headers=LJ_HEADERS)
         try:
-            html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8')
+            content = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', errors='replace')
         except Exception as e:
             print(f'  LesJeudis page {page} erreur: {e}')
             break
-        m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html, re.DOTALL)
-        if not m:
+
+        # Each offer is embedded as: "offer":{"id":"UUID","title":"...","slug":"...",...}
+        positions = [m.start() for m in re.finditer(r'"offer":\{"id":"[0-9a-f-]{36}"', content)]
+        if not positions:
             break
-        try:
-            items = json.loads(m.group(1))['props']['pageProps']['data']['jobs']['pages']
-        except Exception as e:
-            print(f'  LesJeudis page {page} parse error: {e}')
-            break
-        if not items:
-            break
-        for item in items:
-            job_id = item.get('id')
-            if not job_id or job_id in seen_ids:
+
+        for i, start in enumerate(positions):
+            end = positions[i + 1] if i + 1 < len(positions) else start + 3000
+            block = content[start:end]
+
+            m_id    = re.search(r'"id":"([0-9a-f-]{36})"', block)
+            m_title = re.search(r'"title":"([^"]+)"', block)
+            m_slug  = re.search(r'"slug":"([^"]+)"', block)
+            m_emp   = re.search(r'"employment_type":"([^"]+)"', block)
+            m_pub   = re.search(r'"published_at":"([^"]+)"', block)
+            m_org   = re.search(r'"organization":\{[^}]*"name":"([^"]+)"', block)
+            m_logo  = re.search(r'"logo_url":"([^"]+)"', block)
+            m_geo   = re.search(r'"primary_geography":\{[^}]*"name":"([^"]+)"', block)
+            m_remote = re.search(r'"remote_option":"([^"]+)"', block)
+
+            if not (m_id and m_title and m_org):
                 continue
+            job_id = m_id.group(1)
+            if job_id in seen_ids:
+                continue
+
+            # CDI only
+            emp_type = m_emp.group(1) if m_emp else ''
+            if emp_type and emp_type.upper() != 'CDI':
+                continue
+
             seen_ids.add(job_id)
-            title   = (item.get('title') or '').strip()
-            company = (item.get('organization') or '').strip()
-            if not title or not company:
-                continue
-            url_path = (item.get('url') or {}).get('path') or item.get('urlNoPrefix') or ''
-            link = LJ_BASE + url_path if url_path else ''
-            if not link:
-                continue
-            # Published date → daysAgo
+            title   = m_title.group(1).strip()
+            company = m_org.group(1).strip()
+            slug    = m_slug.group(1) if m_slug else job_id
+            link    = f'{LJ_BASE}/offre/{slug}'
+
+            # Location
+            remote_label = m_remote.group(1) if m_remote else ''
+            if 'full_remote' in remote_label.lower() or remote_label.lower() in ('full remote', 'remote'):
+                location = 'Remote'
+            else:
+                location = m_geo.group(1) if m_geo else 'France'
+
+            # daysAgo
             days_ago = 0
-            pub_str = item.get('published') or ''
-            if pub_str:
+            if m_pub:
                 try:
-                    pub = datetime.fromisoformat(pub_str)
-                    if pub.tzinfo is None:
-                        pub = pub.replace(tzinfo=timezone.utc)
+                    pub = datetime.fromisoformat(m_pub.group(1).replace('Z', '+00:00'))
                     days_ago = max(0, (datetime.now(timezone.utc) - pub).days)
                 except Exception:
                     pass
-            # Location
-            remote_opts = item.get('remoteOptions') or []
-            is_remote = any('télétravail' in (r.get('label') or '').lower() for r in remote_opts)
-            if is_remote:
-                location = 'Remote'
-            else:
-                addresses = item.get('address') or []
-                loc = next((a for a in addresses if a.lower() not in ('france',)), None)
-                location = loc or (addresses[0] if addresses else 'France')
-            # Logo
-            logo = None
-            org = item.get('organizationProfile') or {}
-            if org.get('logo'):
-                logo = org['logo']
-            elif item.get('logo'):
-                logo = item['logo']
+
+            logo = m_logo.group(1) if m_logo else None
+
             jobs.append({
                 'id':        1200000 + len(jobs),
                 'title':     title,
@@ -2531,8 +2543,9 @@ def fetch_lesjeudis(max_pages=15):
                 'isCabinet': is_cabinet(company),
                 'source':    'lj',
             })
-        print(f'  Page {page}: {len(items)} jobs (total {len(jobs)})')
-        time.sleep(0.5)
+
+        print(f'  LesJeudis page {page}: {len(positions)} offres (total {len(jobs)})')
+        time.sleep(0.3)
     print(f'  LesJeudis: {len(jobs)} CDI récupérés')
     return jobs
 
@@ -2866,13 +2879,37 @@ CONSIDER_BOARDS = [
 
 def fetch_consider(display_name: str, source_id: str, board_id: str, base_url: str) -> list:
     """Generic fetcher for Consider-hosted VC job boards."""
+    import http.cookiejar
     api_url  = base_url + '/api-boards/search-jobs'
+    ua = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+    # Step 1: load page to get session cookie + CSRF token
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=ctx),
+        urllib.request.HTTPCookieProcessor(cj),
+    )
+    try:
+        page_req = urllib.request.Request(base_url + '/jobs', headers={'User-Agent': ua})
+        page_resp = opener.open(page_req, timeout=15)
+        html = page_resp.read().decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f'  [{display_name}] erreur chargement page: {e}')
+        return []
+
+    m = re.search(r'csrfToken["\'\s:=]+([A-Za-z0-9+/=_-]{20,})', html)
+    csrf = m.group(1) if m else ''
+    if not csrf:
+        print(f'  [{display_name}] CSRF token non trouvé')
+        return []
+
     headers  = {
-        'User-Agent':   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent':   ua,
         'Accept':       'application/json',
         'Content-Type': 'application/json',
         'Origin':       base_url,
         'Referer':      base_url + '/jobs',
+        'X-CSRF-Token': csrf,
     }
     board_obj = {'id': board_id, 'isParent': True}
 
@@ -2892,7 +2929,7 @@ def fetch_consider(display_name: str, source_id: str, board_id: str, base_url: s
         }).encode()
         req = urllib.request.Request(api_url, data=body, method='POST', headers=headers)
         try:
-            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            resp = opener.open(req, timeout=15)
             data = json.loads(resp.read())
         except Exception as e:
             print(f'  [{display_name}] erreur: {e}')
@@ -3251,6 +3288,130 @@ def fetch_welcomekit(display_name: str, source_id: str, base_url: str) -> list:
             time.sleep(0.5)
 
     print(f'  [{display_name}] {len(jobs)} CDI')
+    return jobs
+
+# ── Fonds d'investissements (Index Ventures – Elasticsearch) ─────────────────
+#
+# Index Ventures expose un endpoint Elasticsearch public dont les credentials
+# sont injectés dans la page sous forme de ES_GLOBALS.url.
+# Filtre : France (job_geolocations_country = "FR"), tri date desc.
+
+IV_ES_PAGE = 'https://www.indexventures.com/startup-jobs/paris-france/1'
+
+def fetch_indexventures(max_results: int = 600) -> list:
+    """Fetches France jobs from Index Ventures' public Elasticsearch endpoint."""
+    hdrs = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'}
+
+    # 1. Fetch the landing page to extract ES URL + credentials
+    try:
+        page = urllib.request.urlopen(
+            urllib.request.Request(IV_ES_PAGE, headers=hdrs),
+            context=ctx, timeout=15).read().decode('utf-8', errors='replace')
+    except Exception as e:
+        print(f'  [Index Ventures] page erreur: {e}')
+        return []
+
+    m = re.search(r'ES_GLOBALS\s*=\s*\{[^}]*url\s*:\s*"([^"]+)"', page)
+    if not m:
+        print('  [Index Ventures] ES_GLOBALS introuvable')
+        return []
+
+    # Parse credentials embedded in the URL (format: https://user:pass@host)
+    import base64 as _b64, urllib.parse as _up
+    raw_url = m.group(1).rstrip('/')
+    parsed  = _up.urlparse(raw_url)
+    user    = _up.unquote(parsed.username or '')
+    pw      = _up.unquote(parsed.password or '')
+    es_base = f'{parsed.scheme}://{parsed.hostname}' + (f':{parsed.port}' if parsed.port else '')
+    es_auth = _b64.b64encode(f'{user}:{pw}'.encode()).decode()
+    es_hdrs = {**hdrs, 'Content-Type': 'application/json',
+               'Authorization': f'Basic {es_auth}'}
+
+    # 2. Paginate through France jobs sorted newest-first
+    jobs = []
+    page_size   = 100
+    from_offset = 0
+
+    while from_offset < max_results:
+        size = min(page_size, max_results - from_offset)
+        body = json.dumps({
+            'size': size,
+            'from': from_offset,
+            'query': {'bool': {'filter': [{'match': {'job_geolocations_country': 'FR'}}]}},
+            'sort':  [{'last_published_at_filter': {'order': 'desc'}}],
+            '_source': [
+                'title', 'job_company_title', 'job_geolocations_display_name',
+                'job_company_num_employees_filter', 'job_application_url_filter',
+                'url_filter', 'last_published_at_filter',
+            ],
+        }).encode()
+
+        req = urllib.request.Request(
+            es_base + '/wagtail__startup_jobs_jobmodel/_search',
+            data=body,
+            headers=es_hdrs,
+            method='POST',
+        )
+        try:
+            resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+            data = json.loads(resp.read())
+        except Exception as e:
+            print(f'  [Index Ventures] ES erreur (from={from_offset}): {e}')
+            break
+
+        hits  = data.get('hits', {}).get('hits', [])
+        total = data.get('hits', {}).get('total', {}).get('value', 0)
+        if not hits:
+            break
+
+        for h in hits:
+            s       = h.get('_source', {})
+            title   = s.get('title', '').strip()
+            company = s.get('job_company_title', '').strip()
+            if not title or not company:
+                continue
+
+            apply_url = s.get('job_application_url_filter', '')
+            iv_path   = s.get('url_filter', '')
+            link      = apply_url or ('https://www.indexventures.com' + iv_path if iv_path else '')
+            if not link:
+                continue
+
+            locs     = s.get('job_geolocations_display_name') or []
+            location = ms_normalize_location(locs[0] if locs else 'France', '')
+
+            nb_emp   = s.get('job_company_num_employees_filter')
+
+            date_str = s.get('last_published_at_filter', '')
+            try:
+                dp  = datetime.fromisoformat(date_str)
+                age = max(0, (datetime.now(timezone.utc) - dp.astimezone(timezone.utc)).days)
+            except Exception:
+                age = 7
+
+            jobs.append({
+                'id':           990000 + len(jobs),
+                'title':        title,
+                'company':      company,
+                'link':         link,
+                'desc':         '',
+                'location':     location,
+                'category':     categorize(title, ''),
+                'daysAgo':      age,
+                'logo':         None,
+                'company_size': int(nb_emp) if nb_emp else None,
+                'isESN':        is_esn_company(company),
+                'isCabinet':    is_cabinet(company),
+                'source':       'index',
+            })
+
+        print(f'  [Index Ventures] p{from_offset // page_size + 1}: {len(hits)} jobs (ES total: {total})')
+        from_offset += page_size
+        if from_offset >= total:
+            break
+        time.sleep(0.5)
+
+    print(f'  [Index Ventures] {len(jobs)} offres total')
     return jobs
 
 # ── LinkedIn ──────────────────────────────────────────────────────────────────
@@ -3823,6 +3984,13 @@ if __name__ == '__main__':
         except Exception as e:
             print(f'  {fname} erreur: {e}')
 
+    print('Fetch Fonds d\'investissements (Index Ventures)...')
+    try:
+        iv = fetch_indexventures()
+        jobs += iv
+    except Exception as e:
+        print(f'  Index Ventures erreur: {e}')
+
     print('Fetch WeLoveDevs...')
     try:
         wld = fetch_wld(max_scroll=10)
@@ -3851,6 +4019,11 @@ if __name__ == '__main__':
     before = len(jobs)
     jobs = [j for j in jobs if j.get('daysAgo', 0) <= 90]
     print(f'Total: {len(jobs)} offres ({before - len(jobs)} supprimées car > 90j)')
+
+    # ── Filtre global : suppression des candidatures spontanées ──────────────────
+    before = len(jobs)
+    jobs = [j for j in jobs if 'candidature spontan' not in (j.get('title') or '').lower()]
+    print(f'Total: {len(jobs)} offres ({before - len(jobs)} candidatures spontanées supprimées)')
 
     print('Enrichissement logos...')
     try:
