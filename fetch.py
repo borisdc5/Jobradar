@@ -1713,12 +1713,15 @@ HW_HEADERS = {
 }
 
 def _fetch_hw_job(args):
+    import html as html_module
     idx, job_id = args
     url = f'{HW_BASE}/fr-fr/emplois/{job_id}.html'
     try:
         req = urllib.request.Request(url, headers=HW_HEADERS)
-        html = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
-        scripts = re.findall(r'application/ld\+json[^>]*>([\s\S]*?)</script>', html)
+        page = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8', 'replace')
+
+        # Try ld+json first (legacy support)
+        scripts = re.findall(r'application/ld\+json[^>]*>([\s\S]*?)</script>', page)
         for raw in scripts:
             try:
                 d = json.loads(raw)
@@ -1760,6 +1763,58 @@ def _fetch_hw_job(args):
                 'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
                 'source': 'hw',
             }
+
+        # Fallback: parse og:title + inline JSON fields (new HelloWork structure)
+        og_title_m = re.search(r'<meta[^>]+property="og:title"[^>]+content="([^"]+)"', page)
+        if not og_title_m:
+            return None
+        og_title = html_module.unescape(og_title_m.group(1))
+        # Format: "Offre Emploi {CONTRACT} {title} {location} - Recrutement par {company} | Hellowork"
+        parsed = re.match(
+            r'Offre Emploi\s+(\S+)\s+(.+?)\s+-\s+Recrutement par\s+(.+?)\s*\|\s*Hellowork',
+            og_title, re.IGNORECASE
+        )
+        if not parsed:
+            return None
+        contract, title, company = parsed.group(1), parsed.group(2).strip(), parsed.group(3).strip()
+        if contract.upper() != 'CDI':
+            return None
+
+        city_m = re.search(r'"addressLocality"\s*:\s*"([^"]+)"', page)
+        postal_m = re.search(r'"postalCode"\s*:\s*"([^"]+)"', page)
+        city   = html_module.unescape(city_m.group(1)) if city_m else ''
+        postal = postal_m.group(1) if postal_m else ''
+        # Strip "City (postal)" suffix from title using the known city name
+        if city:
+            city_pat = re.escape(city) + r'\s*\(\d{2,5}\)\s*$'
+            title = re.sub(city_pat, '', title, flags=re.IGNORECASE).strip()
+        else:
+            title = re.sub(r'\s+\S[\S\s]*\(\d{2,5}\)\s*$', '', title).strip()
+        location = ms_normalize_location(city, postal)
+
+        date_m = re.search(r'"datePosted"\s*:\s*"([^"]+)"', page)
+        age = 99
+        if date_m:
+            try:
+                dp = datetime.fromisoformat(date_m.group(1).replace('Z', '+00:00'))
+                if dp.tzinfo is None:
+                    dp = dp.replace(tzinfo=timezone.utc)
+                age = max(0, (datetime.now(timezone.utc) - dp).days)
+            except Exception:
+                pass
+
+        return {
+            'id': 500000 + idx,
+            'title': title,
+            'company': company,
+            'link': url,
+            'desc': '',
+            'location': location,
+            'category': categorize(title, ''),
+            'daysAgo': age,
+            'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
+            'source': 'hw',
+        }
     except Exception:
         pass
     return None
@@ -3858,162 +3913,144 @@ def enrich_crm(jobs):
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
+# Sources whose 0-result threshold requires a minimum count to flag as broken.
+# Playwright-only sources (FashionJobs, WeLoveDevs, LinkedIn) can legitimately
+# return 0 locally — they're only expected to run on GitHub Actions.
+_PLAYWRIGHT_SOURCES = {'fashionjobs', 'wld', 'li'}
+
+def _source_fetch(health: dict, source_id: str, label: str, fn, *args, **kwargs):
+    """Call fn(*args, **kwargs), track result count in health dict, log if 0."""
+    try:
+        result = fn(*args, **kwargs)
+        n = len(result) if result else 0
+        health[source_id] = {'count': n, 'error': None}
+        flag = ' ⚠️  ZERO RÉSULTATS' if n == 0 and source_id not in _PLAYWRIGHT_SOURCES else ''
+        print(f'  {label}: {n} offres{flag}')
+        return result or []
+    except Exception as e:
+        health[source_id] = {'count': 0, 'error': str(e)}
+        print(f'  {label} erreur: {e}')
+        return []
+
+
 if __name__ == '__main__':
     jobs = []
+    source_health: dict = {}
 
     print('Fetch AFJV...')
     try:
         afjv = parse_afjv(http_get(AFJV_RSS).decode('utf-8'))
         jobs += afjv
+        source_health['afjv'] = {'count': len(afjv), 'error': None}
         print(f'  {len(afjv)} CDI AFJV')
     except Exception as e:
+        source_health['afjv'] = {'count': 0, 'error': str(e)}
         print(f'  AFJV erreur: {e}')
 
     print('Fetch France Travail API...')
-    try:
-        ft = fetch_ft()
-        jobs += ft
-        print(f'  {len(ft)} CDI France Travail')
-    except Exception as e:
-        print(f'  France Travail erreur: {e}')
+    result = _source_fetch(source_health, 'ft', 'France Travail', fetch_ft)
+    jobs += result
 
     print('Fetch Sport Jobs Hunter...')
     try:
         sjh = parse_sjh(http_get(SJH_RSS).decode('utf-8'))
         jobs += sjh
+        source_health['sjh'] = {'count': len(sjh), 'error': None}
         print(f'  {len(sjh)} CDI Sport Jobs Hunter')
     except Exception as e:
+        source_health['sjh'] = {'count': 0, 'error': str(e)}
         print(f'  Sport Jobs Hunter erreur: {e}')
 
     print('Fetch Makesense...')
-    try:
-        ms = fetch_makesense(max_jobs=200)
-        jobs += ms
-        print(f'  {len(ms)} offres Makesense')
-    except Exception as e:
-        print(f'  Makesense erreur: {e}')
+    result = _source_fetch(source_health, 'makesense', 'Makesense', fetch_makesense, max_jobs=200)
+    jobs += result
 
     print('Fetch HelloWork...')
-    try:
-        hw = fetch_hellowork(pages_per_kw=2)
-        jobs += hw
-        print(f'  {len(hw)} CDI HelloWork')
-    except Exception as e:
-        print(f'  HelloWork erreur: {e}')
+    result = _source_fetch(source_health, 'hw', 'HelloWork', fetch_hellowork, pages_per_kw=2)
+    jobs += result
 
     print("Fetch L'Industrie Recrute...")
-    try:
-        lir = fetch_lir(max_pages=6)
-        jobs += lir
-        print(f"  {len(lir)} CDI L'Industrie Recrute")
-    except Exception as e:
-        print(f"  L'Industrie Recrute erreur: {e}")
+    result = _source_fetch(source_health, 'lir', "L'Industrie Recrute", fetch_lir, max_pages=6)
+    jobs += result
 
     print('Fetch APEC...')
-    try:
-        apec = fetch_apec(max_results=200)
-        jobs += apec
-        print(f'  {len(apec)} CDI APEC')
-    except Exception as e:
-        print(f'  APEC erreur: {e}')
+    result = _source_fetch(source_health, 'apec', 'APEC', fetch_apec, max_results=200)
+    jobs += result
 
     print('Fetch FashionJobs...')
-    try:
-        fj = fetch_fashionjobs(max_pages=3)
-        jobs += fj
-        print(f'  {len(fj)} CDI FashionJobs')
-    except Exception as e:
-        print(f'  FashionJobs erreur: {e}')
+    result = _source_fetch(source_health, 'fashionjobs', 'FashionJobs', fetch_fashionjobs, max_pages=3)
+    jobs += result
 
     # Indeed: blocked by cloud IP detection — removed
     # print('Fetch Indeed...')
 
     print('Fetch Collective.work...')
-    try:
-        cw = fetch_collective(max_pages=12)
-        jobs += cw
-        print(f'  {len(cw)} CDI Collective.work')
-    except Exception as e:
-        print(f'  Collective.work erreur: {e}')
+    result = _source_fetch(source_health, 'collective', 'Collective.work', fetch_collective, max_pages=12)
+    jobs += result
 
     print('Fetch LesJeudis...')
-    try:
-        lj = fetch_lesjeudis(max_pages=15)
-        jobs += lj
-        print(f'  {len(lj)} CDI LesJeudis')
-    except Exception as e:
-        print(f'  LesJeudis erreur: {e}')
+    result = _source_fetch(source_health, 'lj', 'LesJeudis', fetch_lesjeudis, max_pages=15)
+    jobs += result
 
     print('Fetch Station F...')
-    try:
-        sf = fetch_stationf()
-        jobs += sf
-        print(f'  {len(sf)} CDI Station F')
-    except Exception as e:
-        print(f'  Station F erreur: {e}')
+    result = _source_fetch(source_health, 'stationf', 'Station F', fetch_stationf)
+    jobs += result
 
     print('Fetch Fonds d\'investissements (WelcomeKit)...')
     for (fname, fid, furl) in FUND_BOARDS:
-        try:
-            fj = fetch_welcomekit(fname, fid, furl)
-            jobs += fj
-        except Exception as e:
-            print(f'  {fname} erreur: {e}')
+        result = _source_fetch(source_health, fid, fname, fetch_welcomekit, fname, fid, furl)
+        jobs += result
 
     print('Fetch Fonds d\'investissements (TeamTailor)...')
     for (fname, fid, furl, fqs) in TEAMTAILOR_BOARDS:
-        try:
-            fj = fetch_teamtailor(fname, fid, furl, fqs)
-            jobs += fj
-        except Exception as e:
-            print(f'  {fname} erreur: {e}')
+        result = _source_fetch(source_health, fid, fname, fetch_teamtailor, fname, fid, furl, fqs)
+        jobs += result
 
     print('Fetch Fonds d\'investissements (Consider)...')
     for (fname, fid, fbid, furl) in CONSIDER_BOARDS:
-        try:
-            fj = fetch_consider(fname, fid, fbid, furl)
-            jobs += fj
-        except Exception as e:
-            print(f'  {fname} erreur: {e}')
+        result = _source_fetch(source_health, fid, fname, fetch_consider, fname, fid, fbid, furl)
+        jobs += result
 
     print('Fetch Fonds d\'investissements (Getro)...')
     for (fname, fid, fnet, furl) in GETRO_BOARDS:
-        try:
-            fj = fetch_getro(fname, fid, fnet, furl)
-            jobs += fj
-        except Exception as e:
-            print(f'  {fname} erreur: {e}')
+        result = _source_fetch(source_health, fid, fname, fetch_getro, fname, fid, fnet, furl)
+        jobs += result
 
     print('Fetch Fonds d\'investissements (Index Ventures)...')
-    try:
-        iv = fetch_indexventures()
-        jobs += iv
-    except Exception as e:
-        print(f'  Index Ventures erreur: {e}')
+    result = _source_fetch(source_health, 'indexventures', 'Index Ventures', fetch_indexventures)
+    jobs += result
 
     print('Fetch WeLoveDevs...')
-    try:
-        wld = fetch_wld(max_scroll=10)
-        jobs += wld
-        print(f'  {len(wld)} CDI WeLoveDevs')
-    except Exception as e:
-        print(f'  WeLoveDevs erreur: {e}')
+    result = _source_fetch(source_health, 'wld', 'WeLoveDevs', fetch_wld, max_scroll=10)
+    jobs += result
 
     print('Fetch LinkedIn...')
-    try:
-        li = fetch_linkedin(pages_per_kw=3, max_hits=600)
-        jobs += li
-        print(f'  {len(li)} offres LinkedIn')
-    except Exception as e:
-        print(f'  LinkedIn erreur: {e}')
+    result = _source_fetch(source_health, 'li', 'LinkedIn', fetch_linkedin, pages_per_kw=3, max_hits=600)
+    jobs += result
 
     print('Fetch Welcome to the Jungle...')
-    try:
-        wttj = fetch_wttj(days=30, max_hits=1000)
-        jobs += wttj
-        print(f'  {len(wttj)} CDI Welcome to the Jungle')
-    except Exception as e:
-        print(f'  Welcome to the Jungle erreur: {e}')
+    result = _source_fetch(source_health, 'wttj', 'Welcome to the Jungle', fetch_wttj, days=30, max_hits=1000)
+    jobs += result
+
+    # ── Bilan santé des sources ─────────────────────────────────────────────────
+    broken = {k: v for k, v in source_health.items()
+              if v['count'] == 0 and k not in _PLAYWRIGHT_SOURCES}
+    if broken:
+        print('\n⚠️  SOURCES EN ÉCHEC (0 offre) :')
+        for sid, info in broken.items():
+            err = f" — {info['error']}" if info['error'] else ''
+            print(f'  • {sid}{err}')
+    else:
+        print('\n✅ Toutes les sources ont retourné des résultats.')
+
+    # Persist health report for CI / monitoring
+    health_path = os.path.join(os.path.dirname(__file__), 'source_health.json')
+    with open(health_path, 'w', encoding='utf-8') as fh:
+        json.dump({
+            'updated': datetime.now(timezone.utc).isoformat(),
+            'sources': source_health,
+            'broken': list(broken.keys()),
+        }, fh, indent=2, ensure_ascii=False)
 
     # ── Filtre global : on ne garde que les offres de moins de 90 jours ──────────
     before = len(jobs)

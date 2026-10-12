@@ -315,6 +315,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .sp-btn-prim:hover{opacity:.9;}
 .sp-btn-prim:disabled{opacity:.4;cursor:default;}
 @media(max-width:700px){.sales-panel{width:100%;right:-100%;}.sales-panel.open{right:0;}}
+/* ── Groupe entreprise ───────────────────────────────────────── */
+.co-group{border:1px solid var(--border);border-radius:var(--radius-lg);background:white;overflow:hidden;}
+.co-group-hdr{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .1s;}
+.co-group-hdr:hover{background:var(--bg2);}
+.co-group-info{flex:1;min-width:0;}
+.co-group-name{font-size:13px;font-weight:600;display:block;}
+.co-group-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.co-group-count{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--accent-bg);color:var(--accent-txt);font-weight:600;font-family:'DM Mono',monospace;white-space:nowrap;}
+.co-group-chevron{font-size:11px;color:var(--txt3);transition:transform .2s;width:14px;text-align:center;}
+.co-group-jobs{}
+.job-card.in-group{border:none;border-top:1px solid var(--border);border-radius:0;margin:0;}
+.job-card.in-group:hover{transform:none;background:var(--bg2);}
 </style>
 </head>
 <body>
@@ -543,8 +555,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <option value="title">Poste A&#8211;Z</option>
       </select>
       <div class="view-btns">
-        <button class="vbtn on" id="vlist" onclick="setView('list')">&#9776;</button>
-        <button class="vbtn" id="vgrid" onclick="setView('grid')">&#8862;</button>
+        <button class="vbtn on" id="vlist" onclick="setView('list')" title="Liste">&#9776;</button>
+        <button class="vbtn" id="vgrid" onclick="setView('grid')" title="Grille">&#8862;</button>
+        <button class="vbtn" id="vgroup" onclick="setView('group')" title="Grouper par entreprise" style="font-size:10px;font-weight:700;letter-spacing:-.5px;">CO</button>
       </div>
     </div>
     <div class="stats-bar" id="stats-bar"></div>
@@ -562,6 +575,7 @@ var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia','index'];
 var FUND_SOURCES  = ['elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia','index'];
 var fundsExpanded = false;
+var expandedGroups = {}; // company key → true/false (user-toggled)
 
 function openSidebar(){
   document.getElementById('sidebar').classList.add('sb-open');
@@ -708,6 +722,14 @@ function setView(v) {
   view=v;
   document.getElementById('vlist').className='vbtn'+(v==='list'?' on':'');
   document.getElementById('vgrid').className='vbtn'+(v==='grid'?' on':'');
+  document.getElementById('vgroup').className='vbtn'+(v==='group'?' on':'');
+  renderJobs();
+}
+function toggleGroup(encKey,n) {
+  var key=decodeURIComponent(encKey);
+  var def=(n<=2);
+  var cur=expandedGroups.hasOwnProperty(key)?expandedGroups[key]:def;
+  expandedGroups[key]=!cur;
   renderJobs();
 }
 function locMatch(j) {
@@ -758,20 +780,12 @@ function resetAll() {
   activeSources=['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia','index'];
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
-  document.getElementById('src-afjv').className='src-chip active';
-  document.getElementById('src-ft').className='src-chip active';
-  document.getElementById('src-ms').className='src-chip active';
-  document.getElementById('src-sjh').className='src-chip active';
-  document.getElementById('src-hw').className='src-chip active';
-  document.getElementById('src-lir').className='src-chip active';
-  document.getElementById('src-apec').className='src-chip active';
-  document.getElementById('src-fj').className='src-chip active';
-  document.getElementById('src-wld').className='src-chip active';
-  document.getElementById('src-cw').className='src-chip active';
-  document.getElementById('src-lj').className='src-chip active';
-  document.getElementById('src-sf').className='src-chip active';
-  document.getElementById('src-wttj').className='src-chip active';
-  document.getElementById('src-li').className='src-chip active';
+  ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','sf','wttj','li'].forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
+  view='list';
+  document.getElementById('vlist').className='vbtn on';
+  document.getElementById('vgrid').className='vbtn';
+  document.getElementById('vgroup').className='vbtn';
+  expandedGroups={};
   renderJobs();
 }
 function evalKw(query, hay) {
@@ -980,6 +994,41 @@ function showScoreTip(e, jid) {
 }
 function hideScoreTip() { document.getElementById('score-tip').style.display = 'none'; }
 
+function srcTagHtml(src) {
+  var t={ft:['ft','france travail'],ms:['ms','makesense'],sjh:['sjh','sport jobs'],hw:['hw','hellowork'],lir:['lir','industrie recrute'],apec:['apec','apec'],fj:['fj','fashionjobs'],indeed:['indeed','indeed'],wld:['wld','welovedevs'],cw:['cw','collective.work'],lj:['lj','lesjeudis'],wttj:['wttj','wttj'],li:['li','linkedin'],sf:['sf','station f']};
+  var v=t[src];
+  if(v) return '<span class="'+v[0]+'-tag"><span class="'+v[0]+'-dot"></span>'+v[1]+'</span>';
+  return '<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>';
+}
+function jobCardHtml(j,sv,gc,inGroup) {
+  var locPill=j.location==='Remote'?'<span class="pill p-green">Télétravail</span>':'<span class="pill p-blue">'+j.location+'</span>';
+  var logoHtml=j.logo?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">':initials(j.company);
+  var ciHtml='',crmBottomRight='';
+  if(j.crm_link){
+    ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
+    ciHtml+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
+    ciHtml+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
+    var dateStr=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' &middot; '+j.crm_updated_by:'')+'</span>':'');
+    var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
+    crmBottomRight=dateStr+badgeHtml;
+  }
+  var h='<div class="job-card'+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
+  if(!inGroup) h+='<div class="co-logo">'+logoHtml+'</div>';
+  h+='<div class="jbody"><div class="jtop"><span class="jtitle">'+j.title+'</span><div class="jright">';
+  if(ciHtml) h+='<div class="crm-indicators">'+ciHtml+'</div>';
+  h+='<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span><button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button></div>';
+  if(crmBottomRight) h+='<div class="crm-btm-right">'+crmBottomRight+'</div>';
+  h+='</div></div>';
+  if(!inGroup) h+='<div class="jco">'+j.company+'</div>';
+  h+='<div class="jmeta">'+locPill;
+  if(j.category) h+='<span class="pill p-purple">'+j.category+'</span>';
+  if(j.isESN) h+='<span class="pill p-blue">ESN</span>';
+  if(j.isCabinet) h+='<span class="pill p-red">cabinet</span>';
+  if(sizeBucket(j.company_size)) h+='<span class="pill p-size">'+sizeBucket(j.company_size)+'</span>';
+  h+=srcTagHtml(j.source);
+  h+='</div></div></div>';
+  return h;
+}
 function renderJobs() {
   var search=(document.getElementById('search-input').value||'').toLowerCase();
   var kw=(document.getElementById('kw').value||'').trim();
@@ -1035,21 +1084,71 @@ function renderJobs() {
   if(filterTC===false) activeF.push({group:'tc',val:'sans T&Cs'});
   if(consultant) activeF.push({group:'consultant',val:consultant});
   for(var si=0;si<activeSizes.length;si++) activeF.push({group:'size',val:activeSizes[si]});
-  var recC=0,savC=0;
-  for(var i=0;i<jobs.length;i++){if(jobs[i].daysAgo<=3)recC++;if(saved[jobs[i].id])savC++;}
   document.getElementById('stats-bar').innerHTML=
     '<div class="stat" onclick="toggleSavedOnly()" title="Cliquer pour voir les sauvegard\u00e9s" style="cursor:pointer;'+(showSavedOnly?'outline:2px solid var(--warn);border-radius:8px;':'')+'">' +
       '<span class="stat-n" style="color:var(--warn)">'+Object.keys(saved).length+'</span><span class="stat-l">Sauvegard\u00e9s</span></div>'+
     '<span class="last-update">Mis \u00e0 jour : '+UPDATED+'</span>';
   var chips='';
-  for(var i=0;i<Math.min(activeF.length,6);i++){var f=activeF[i];chips+='<span class="achip'+(f.group==='cabinet'?' achip-red':f.group==='esn'?' achip-blue':'')+'" onclick="removeFilter(\''+f.group+'\',\''+f.val+'\')">'+f.val+' \u00d7</span>';}
+  for(var i=0;i<Math.min(activeF.length,6);i++){var f=activeF[i];chips+='<span class="achip'+(f.group==='cabinet'?' achip-red':f.group==='esn'?' achip-blue':'')+'" onclick="removeFilter(\''+f.group+'\'\,\''+f.val+'\')">'+f.val+' \u00d7</span>';}
   document.getElementById('results-bar').innerHTML=
-    '<span class="rcount"><strong>'+jobs.length+'</strong> CDI &nbsp;<span style="font-size:10px;color:var(--txt3);font-family:\'DM Mono\',monospace;">AFJV live</span></span>'+
+    '<span class="rcount"><strong>'+jobs.length+'</strong> CDI</span>'+
     '<div class="active-chips">'+chips+'</div>'+
     (showSavedOnly&&Object.keys(saved).length?'<span class="reset-all" onclick="clearAllSaved()" style="color:var(--warn)">Vider la liste</span>':'')+(activeF.length?'<span class="reset-all" onclick="resetAll()">Tout effacer</span>':'');
   var wrap=document.getElementById('jobs-wrap');
   wrap.className=view==='grid'?'jobs-wrap grid-mode':'jobs-wrap';
   if(!jobs.length){wrap.innerHTML='<div class="empty"><span style="font-size:32px;opacity:.2">&#9711;</span><span style="font-size:13px;">Aucun CDI ne correspond</span></div>';return;}
+
+  // ── Vue groupée par entreprise ────────────────────────────────────────────
+  if(view==='group'){
+    var groups=[],groupMap={};
+    for(var i=0;i<jobs.length;i++){
+      var j=jobs[i],key=(j.company||'').toLowerCase().trim();
+      if(!groupMap[key]){
+        groupMap[key]={key:key,company:j.company,jobs:[],logo:j.logo||'',crm_link:j.crm_link,is_client:j.is_client,crm_status:j.crm_status,crm_tc:j.crm_tc,crm_open_job:j.crm_open_job,crm_consultant:j.crm_consultant};
+        groups.push(groupMap[key]);
+      }
+      groupMap[key].jobs.push(j);
+    }
+    groups.sort(function(a,b){
+      if(sort==='company') return a.company.localeCompare(b.company);
+      if(sort==='date') return a.jobs[0].daysAgo-b.jobs[0].daysAgo;
+      return a.jobs[0].title.localeCompare(b.jobs[0].title);
+    });
+    var html='';
+    for(var gi=0;gi<groups.length;gi++){
+      var grp=groups[gi],gJobs=grp.jobs,n=gJobs.length;
+      if(n===1){html+=jobCardHtml(gJobs[0],!!saved[gJobs[0].id],'',false);continue;}
+      var def=(n<=2),expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:def;
+      var logoHtml=grp.logo?'<img src="'+grp.logo+'" alt="'+initials(grp.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(grp.company)+'\'">':initials(grp.company);
+      var ciHtml='';
+      if(grp.crm_link){
+        ciHtml+=(grp.crm_tc!==null&&grp.crm_tc!==undefined?(grp.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs \u2713</span>':'<span class="ci ci-tc-n">T&amp;Cs \u2014</span>'):'');
+        ciHtml+=(grp.crm_open_job?'<span class="ci ci-job">\u2b24 job ouvert</span>':'');
+        ciHtml+=(grp.crm_consultant?'<span class="ci ci-owner">'+grp.crm_consultant+'</span>':'');
+      }
+      var crmBadge=grp.crm_link?'<a class="crm-badge '+(grp.is_client?'crm-client':grp.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+grp.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(grp.is_client?'\u2605 Client':grp.crm_status==='Prospect'?'\u25ce Prospect':'\ud83d\udcc1 CRM')+'</a>':'';
+      var encKey=encodeURIComponent(grp.key);
+      html+='<div class="co-group">';
+      html+='<div class="co-group-hdr" onclick="toggleGroup(\''+encKey+'\','+n+')">';
+      html+='<div class="co-logo">'+logoHtml+'</div>';
+      html+='<div class="co-group-info"><span class="co-group-name">'+grp.company+'</span>';
+      if(ciHtml) html+='<div class="crm-indicators" style="margin-top:3px;">'+ciHtml+'</div>';
+      html+='</div><div class="co-group-right">';
+      if(crmBadge) html+=crmBadge;
+      html+='<span class="co-group-count">'+n+' postes</span>';
+      html+='<span class="jdate">'+daysLabel(gJobs[0].daysAgo)+'</span>';
+      html+='<span class="co-group-chevron">'+(expanded?'\u25be':'\u25b8')+'</span>';
+      html+='</div></div>';
+      if(expanded){
+        html+='<div class="co-group-jobs">';
+        for(var ji=0;ji<gJobs.length;ji++) html+=jobCardHtml(gJobs[ji],!!saved[gJobs[ji].id],'',true);
+        html+='</div>';
+      }
+      html+='</div>';
+    }
+    wrap.innerHTML=html;
+    return;
+  }
   var html='';
   for(var i=0;i<jobs.length;i++){
     var j=jobs[i],sv=!!saved[j.id],gc=view==='grid'?' half':'';
@@ -1099,6 +1198,7 @@ function renderJobs() {
   }
   wrap.innerHTML=html;
 }
+
 function sizeBucket(n){
   if(!n) return '';
   n=parseInt(n);
