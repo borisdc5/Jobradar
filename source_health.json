@@ -1,8 +1,8 @@
 {
-  "updated": "2026-10-12T15:23:44.508433+00:00",
+  "updated": "2026-10-12T16:41:14.566219+00:00",
   "sources": {
     "afjv": {
-      "count": 52,
+      "count": 51,
       "error": null
     },
     "ft": {
@@ -14,11 +14,11 @@
       "error": null
     },
     "makesense": {
-      "count": 188,
+      "count": 187,
       "error": null
     },
     "hw": {
-      "count": 876,
+      "count": 676,
       "error": null
     },
     "lir": {
@@ -34,7 +34,7 @@
       "error": null
     },
     "collective": {
-      "count": 316,
+      "count": 360,
       "error": null
     },
     "lj": {
@@ -42,7 +42,7 @@
       "error": null
     },
     "stationf": {
-      "count": 431,
+      "count": 430,
       "error": null
     },
     "elaia": {
@@ -66,7 +66,7 @@
       "error": null
     },
     "serena": {
-      "count": 260,
+      "count": 268,
       "error": null
     },
     "360cap": {
@@ -82,11 +82,11 @@
       "error": null
     },
     "partech": {
-      "count": 337,
+      "count": 336,
       "error": null
     },
     "indexventures": {
-      "count": 404,
+      "count": 449,
       "error": null
     },
     "wld": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 385,
+      "count": 158,
       "error": null
     },
     "wttj": {
