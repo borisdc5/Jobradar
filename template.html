@@ -1267,7 +1267,9 @@ async function submitFlag(){
     if(!content.cabinet) content.cabinet=[];
     var list=_flagType==='esn'?content.esn:content.cabinet;
     if(!list.includes(name)) list.push(name);
-    var body=JSON.stringify({message:'🚩 Flag: '+_flagCompany+' → '+_flagType,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:sha});
+    var jsonStr=JSON.stringify(content,null,2);
+    var encoded=btoa(String.fromCharCode.apply(null,new TextEncoder().encode(jsonStr)));
+    var body=JSON.stringify({message:'🚩 Flag: '+_flagCompany+' → '+_flagType,content:encoded,sha:sha});
     var w=await fetch(apiBase,{method:'PUT',headers:headers,body:body});
     if(!w.ok) throw new Error('Écriture échouée ('+w.status+')');
     // Store locally so card hides immediately
