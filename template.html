@@ -555,9 +555,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <option value="title">Poste A&#8211;Z</option>
       </select>
       <div class="view-btns">
-        <button class="vbtn on" id="vlist" onclick="setView('list')" title="Liste">&#9776;</button>
+        <button class="vbtn" id="vlist" onclick="setView('list')" title="Liste">&#9776;</button>
         <button class="vbtn" id="vgrid" onclick="setView('grid')" title="Grille">&#8862;</button>
-        <button class="vbtn" id="vgroup" onclick="setView('group')" title="Grouper par entreprise" style="font-size:10px;font-weight:700;letter-spacing:-.5px;">CO</button>
+        <button class="vbtn on" id="vgroup" onclick="setView('group')" title="Grouper par entreprise" style="font-size:10px;font-weight:700;letter-spacing:-.5px;">CO</button>
       </div>
     </div>
     <div class="stats-bar" id="stats-bar"></div>
@@ -569,7 +569,7 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
-var hideESN = false, hideCabinet = false, view = 'list', showSavedOnly = false, filterTC = null, hideNoCRM = false;
+var hideESN = false, hideCabinet = false, view = 'group', showSavedOnly = false, filterTC = null, hideNoCRM = false;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia','index'];
