@@ -3658,7 +3658,7 @@ def fetch_wttj(days=30, max_hits=1000):
             }).encode()
             req = urllib.request.Request(WTTJ_ALGOLIA_URL, data=body, method='POST', headers=headers)
             try:
-                resp = urllib.request.urlopen(req, context=ctx, timeout=15)
+                resp = urllib.request.urlopen(req, context=ctx, timeout=8)
                 data = json.loads(resp.read())
             except Exception as e:
                 print(f'  [WTTJ] "{kw}" p{page} erreur: {e}')
@@ -3918,19 +3918,37 @@ def enrich_crm(jobs):
 # return 0 locally — they're only expected to run on GitHub Actions.
 _PLAYWRIGHT_SOURCES = {'fashionjobs', 'wld', 'li'}
 
-def _source_fetch(health: dict, source_id: str, label: str, fn, *args, **kwargs):
-    """Call fn(*args, **kwargs), track result count in health dict, log if 0."""
-    try:
-        result = fn(*args, **kwargs)
-        n = len(result) if result else 0
-        health[source_id] = {'count': n, 'error': None}
-        flag = ' ⚠️  ZERO RÉSULTATS' if n == 0 and source_id not in _PLAYWRIGHT_SOURCES else ''
-        print(f'  {label}: {n} offres{flag}')
-        return result or []
-    except Exception as e:
-        health[source_id] = {'count': 0, 'error': str(e)}
-        print(f'  {label} erreur: {e}')
+def _source_fetch(health: dict, source_id: str, label: str, fn, *args, timeout_s: int = 180, **kwargs):
+    """Call fn(*args, **kwargs) with a wall-clock timeout, track result count in health dict."""
+    import threading
+    result_box = [None]
+    error_box  = [None]
+
+    def _run():
+        try:
+            result_box[0] = fn(*args, **kwargs)
+        except Exception as e:
+            error_box[0] = str(e)
+
+    t = threading.Thread(target=_run, daemon=True)
+    t.start()
+    t.join(timeout_s)
+
+    if t.is_alive():
+        health[source_id] = {'count': 0, 'error': f'timeout >{timeout_s}s'}
+        print(f'  {label}: ⏱ timeout ({timeout_s}s dépassé)')
         return []
+
+    if error_box[0]:
+        health[source_id] = {'count': 0, 'error': error_box[0]}
+        print(f'  {label} erreur: {error_box[0]}')
+        return []
+
+    n = len(result_box[0]) if result_box[0] else 0
+    health[source_id] = {'count': n, 'error': None}
+    flag = ' ⚠️  ZERO RÉSULTATS' if n == 0 and source_id not in _PLAYWRIGHT_SOURCES else ''
+    print(f'  {label}: {n} offres{flag}')
+    return result_box[0] or []
 
 
 if __name__ == '__main__':
@@ -4029,7 +4047,7 @@ if __name__ == '__main__':
     jobs += result
 
     print('Fetch Welcome to the Jungle...')
-    result = _source_fetch(source_health, 'wttj', 'Welcome to the Jungle', fetch_wttj, days=30, max_hits=1000)
+    result = _source_fetch(source_health, 'wttj', 'Welcome to the Jungle', fetch_wttj, days=30, max_hits=300, timeout_s=120)
     jobs += result
 
     # ── Bilan santé des sources ─────────────────────────────────────────────────
