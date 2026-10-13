@@ -1122,7 +1122,7 @@ function renderJobs() {
     for(var i=0;i<jobs.length;i++){
       var j=jobs[i],key=(j.company||'').toLowerCase().trim();
       if(!groupMap[key]){
-        groupMap[key]={key:key,company:j.company,jobs:[],logo:j.logo||'',crm_link:j.crm_link,is_client:j.is_client,crm_status:j.crm_status,crm_tc:j.crm_tc,crm_open_job:j.crm_open_job,crm_consultant:j.crm_consultant};
+        groupMap[key]={key:key,company:j.company,jobs:[],logo:j.logo||'',crm_link:j.crm_link,is_client:j.is_client,crm_status:j.crm_status,crm_tc:j.crm_tc,crm_open_job:j.crm_open_job,crm_consultant:j.crm_consultant,isESN:j.isESN,isCabinet:j.isCabinet};
         groups.push(groupMap[key]);
       }
       groupMap[key].jobs.push(j);
@@ -1176,7 +1176,10 @@ function renderJobs() {
       html+='<div class="co-group-hdr'+(n===1?' co-group-single':'')+'" onclick="'+_hdrClick+'" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \')'+_hdrClick+'">';
       html+='<div class="co-group-chevron">'+(n>1?'\u25b8':'')+'</div>';
       html+='<div class="co-logo">'+logoHtml+'</div>';
-      html+='<div class="co-group-name-wrap"><span class="co-group-name">'+grp.company+'</span>'+(n===1?'<span class="co-group-jobtitle">'+gJobs[0].title+'</span>':'')+'</div>';
+      var _grpFlags='';
+      if(grp.isESN) _grpFlags+='<span class="j-esn">ESN</span>';
+      if(grp.isCabinet) _grpFlags+='<span class="j-cab">Cabinet</span>';
+      html+='<div class="co-group-name-wrap"><span class="co-group-name">'+grp.company+(_grpFlags?' '+_grpFlags:'')+'</span>'+(n===1?'<span class="co-group-jobtitle">'+gJobs[0].title+'</span>':'')+'</div>';
       html+='<div class="co-group-consultant co-th-consultant">'+(grp.crm_consultant||'\u2014')+'</div>';
       html+='<div class="co-col-status">'+crmBadge+'</div>';
       html+='<div class="co-col-tc co-th-tc">'+tcHtml+'</div>';

@@ -12,8 +12,6 @@ FT_API_URL   = 'https://api.francetravail.io/partenaire/offresdemploi/v2/offres/
 
 FT_CLIENT_ID     = os.getenv('FT_CLIENT_ID', '')
 FT_CLIENT_SECRET = os.getenv('FT_CLIENT_SECRET', '')
-APEC_EMAIL           = os.getenv('APEC_EMAIL', '')
-APEC_PASSWORD        = os.getenv('APEC_PASSWORD', '')
 RECRUITCRM_TOKEN     = os.getenv('RECRUITCRM_API_KEY', '')
 COMMUNITY_FLAGS_TOKEN = os.getenv('COMMUNITY_FLAGS_TOKEN', '')
 
@@ -1938,160 +1936,147 @@ def fetch_lir(max_pages=6):
 # ── APEC ─────────────────────────────────────────────────────────────────────
 
 APEC_BASE   = 'https://www.apec.fr'
-APEC_LOGIN  = APEC_BASE + '/.apec-login.do'
 APEC_SEARCH = APEC_BASE + '/cms/webservices/rechercheOffre'
-APEC_BASE_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept-Language': 'fr-FR,fr;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-}
-
-def apec_login():
-    cj = http.cookiejar.CookieJar()
-    opener = urllib.request.build_opener(
-        urllib.request.HTTPSHandler(context=ctx),
-        urllib.request.HTTPCookieProcessor(cj),
-    )
-    # Seed cookies with homepage visit
-    opener.open(urllib.request.Request(APEC_BASE + '/', headers=APEC_BASE_HEADERS), timeout=10)
-    # POST login
-    payload = urllib.parse.urlencode({
-        'source': 'loginApec',
-        'username': APEC_EMAIL,
-        'password': APEC_PASSWORD,
-    }).encode()
-    h = dict(APEC_BASE_HEADERS)
-    h.update({
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-        'cache-control': 'no-cache',
-        'Origin': APEC_BASE,
-        'Referer': APEC_BASE + '/',
-    })
-    opener.open(urllib.request.Request(APEC_LOGIN, data=payload, headers=h), timeout=15)
-    return opener
-
-def _apec_decode(resp):
-    raw = resp.read()
-    enc = resp.headers.get('Content-Encoding', '')
-    if enc == 'gzip':
-        raw = gzip.decompress(raw)
-    elif enc == 'br':
-        try:
-            import brotli
-            raw = brotli.decompress(raw)
-        except Exception:
-            pass
-    try:
-        return json.loads(raw.decode('utf-8'))
-    except Exception:
-        return json.loads(raw.decode('latin-1'))
 
 def fetch_apec(max_results=300):
-    if not APEC_EMAIL or not APEC_PASSWORD:
-        print('  Credentials APEC absents, ignoré')
-        return []
+    """Scrape APEC CDI jobs via Playwright (DataDome bypass via real Chromium context)."""
     try:
-        opener = apec_login()
-    except Exception as e:
-        print(f'  APEC login erreur: {e}')
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        print('  Playwright non disponible, APEC ignoré')
         return []
 
-    h2 = dict(APEC_BASE_HEADERS)
-    h2.update({
-        'Content-Type': 'application/json;charset=UTF-8',
-        'Accept': 'application/json, text/plain, */*',
-        'Referer': APEC_BASE + '/candidat/recherche-emploi.html/emploi',
-        'Origin': APEC_BASE,
-    })
+    # Search payload template (CDI + Informatique)
+    _base_body = {
+        'typesConvention': [143684],
+        'fonctions': [101833],
+        'secteursActivite': [],
+        'motsCles': '',
+        'lieux': [],
+    }
 
-    jobs, batch = [], 50
+    raw_pages = []
 
-    # ── 1. Sonde initiale : récupère totalCount pour partir de la fin ──────────
-    # L'API APEC trie les offres de la plus ancienne (index 0) à la plus récente
-    # (index totalCount-1). On calcule le startIndex pour ne prendre que les
-    # `max_results` offres les plus récentes.
-    def _apec_req(si, rng):
-        body = json.dumps({
-            'typesConvention': [143684],   # CDI
-            'fonctions': [101833],          # Informatique
-            'secteursActivite': [],
-            'motsCles': '',
-            'lieux': [],
-            'pagination': {'startIndex': si, 'range': rng},
-        }).encode('utf-8')
-        req = urllib.request.Request(APEC_SEARCH, data=body, headers=h2, method='POST')
-        resp = opener.open(req, timeout=20)
-        return _apec_decode(resp)
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        page = browser.new_page(
+            user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            locale='fr-FR',
+            viewport={'width': 1280, 'height': 900},
+        )
+        page.set_default_navigation_timeout(30000)
+        page.set_default_timeout(15000)
 
-    try:
-        probe = _apec_req(0, 1)
-        total = probe.get('totalCount', 0)
-    except Exception as e:
-        print(f'  APEC sonde erreur: {e}')
-        return []
-
-    print(f'  [APEC] totalCount={total}, on part de la fin')
-    start = max(0, total - max_results)  # commence aux offres récentes
-
-    while len(jobs) < max_results:
+        # Navigate to search page — DataDome validates the browser fingerprint here
         try:
-            data = _apec_req(start, batch)
+            page.goto(
+                APEC_BASE + '/candidat/recherche-emploi.html/emploi'
+                '?typesContrat=143684&fonctions=101833',
+                wait_until='domcontentloaded', timeout=30000,
+            )
         except Exception as e:
-            print(f'  APEC search erreur (start={start}): {e}')
-            break
+            print(f'  [APEC] chargement erreur: {e}')
+            browser.close()
+            return []
 
-        results = data.get('resultats', [])
-        if not results:
-            break
+        # Wait for DataDome challenge to complete and page to stabilise
+        page.wait_for_timeout(4000)
 
-        for r in results:
-            # Company from logo URL
-            company = ''
-            logo = r.get('urlLogo', '')
-            if logo:
-                m = re.search(r'/logo_(.+?)_\d+_\d+\.', logo)
-                if m:
-                    company = m.group(1).replace('_', ' ').replace('-', ' ').title()
-            if not company:
-                continue  # skip anonymous offers
+        # From here, fetch() calls inherit DataDome cookies automatically
+        def _apec_req(start_index, rng):
+            body = {**_base_body, 'pagination': {'startIndex': start_index, 'range': rng}}
+            result = page.evaluate(
+                """async ({url, body}) => {
+                    const r = await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json;charset=UTF-8',
+                            'Accept': 'application/json, text/plain, */*',
+                        },
+                        body: JSON.stringify(body),
+                    });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return await r.json();
+                }""",
+                {'url': APEC_SEARCH, 'body': body},
+            )
+            return result
 
-            # Location
-            lieu = r.get('lieuTexte', '')
-            lm = re.match(r'(.+?)\s*-\s*(\d+)', lieu)
-            if lm:
-                location = ms_normalize_location(lm.group(1).strip(), lm.group(2))
-            else:
-                location = lieu.strip() or 'France'
+        # Probe for total count
+        try:
+            probe = _apec_req(0, 1)
+            total = probe.get('totalCount', 0)
+        except Exception as e:
+            print(f'  [APEC] sonde erreur: {e}')
+            browser.close()
+            return []
 
-            # Age — format API: "2026-05-19T10:34:58.000+0000"
-            date_str = r.get('datePublication', '')
+        print(f'  [APEC] totalCount={total}')
+        if total == 0:
+            browser.close()
+            return []
+
+        batch = 50
+        # Start from most-recent end (API sorts oldest→newest)
+        start = max(0, total - max_results)
+
+        while len(raw_pages) * batch < max_results:
             try:
-                # Normalise offset "+0000" → "+00:00" pour fromisoformat
-                ds = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', date_str)
-                dp = datetime.fromisoformat(ds)
-                age = max(0, (datetime.now(timezone.utc) - dp).days)
-            except Exception:
-                age = 99
+                data = _apec_req(start, batch)
+            except Exception as e:
+                print(f'  [APEC] search erreur (start={start}): {e}')
+                break
+            results = data.get('resultats', [])
+            if not results:
+                break
+            raw_pages.extend(results)
+            print(f'  [APEC] start={start} +{len(results)} → {len(raw_pages)} bruts')
+            start += batch
+            if start >= total:
+                break
 
-            title = r.get('intitule', '')
-            jobs.append({
-                'id': 700000 + len(jobs),
-                'title': title,
-                'company': company,
-                'link': f'{APEC_BASE}/candidat/recherche-emploi.html/emploi/detail-offre/{r.get("numeroOffre", "")}',
-                'desc': re.sub(r'<[^>]+>', ' ', r.get('texteOffre', '')).strip()[:200],
-                'location': location,
-                'category': categorize(title, ''),
-                'daysAgo': age,
-                'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
-                'source': 'apec',
-            })
+        browser.close()
 
-        print(f'  [APEC] start={start} +{len(results)} → {len(jobs)} total')
-        start += batch
-        if start >= total:
-            break
+    jobs = []
+    for r in raw_pages:
+        # Company from logo URL
+        company = ''
+        logo = r.get('urlLogo', '')
+        if logo:
+            m = re.search(r'/logo_(.+?)_\d+_\d+\.', logo)
+            if m:
+                company = m.group(1).replace('_', ' ').replace('-', ' ').title()
+        if not company:
+            continue
+
+        lieu = r.get('lieuTexte', '')
+        lm = re.match(r'(.+?)\s*-\s*(\d+)', lieu)
+        if lm:
+            location = ms_normalize_location(lm.group(1).strip(), lm.group(2))
+        else:
+            location = lieu.strip() or 'France'
+
+        date_str = r.get('datePublication', '')
+        try:
+            ds = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', date_str)
+            dp = datetime.fromisoformat(ds)
+            age = max(0, (datetime.now(timezone.utc) - dp).days)
+        except Exception:
+            age = 99
+
+        title = r.get('intitule', '')
+        jobs.append({
+            'id': 700000 + len(jobs),
+            'title': title,
+            'company': company,
+            'link': f'{APEC_BASE}/candidat/recherche-emploi.html/emploi/detail-offre/{r.get("numeroOffre", "")}',
+            'desc': re.sub(r'<[^>]+>', ' ', r.get('texteOffre', '')).strip()[:200],
+            'location': location,
+            'category': categorize(title, ''),
+            'daysAgo': age,
+            'isESN': is_esn_company(company), 'isCabinet': is_cabinet(company),
+            'source': 'apec',
+        })
 
     return jobs
 
@@ -3916,7 +3901,7 @@ def enrich_crm(jobs):
 # Sources whose 0-result threshold requires a minimum count to flag as broken.
 # Playwright-only sources (FashionJobs, WeLoveDevs, LinkedIn) can legitimately
 # return 0 locally — they're only expected to run on GitHub Actions.
-_PLAYWRIGHT_SOURCES = {'fashionjobs', 'wld', 'li'}
+_PLAYWRIGHT_SOURCES = {'fashionjobs', 'wld', 'li', 'apec'}
 
 def _source_fetch(health: dict, source_id: str, label: str, fn, *args, timeout_s: int = 180, **kwargs):
     """Call fn(*args, **kwargs) with a wall-clock timeout, track result count in health dict."""
