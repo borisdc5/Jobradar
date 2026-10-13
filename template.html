@@ -225,7 +225,7 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 .co-group-consultant{font:400 12px var(--f-sans);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .co-group-count{font:500 12.5px var(--f-mono);color:var(--ink);}
 .co-group-date{font:400 12px var(--f-sans);color:var(--muted);white-space:nowrap;}
-.co-group-chevron{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;transition:transform .15s;flex-shrink:0;}
+.co-group-chevron{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);font-size:14px;transition:transform .15s;flex-shrink:0;}
 .co-group.open>.co-group-hdr>.co-group-chevron{transform:rotate(90deg);}
 .co-tc{font:400 11.5px var(--f-sans);white-space:nowrap;}
 .co-tc-y{color:#15803D;font-weight:500;}
@@ -1158,7 +1158,7 @@ function renderJobs() {
     html+='</div>';
     for(var gi=0;gi<groups.length;gi++){
       var grp=groups[gi],gJobs=grp.jobs,n=gJobs.length;
-      var expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:(n<=3);
+      var expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:false;
       var logoHtml=grp.logo?'<img src="'+grp.logo+'" alt="'+initials(grp.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(grp.company)+'\'">':initials(grp.company);
       var crmBadge='';
       if(grp.crm_link){
