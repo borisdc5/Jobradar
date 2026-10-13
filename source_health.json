@@ -1,28 +1,28 @@
 {
-  "updated": "2026-10-12T16:41:14.566219+00:00",
+  "updated": "2026-10-13T15:00:08.301437+00:00",
   "sources": {
     "afjv": {
-      "count": 51,
+      "count": 52,
       "error": null
     },
     "ft": {
-      "count": 1466,
+      "count": 1465,
       "error": null
     },
     "sjh": {
-      "count": 30,
+      "count": 36,
       "error": null
     },
     "makesense": {
-      "count": 187,
+      "count": 198,
       "error": null
     },
     "hw": {
-      "count": 676,
+      "count": 793,
       "error": null
     },
     "lir": {
-      "count": 118,
+      "count": 117,
       "error": null
     },
     "apec": {
@@ -34,23 +34,23 @@
       "error": null
     },
     "collective": {
-      "count": 360,
+      "count": 358,
       "error": null
     },
     "lj": {
-      "count": 276,
+      "count": 259,
       "error": null
     },
     "stationf": {
-      "count": 430,
+      "count": 432,
       "error": null
     },
     "elaia": {
-      "count": 76,
+      "count": 75,
       "error": null
     },
     "isai": {
-      "count": 131,
+      "count": 129,
       "error": null
     },
     "breega": {
@@ -58,35 +58,35 @@
       "error": null
     },
     "alven": {
-      "count": 243,
+      "count": 237,
       "error": null
     },
     "xange": {
-      "count": 279,
+      "count": 280,
       "error": null
     },
     "serena": {
-      "count": 268,
+      "count": 251,
       "error": null
     },
     "360cap": {
-      "count": 160,
+      "count": 165,
       "error": null
     },
     "sequoia": {
-      "count": 236,
+      "count": 233,
       "error": null
     },
     "daphni": {
-      "count": 156,
+      "count": 152,
       "error": null
     },
     "partech": {
-      "count": 336,
+      "count": 329,
       "error": null
     },
     "indexventures": {
-      "count": 449,
+      "count": 445,
       "error": null
     },
     "wld": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 158,
+      "count": 228,
       "error": null
     },
     "wttj": {
