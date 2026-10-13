@@ -41,13 +41,13 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 .hr{height:1px;background:var(--hair);margin:3px 0 11px;}
 
 /* Source rows — compact */
-.src-chip{display:flex;align-items:center;gap:6px;height:26px;padding:0 7px;border-radius:5px;cursor:pointer;background:transparent;transition:background .12s;user-select:none;}
+.src-chip{display:flex;align-items:center;gap:7px;height:24px;padding:2px 6px;border-radius:4px;cursor:pointer;background:transparent;transition:background .12s;user-select:none;}
 .src-chip:hover{background:var(--hair);}
-.src-chip.active{background:var(--mint-soft);}
-.src-chip.active .src-name{color:var(--mint);font-weight:500;}
+.src-chip.active .src-name{color:var(--ink);}
 .src-chip.dim{opacity:.35;}
-.src-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;background:var(--faint);}
-.src-chip.active .src-dot{background:var(--mint);}
+.src-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0;border:1.5px solid var(--hair-2);background:var(--bg);position:relative;transition:all .12s;}
+.src-chip.active .src-dot{background:var(--mint);border-color:var(--mint);}
+.src-chip.active .src-dot::after{content:'';position:absolute;left:2px;top:0;width:5px;height:8px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(40deg);}
 .src-name{font:400 11.5px var(--f-sans);color:var(--ink-2);flex:1;}
 .src-badge{display:none;}
 
@@ -213,16 +213,25 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 .flag-send.ready{opacity:1;}
 .flag-status{font:400 11px var(--f-sans);color:var(--muted);text-align:center;min-height:14px;}
 
-/* ── Groupe entreprise (vue CO) ─────────────────────────────────────────── */
+/* ── Groupe entreprise (vue CO) table ────────────────────────────────────── */
+.co-table-wrap{--co-cols:28px 32px 1fr 150px 110px 72px 56px 82px;}
+.co-table-header,.co-group-hdr{display:grid;grid-template-columns:var(--co-cols);align-items:center;column-gap:12px;padding:0 14px;}
+.co-table-header{height:32px;background:var(--bg);border-bottom:1px solid var(--hair-2);position:sticky;top:0;z-index:2;}
+.co-th{font:600 10px var(--f-sans);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .co-group{background:var(--card);border-bottom:1px solid var(--hair);}
-.co-group-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;transition:background .1s;}
-.co-group-hdr:hover{background:var(--bg);}
-.co-group-info{flex:1;min-width:0;}
-.co-group-name{font:600 13.5px var(--f-display);display:block;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.co-group-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.co-group-count{font:500 10px var(--f-mono);padding:1px 6px;border-radius:10px;background:var(--mint-soft);color:var(--mint);border:1px solid var(--mint-line);white-space:nowrap;}
-.co-group-chevron{font-size:10px;color:var(--muted);width:12px;text-align:center;}
-.co-group-jobs{}
+.co-group-hdr{min-height:48px;padding-top:4px;padding-bottom:4px;cursor:pointer;user-select:none;transition:background .1s;}
+.co-group-hdr:hover,.co-group-hdr:focus-visible{background:var(--bg);outline:none;}
+.co-group-name{font:600 13.5px var(--f-display);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.co-group-consultant{font:400 12px var(--f-sans);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.co-group-count{font:500 12.5px var(--f-mono);color:var(--ink);}
+.co-group-date{font:400 12px var(--f-sans);color:var(--muted);white-space:nowrap;}
+.co-group-chevron{width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;transition:transform .15s;flex-shrink:0;}
+.co-group.open>.co-group-hdr>.co-group-chevron{transform:rotate(90deg);}
+.co-tc{font:400 11.5px var(--f-sans);white-space:nowrap;}
+.co-tc-y{color:#15803D;font-weight:500;}
+.co-tc-n{color:var(--muted);}
+.co-tc-u{color:var(--faint);}
+.co-group-jobs{border-top:1px solid var(--hair);}
 .jco{font:500 11.5px var(--f-sans);color:var(--ink-2);}
 
 /* ── Prospect / basket / flag ───────────────────────────────────────────── */
@@ -313,6 +322,10 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
   .j-sub{font-size:11px;}
   .j-crm{display:none;}
   .score-lbl-sm{display:none;}
+  .co-table-wrap{--co-cols:24px 28px 1fr 90px 44px 64px;}
+  .co-th-consultant,.co-group-consultant,.co-th-tc,.co-col-tc{display:none;}
+  .co-table-header{position:relative;}
+  .co-group-hdr{column-gap:8px;padding:0 10px;}
 }
 </style>
 </head>
@@ -386,7 +399,7 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
     </div>
     <div class="sb-body">
       <div class="fs">
-        <div class="fs-label">Sources<button onclick="deselectAllSources()" style="font:400 10px var(--f-sans);padding:1px 6px;border-radius:4px;border:1px solid var(--hair-2);background:var(--bg);color:var(--ink-2);cursor:pointer;">tout &nbsp;d&eacute;s.</button></div>
+        <div class="fs-label">Sources<button onclick="deselectAllSources()" style="font:400 10px var(--f-sans);padding:1px 6px;border-radius:4px;border:1px solid var(--hair-2);background:var(--bg);color:var(--ink-2);cursor:pointer;">D&eacute;s&eacute;lectionner tout</button></div>
         <div class="src-chip active" id="src-afjv" onclick="toggleSource('afjv')"><div class="src-dot"></div><span class="src-name">AFJV</span></div>
         <div class="src-chip active" id="src-ft" onclick="toggleSource('ft')"><div class="src-dot"></div><span class="src-name">France Travail</span></div>
         <div class="src-chip active" id="src-ms" onclick="toggleSource('ms')"><div class="src-dot"></div><span class="src-name">Makesense</span></div>
@@ -1117,31 +1130,55 @@ function renderJobs() {
       if(sort==='intensity'){var ca=(_companyData[(a.company||'').toLowerCase()]||{count:0}).count,cb=(_companyData[(b.company||'').toLowerCase()]||{count:0}).count;return cb-ca||a.jobs[0].daysAgo-b.jobs[0].daysAgo;}
       return a.jobs[0].title.localeCompare(b.jobs[0].title);
     });
-    var html='';
+    // Update results bar with group + offer counts
+    var _savedCntG=Object.keys(saved).length;
+    var _totalOffers=0;for(var _gi2=0;_gi2<groups.length;_gi2++)_totalOffers+=groups[_gi2].jobs.length;
+    document.getElementById('results-bar').innerHTML=
+      '<button class="saved-count'+(showSavedOnly?' active':'')+'" onclick="toggleSavedOnly()">'+
+      (_savedCntG?'<span class="sc-n">'+_savedCntG+'</span>\u00a0':'')+
+      (showSavedOnly?'\u2605 favoris':'\u2606 favoris')+'</button>'+
+      '<span class="rcount"><strong>'+groups.length+'</strong> entreprises \u00b7 <strong>'+_totalOffers+'</strong> offres</span>'+
+      '<div class="active-chips">'+chips+'</div>'+
+      (showSavedOnly&&_savedCntG?'<span class="reset-all" onclick="clearAllSaved()" style="color:var(--bad)">Vider</span>':'')+
+      (activeF.length?'<span class="reset-all" onclick="resetAll()">Tout effacer</span>':'')+
+      '<span class="last-update">'+UPDATED+'</span>';
+    var html='<div class="co-table-wrap">';
+    html+='<div class="co-table-header" aria-hidden="true">';
+    html+='<div></div><div></div>';
+    html+='<div class="co-th">Entreprise</div>';
+    html+='<div class="co-th co-th-consultant">Consultant</div>';
+    html+='<div class="co-th">Statut CRM</div>';
+    html+='<div class="co-th co-th-tc">T&amp;Cs</div>';
+    html+='<div class="co-th">Offres</div>';
+    html+='<div class="co-th">Derni\u00e8re offre</div>';
+    html+='</div>';
     for(var gi=0;gi<groups.length;gi++){
       var grp=groups[gi],gJobs=grp.jobs,n=gJobs.length;
       if(n===1){html+=jobCardHtml(gJobs[0],!!saved[gJobs[0].id],'',false);continue;}
       var def=(n<=2),expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:def;
       var logoHtml=grp.logo?'<img src="'+grp.logo+'" alt="'+initials(grp.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(grp.company)+'\'">':initials(grp.company);
-      var ciHtml='';
+      var crmBadge='';
       if(grp.crm_link){
-        ciHtml+=(grp.crm_tc!==null&&grp.crm_tc!==undefined?(grp.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs \u2713</span>':'<span class="ci ci-tc-n">T&amp;Cs \u2014</span>'):'');
-        ciHtml+=(grp.crm_open_job?'<span class="ci ci-job">\u2b24 job ouvert</span>':'');
-        ciHtml+=(grp.crm_consultant?'<span class="ci ci-owner">'+grp.crm_consultant+'</span>':'');
+        var _crmCls=grp.is_client?'crm-client':grp.crm_status==='Prospect'?'crm-prospect':'crm-known';
+        var _crmLbl=grp.is_client?'Client':grp.crm_status==='Prospect'?'Prospect':'Dans CRM';
+        crmBadge='<a class="crm-badge '+_crmCls+'" href="'+grp.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+_crmLbl+'</a>';
       }
-      var crmBadge=grp.crm_link?'<a class="crm-badge '+(grp.is_client?'crm-client':grp.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+grp.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(grp.is_client?'\u2605 Client':grp.crm_status==='Prospect'?'\u25ce Prospect':'\ud83d\udcc1 CRM')+'</a>':'';
+      var tcHtml='';
+      if(grp.crm_tc===true) tcHtml='<span class="co-tc co-tc-y">Sign\u00e9s</span>';
+      else if(grp.crm_tc===false) tcHtml='<span class="co-tc co-tc-n">Non sign\u00e9s</span>';
+      else tcHtml='<span class="co-tc co-tc-u">\u2014</span>';
       var encKey=encodeURIComponent(grp.key);
-      html+='<div class="co-group">';
-      html+='<div class="co-group-hdr" onclick="toggleGroup(\''+encKey+'\','+n+')">';
+      html+='<div class="co-group'+(expanded?' open':'')+'">';
+      html+='<div class="co-group-hdr" onclick="toggleGroup(\''+encKey+'\','+n+')" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \')toggleGroup(\''+encKey+'\','+n+')">';
+      html+='<div class="co-group-chevron">\u25b8</div>';
       html+='<div class="co-logo">'+logoHtml+'</div>';
-      html+='<div class="co-group-info"><span class="co-group-name">'+grp.company+'</span>';
-      if(ciHtml) html+='<div class="crm-indicators" style="margin-top:3px;">'+ciHtml+'</div>';
-      html+='</div><div class="co-group-right">';
-      if(crmBadge) html+=crmBadge;
-      html+='<span class="co-group-count">'+n+' postes</span>';
-      html+='<span class="jdate">'+daysLabel(gJobs[0].daysAgo)+'</span>';
-      html+='<span class="co-group-chevron">'+(expanded?'\u25be':'\u25b8')+'</span>';
-      html+='</div></div>';
+      html+='<div class="co-group-name">'+grp.company+'</div>';
+      html+='<div class="co-group-consultant co-th-consultant">'+(grp.crm_consultant||'\u2014')+'</div>';
+      html+='<div class="co-col-status">'+crmBadge+'</div>';
+      html+='<div class="co-col-tc co-th-tc">'+tcHtml+'</div>';
+      html+='<div class="co-group-count">'+n+'</div>';
+      html+='<div class="co-group-date">'+daysLabel(gJobs[0].daysAgo)+'</div>';
+      html+='</div>';
       if(expanded){
         html+='<div class="co-group-jobs">';
         for(var ji=0;ji<gJobs.length;ji++) html+=jobCardHtml(gJobs[ji],!!saved[gJobs[ji].id],'',true);
@@ -1149,6 +1186,7 @@ function renderJobs() {
       }
       html+='</div>';
     }
+    html+='</div>';
     wrap.innerHTML=html;
     return;
   }
