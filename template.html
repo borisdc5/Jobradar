@@ -1115,8 +1115,10 @@ function renderJobs() {
       groupMap[key].jobs.push(j);
     }
     groups.sort(function(a,b){
+      if(sort==='score'){var sa=calculateRelevanceScore(a.jobs[0]).finalScore,sb=calculateRelevanceScore(b.jobs[0]).finalScore;return sb-sa||a.jobs[0].daysAgo-b.jobs[0].daysAgo;}
       if(sort==='company') return a.company.localeCompare(b.company);
       if(sort==='date') return a.jobs[0].daysAgo-b.jobs[0].daysAgo;
+      if(sort==='intensity'){var ca=(_companyData[(a.company||'').toLowerCase()]||{count:0}).count,cb=(_companyData[(b.company||'').toLowerCase()]||{count:0}).count;return cb-ca||a.jobs[0].daysAgo-b.jobs[0].daysAgo;}
       return a.jobs[0].title.localeCompare(b.jobs[0].title);
     });
     var html='';
