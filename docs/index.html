@@ -1007,10 +1007,13 @@ function srcTagHtml(src) {
 }
 function jobCardHtml(j,sv,gc,inGroup) {
   var logoHtml=j.logo?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">':initials(j.company);
-  var h='<div class="job-card'+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
+  var _sc=calculateRelevanceScore(j),_sty=_scoreStyle(_sc.finalScore,j.isCabinet);
+  var scorePill='<div class="score-pill '+_sty.pill+'" onmouseenter="showScoreTip(event,'+j.id+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()"><span class="score-num">'+_sc.finalScore+'</span><span class="score-lbl-sm">'+_sc.label+'</span></div>';
+  var h='<div class="job-card'+_sty.cb+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
   h+='<div class="jtop">';
   if(!inGroup){h+='<div class="co-logo">'+logoHtml+'</div><div class="jinfo"><span class="jco">'+j.company+'</span><span class="jtitle">'+j.title+'</span></div>';}
   else{h+='<span class="jtitle">'+j.title+'</span>';}
+  h+=scorePill;
   h+='<div class="jacts"><span class="jdate">'+daysLabel(j.daysAgo)+'</span><button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button></div>';
   h+='</div><div class="jmeta">';
   if(j.location==='Remote') h+='<span class="pill p-green">Télétravail</span>';
