@@ -214,7 +214,7 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 .flag-status{font:400 11px var(--f-sans);color:var(--muted);text-align:center;min-height:14px;}
 
 /* ── Groupe entreprise (vue CO) table ────────────────────────────────────── */
-.co-table-wrap{--co-cols:28px 32px 1fr 150px 110px 72px 56px 82px;}
+.co-table-wrap{--co-cols:28px 32px 1fr 150px 110px 72px 56px 82px 28px;}
 .co-table-header,.co-group-hdr{display:grid;grid-template-columns:var(--co-cols);align-items:center;column-gap:12px;padding:0 14px;}
 .co-table-header{height:32px;background:var(--bg);border-bottom:1px solid var(--hair-2);position:sticky;top:0;z-index:2;}
 .co-th{font:600 10px var(--f-sans);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -326,7 +326,7 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
   .j-sub{font-size:11px;}
   .j-crm{display:none;}
   .score-lbl-sm{display:none;}
-  .co-table-wrap{--co-cols:24px 28px 1fr 90px 44px 64px;}
+  .co-table-wrap{--co-cols:24px 28px 1fr 90px 44px 64px 24px;}
   .co-th-consultant,.co-group-consultant,.co-th-tc,.co-col-tc{display:none;}
   .co-table-header{position:relative;}
   .co-group-hdr{column-gap:8px;padding:0 10px;}
@@ -1039,6 +1039,7 @@ function jobCardHtml(j,sv,gc,inGroup) {
   h+='<span class="jdate">'+daysLabel(j.daysAgo)+'</span>';
   h+=srcTagHtml(j.source);
   h+='<button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button>';
+  h+='<button class="flag-btn" onclick="openFlagModal(event,\''+j.company.replace(/'/g,'\\\'')+'\')" title="Signaler ESN / Cabinet">⚑</button>';
   h+='</div>';
   h+='</div></div>';
   return h;
@@ -1155,6 +1156,7 @@ function renderJobs() {
     html+='<div class="co-th co-th-tc">T&amp;Cs</div>';
     html+='<div class="co-th">Offres</div>';
     html+='<div class="co-th">Derni\u00e8re offre</div>';
+    html+='<div class="co-th"></div>';
     html+='</div>';
     for(var gi=0;gi<groups.length;gi++){
       var grp=groups[gi],gJobs=grp.jobs,n=gJobs.length;
@@ -1185,6 +1187,7 @@ function renderJobs() {
       html+='<div class="co-col-tc co-th-tc">'+tcHtml+'</div>';
       html+='<div class="co-group-count">'+n+'</div>';
       html+='<div class="co-group-date">'+daysLabel(gJobs[0].daysAgo)+'</div>';
+      html+='<button class="flag-btn" onclick="openFlagModal(event,\''+grp.company.replace(/'/g,'\\\'')+'\')" title="Signaler ESN / Cabinet">⚑</button>';
       html+='</div>';
       if(expanded&&n>1){
         html+='<div class="co-group-jobs">';
