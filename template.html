@@ -84,10 +84,15 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .jrow1{display:flex;align-items:center;gap:7px;}
 .co-logo{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--txt2);flex-shrink:0;overflow:hidden;}
 .co-logo img{width:100%;height:100%;object-fit:contain;padding:3px;}
-.jtitle{flex:1;min-width:0;font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.jtop{display:flex;align-items:center;gap:7px;}
+.jinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+.jacts{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.jmeta{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
+.jtitle{font-size:13px;font-weight:500;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.jtop > .jtitle{flex:1;min-width:0;}
 /* Row 2 : entreprise · localisation · taille · catégorie · source */
 .jrow2{display:flex;align-items:center;flex-wrap:wrap;gap:4px;}
-.jco{font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;}
+.jco{font-size:11px;font-weight:600;color:var(--txt2);white-space:nowrap;}
 /* Row 3 : date · CRM · actions */
 .jrow3{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 .jact{display:flex;align-items:center;gap:4px;margin-left:auto;}
@@ -781,10 +786,10 @@ function resetAll() {
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
   ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','sf','wttj','li'].forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
-  view='list';
-  document.getElementById('vlist').className='vbtn on';
+  view='group';
+  document.getElementById('vlist').className='vbtn';
   document.getElementById('vgrid').className='vbtn';
-  document.getElementById('vgroup').className='vbtn';
+  document.getElementById('vgroup').className='vbtn on';
   expandedGroups={};
   renderJobs();
 }
@@ -1001,32 +1006,28 @@ function srcTagHtml(src) {
   return '<span class="afjv-tag"><span class="afjv-dot"></span>afjv</span>';
 }
 function jobCardHtml(j,sv,gc,inGroup) {
-  var locPill=j.location==='Remote'?'<span class="pill p-green">Télétravail</span>':'<span class="pill p-blue">'+j.location+'</span>';
   var logoHtml=j.logo?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">':initials(j.company);
-  var ciHtml='',crmBottomRight='';
-  if(j.crm_link){
-    ciHtml=(j.crm_tc!==null&&j.crm_tc!==undefined?(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>'):'');
-    ciHtml+=(j.crm_open_job?'<span class="ci ci-job">⬤ job ouvert</span>':'');
-    ciHtml+=(j.crm_consultant?'<span class="ci ci-owner">'+j.crm_consultant+'</span>':'');
-    var dateStr=(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)?'<span class="crm-date">&#8635; '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' &middot; '+j.crm_updated_by:'')+'</span>':'');
-    var badgeHtml='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
-    crmBottomRight=dateStr+badgeHtml;
-  }
   var h='<div class="job-card'+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
-  if(!inGroup) h+='<div class="co-logo">'+logoHtml+'</div>';
-  h+='<div class="jbody"><div class="jtop"><span class="jtitle">'+j.title+'</span><div class="jright">';
-  if(ciHtml) h+='<div class="crm-indicators">'+ciHtml+'</div>';
-  h+='<div class="jright-btm"><span class="jdate">'+daysLabel(j.daysAgo)+'</span><button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button></div>';
-  if(crmBottomRight) h+='<div class="crm-btm-right">'+crmBottomRight+'</div>';
-  h+='</div></div>';
-  if(!inGroup) h+='<div class="jco">'+j.company+'</div>';
-  h+='<div class="jmeta">'+locPill;
+  h+='<div class="jtop">';
+  if(!inGroup){h+='<div class="co-logo">'+logoHtml+'</div><div class="jinfo"><span class="jco">'+j.company+'</span><span class="jtitle">'+j.title+'</span></div>';}
+  else{h+='<span class="jtitle">'+j.title+'</span>';}
+  h+='<div class="jacts"><span class="jdate">'+daysLabel(j.daysAgo)+'</span><button class="save-btn'+(sv?' on':'')+'" onclick="doSave(event,'+j.id+')">'+(sv?'&#9829;':'&#9825;')+'</button></div>';
+  h+='</div><div class="jmeta">';
+  if(j.location==='Remote') h+='<span class="pill p-green">Télétravail</span>';
+  else if(j.location) h+='<span class="pill p-blue">'+j.location+'</span>';
   if(j.category) h+='<span class="pill p-purple">'+j.category+'</span>';
   if(j.isESN) h+='<span class="pill p-blue">ESN</span>';
   if(j.isCabinet) h+='<span class="pill p-red">cabinet</span>';
   if(sizeBucket(j.company_size)) h+='<span class="pill p-size">'+sizeBucket(j.company_size)+'</span>';
   h+=srcTagHtml(j.source);
-  h+='</div></div></div>';
+  if(j.crm_link){
+    if(j.crm_tc!==null&&j.crm_tc!==undefined) h+=(j.crm_tc?'<span class="ci ci-tc-y">T&amp;Cs ✓</span>':'<span class="ci ci-tc-n">T&amp;Cs —</span>');
+    if(j.crm_open_job) h+='<span class="ci ci-job">⬤ job ouvert</span>';
+    if(j.crm_consultant) h+='<span class="ci ci-owner">'+j.crm_consultant+'</span>';
+    if(j.crm_last_updated&&fmtCrmDate(j.crm_last_updated)) h+='<span class="crm-date">↻ '+fmtCrmDate(j.crm_last_updated)+(j.crm_updated_by?' · '+j.crm_updated_by:'')+'</span>';
+    h+='<a class="crm-badge '+(j.is_client?'crm-client':j.crm_status==='Prospect'?'crm-prospect':'crm-known')+'" href="'+j.crm_link+'" onclick="event.stopPropagation()" target="_blank" rel="noopener">'+(j.is_client?'★ Client actif':j.crm_status==='Prospect'?'◎ Prospect':'📁 Dans CRM')+'</a>';
+  }
+  h+='</div></div>';
   return h;
 }
 function renderJobs() {
@@ -1038,6 +1039,7 @@ function renderJobs() {
   var jobs=[];
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
+    if(/\bcdd\b|\bstage\b|\balternance\b|\bapprentissage\b/.test((j.title||'').toLowerCase())) continue;
     if(activeSources.indexOf(j.source)===-1) continue;
     var _cn=(j.company||'').toLowerCase();
     var _localESN=_localFlags.esn.some(function(f){return _cn.indexOf(f)!==-1;});
