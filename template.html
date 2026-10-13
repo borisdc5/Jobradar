@@ -560,9 +560,9 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
         <option value="title">Poste A&#8211;Z</option>
       </select>
       <div class="view-btns">
-        <button class="vbtn" id="vlist" onclick="setView('list')" title="Liste">&#9776;</button>
+        <button class="vbtn on" id="vlist" onclick="setView('list')" title="Liste">&#9776;</button>
         <button class="vbtn" id="vgrid" onclick="setView('grid')" title="Grille">&#8862;</button>
-        <button class="vbtn on" id="vgroup" onclick="setView('group')" title="Grouper par entreprise" style="font-size:10px;font-weight:700;letter-spacing:-.5px;">CO</button>
+        <button class="vbtn" id="vgroup" onclick="setView('group')" title="Grouper par entreprise" style="font-size:10px;font-weight:700;letter-spacing:-.5px;">CO</button>
       </div>
     </div>
     <div class="stats-bar" id="stats-bar"></div>
@@ -786,10 +786,10 @@ function resetAll() {
   FUND_SOURCES.forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
   updateFundGroupUI();
   ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','sf','wttj','li'].forEach(function(s){var el=document.getElementById('src-'+s);if(el)el.className='src-chip active';});
-  view='group';
-  document.getElementById('vlist').className='vbtn';
+  view='list';
+  document.getElementById('vlist').className='vbtn on';
   document.getElementById('vgrid').className='vbtn';
-  document.getElementById('vgroup').className='vbtn on';
+  document.getElementById('vgroup').className='vbtn';
   expandedGroups={};
   renderJobs();
 }
@@ -1009,7 +1009,7 @@ function jobCardHtml(j,sv,gc,inGroup) {
   var logoHtml=j.logo?'<img src="'+j.logo+'" alt="'+initials(j.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(j.company)+'\'">':initials(j.company);
   var _sc=calculateRelevanceScore(j),_sty=_scoreStyle(_sc.finalScore,j.isCabinet);
   var scorePill='<div class="score-pill '+_sty.pill+'" onmouseenter="showScoreTip(event,'+j.id+')" onmouseleave="hideScoreTip()" onclick="event.stopPropagation()"><span class="score-num">'+_sc.finalScore+'</span><span class="score-lbl-sm">'+_sc.label+'</span></div>';
-  var h='<div class="job-card'+_sty.cb+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
+  var h='<div class="job-card '+_sty.cb+(sv?' saved':'')+(gc||'')+(inGroup?' in-group':'')+'" onclick="openJob(\''+encodeURIComponent(j.link)+'\')">';
   h+='<div class="jtop">';
   if(!inGroup){h+='<div class="co-logo">'+logoHtml+'</div><div class="jinfo"><span class="jco">'+j.company+'</span><span class="jtitle">'+j.title+'</span></div>';}
   else{h+='<span class="jtitle">'+j.title+'</span>';}
