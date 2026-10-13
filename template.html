@@ -232,6 +232,10 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 .co-tc-n{color:var(--muted);}
 .co-tc-u{color:var(--faint);}
 .co-group-jobs{border-top:1px solid var(--hair);}
+.co-group-name-wrap{display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden;}
+.co-group-jobtitle{font:400 11px var(--f-sans);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.co-group-single{cursor:pointer;}
+.co-group-single .co-group-name{font-weight:500;}
 .jco{font:500 11.5px var(--f-sans);color:var(--ink-2);}
 
 /* ── Prospect / basket / flag ───────────────────────────────────────────── */
@@ -1154,8 +1158,7 @@ function renderJobs() {
     html+='</div>';
     for(var gi=0;gi<groups.length;gi++){
       var grp=groups[gi],gJobs=grp.jobs,n=gJobs.length;
-      if(n===1){html+=jobCardHtml(gJobs[0],!!saved[gJobs[0].id],'',false);continue;}
-      var def=(n<=2),expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:def;
+      var expanded=expandedGroups.hasOwnProperty(grp.key)?expandedGroups[grp.key]:(n<=3);
       var logoHtml=grp.logo?'<img src="'+grp.logo+'" alt="'+initials(grp.company)+'" loading="lazy" onerror="this.parentNode.removeChild(this);this.parentNode.textContent=\''+initials(grp.company)+'\'">':initials(grp.company);
       var crmBadge='';
       if(grp.crm_link){
@@ -1169,17 +1172,18 @@ function renderJobs() {
       else tcHtml='<span class="co-tc co-tc-u">\u2014</span>';
       var encKey=encodeURIComponent(grp.key);
       html+='<div class="co-group'+(expanded?' open':'')+'">';
-      html+='<div class="co-group-hdr" onclick="toggleGroup(\''+encKey+'\','+n+')" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \')toggleGroup(\''+encKey+'\','+n+')">';
-      html+='<div class="co-group-chevron">\u25b8</div>';
+      var _hdrClick=n>1?'toggleGroup(\''+encKey+'\','+n+')':'openJob(\''+encodeURIComponent(gJobs[0].link)+'\')';
+      html+='<div class="co-group-hdr'+(n===1?' co-group-single':'')+'" onclick="'+_hdrClick+'" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \')'+_hdrClick+'">';
+      html+='<div class="co-group-chevron">'+(n>1?'\u25b8':'')+'</div>';
       html+='<div class="co-logo">'+logoHtml+'</div>';
-      html+='<div class="co-group-name">'+grp.company+'</div>';
+      html+='<div class="co-group-name-wrap"><span class="co-group-name">'+grp.company+'</span>'+(n===1?'<span class="co-group-jobtitle">'+gJobs[0].title+'</span>':'')+'</div>';
       html+='<div class="co-group-consultant co-th-consultant">'+(grp.crm_consultant||'\u2014')+'</div>';
       html+='<div class="co-col-status">'+crmBadge+'</div>';
       html+='<div class="co-col-tc co-th-tc">'+tcHtml+'</div>';
       html+='<div class="co-group-count">'+n+'</div>';
       html+='<div class="co-group-date">'+daysLabel(gJobs[0].daysAgo)+'</div>';
       html+='</div>';
-      if(expanded){
+      if(expanded&&n>1){
         html+='<div class="co-group-jobs">';
         for(var ji=0;ji<gJobs.length;ji++) html+=jobCardHtml(gJobs[ji],!!saved[gJobs[ji].id],'',true);
         html+='</div>';
