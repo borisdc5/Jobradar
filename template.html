@@ -1128,6 +1128,8 @@ function renderJobs() {
       }
       groupMap[key].jobs.push(j);
     }
+    // Normalise company_size across all jobs in each group (use first job's value)
+    for(var _ni=0;_ni<groups.length;_ni++){var _g=groups[_ni],_sz=_g.jobs[0].company_size;for(var _nj=0;_nj<_g.jobs.length;_nj++)_g.jobs[_nj].company_size=_sz;}
     groups.sort(function(a,b){
       if(sort==='score'){var sa=calculateRelevanceScore(a.jobs[0]).finalScore,sb=calculateRelevanceScore(b.jobs[0]).finalScore;return sb-sa||a.jobs[0].daysAgo-b.jobs[0].daysAgo;}
       if(sort==='company') return a.company.localeCompare(b.company);
