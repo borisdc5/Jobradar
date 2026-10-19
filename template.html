@@ -459,6 +459,12 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
           <span class="tag" id="tc-oui" onclick="toggleTC(true)">T&amp;Cs &#10003;</span>
           <span class="tag" id="tc-non" onclick="toggleTC(false)">Sans T&amp;Cs</span>
         </div>
+        <select id="tc-age-sel" onchange="renderJobs()" style="width:100%;padding:5px 8px;border:1px solid var(--hair-2);border-radius:6px;background:var(--card);font:400 11.5px var(--f-sans);color:var(--ink);outline:none;cursor:pointer;margin-bottom:7px;font-family:var(--f-sans);">
+          <option value="">Mise à jour CRM (toutes)</option>
+          <option value="365">Mise à jour &lt; 1 an</option>
+          <option value="730">Mise à jour &lt; 2 ans</option>
+          <option value="1095">Mise à jour &lt; 3 ans</option>
+        </select>
         <select id="consultant-sel" onchange="renderJobs()" style="width:100%;padding:5px 8px;border:1px solid var(--hair-2);border-radius:6px;background:var(--card);font:400 11.5px var(--f-sans);color:var(--ink);outline:none;cursor:pointer;margin-bottom:5px;font-family:var(--f-sans);">
           <option value="">Propri&eacute;taire du compte</option>
         </select>
@@ -571,7 +577,7 @@ html,body{height:100%;font-family:var(--f-sans);background:var(--bg);color:var(-
 var ALL_JOBS = __JOBS__;
 var UPDATED = "__UPDATED__";
 var filters = {category:[],location:[],age:[]};
-var hideESN = false, hideCabinet = false, view = 'group', showSavedOnly = false, filterTC = null, hideNoCRM = false;
+var hideESN = false, hideCabinet = false, view = 'group', showSavedOnly = false, filterTC = null, hideNoCRM = false, filterTCAge = 0;
 var activeSizes = [];
 var saved = JSON.parse(localStorage.getItem('jr_saved')||'{}');
 var activeSources = ['afjv','ft','ms','sjh','hw','lir','apec','fj','wld','cw','lj','wttj','li','sf','elaia','daphni','partech','alven','xange','serena','360cap','isai','breega','sequoia','index'];
@@ -750,6 +756,7 @@ function removeFilter(group,val) {
   else if(group==='kw'){document.getElementById('kw').value='';}
   else if(group==='saved'){showSavedOnly=false;}
   else if(group==='tc'){filterTC=null;document.getElementById('tc-oui').className='tag';document.getElementById('tc-non').className='tag';}
+  else if(group==='tcage'){filterTCAge=0;document.getElementById('tc-age-sel').value='';}
   else if(group==='consultant'){document.getElementById('consultant-sel').value='';}
   else if(group==='updatedby'){document.getElementById('updatedby-sel').value='';}
   else if(group==='nocrm'){hideNoCRM=false;document.getElementById('nocrm-btn').className='esn-btn';document.getElementById('nocrm-check').textContent='';document.getElementById('nocrm-lbl').textContent='Pas dans RCRM';}
@@ -770,9 +777,10 @@ function resetAll() {
   document.getElementById('cab-check').textContent='';
   document.getElementById('cab-lbl').textContent='Masquer cabinets';
   activeSizes=[];document.querySelectorAll('#filter-size .tag').forEach(function(t){t.className='tag';});
-  filterTC=null;showSavedOnly=false;
+  filterTC=null;filterTCAge=0;showSavedOnly=false;
   document.getElementById('tc-oui').className='tag';
   document.getElementById('tc-non').className='tag';
+  document.getElementById('tc-age-sel').value='';
   document.getElementById('consultant-sel').value='';
   document.getElementById('updatedby-sel').value='';
   hideNoCRM=false;
@@ -1050,6 +1058,7 @@ function renderJobs() {
   var sort=document.getElementById('sort-sel').value||'date';
   var consultant=document.getElementById('consultant-sel').value;
   var updatedBy=document.getElementById('updatedby-sel').value;
+  filterTCAge=parseInt(document.getElementById('tc-age-sel').value)||0;
   var jobs=[];
   for(var i=0;i<ALL_JOBS.length;i++) {
     var j=ALL_JOBS[i];
@@ -1064,6 +1073,7 @@ function renderJobs() {
     if(showSavedOnly&&!saved[j.id]) continue;
     if(filterTC===true&&!j.crm_tc) continue;
     if(filterTC===false&&j.crm_tc) continue;
+    if(filterTCAge>0){if(!j.crm_last_updated) continue; var _tcDays=(Date.now()-new Date(j.crm_last_updated).getTime())/86400000; if(_tcDays>filterTCAge) continue;}
     if(hideNoCRM&&j.crm_link) continue;
     if(consultant&&j.crm_consultant!==consultant) continue;
     if(updatedBy&&j.crm_updated_by!==updatedBy) continue;
@@ -1098,6 +1108,7 @@ function renderJobs() {
   if(showSavedOnly) activeF.push({group:'saved',val:'sauvegardés'});
   if(filterTC===true) activeF.push({group:'tc',val:'T&Cs ✓'});
   if(filterTC===false) activeF.push({group:'tc',val:'sans T&Cs'});
+  if(filterTCAge>0) activeF.push({group:'tcage',val:'MAJ < '+(filterTCAge/365|0)+'an'+(filterTCAge>365?'s':'')});
   if(consultant) activeF.push({group:'consultant',val:consultant});
   for(var si=0;si<activeSizes.length;si++) activeF.push({group:'size',val:activeSizes[si]});
   document.getElementById('stats-bar').innerHTML='';
