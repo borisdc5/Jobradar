@@ -1287,7 +1287,7 @@ async function submitFlag(){
     var list=_flagType==='esn'?content.esn:content.cabinet;
     if(!list.includes(name)) list.push(name);
     var jsonStr=JSON.stringify(content,null,2);
-    var encoded=btoa(String.fromCharCode.apply(null,new TextEncoder().encode(jsonStr)));
+    var _bytes=new TextEncoder().encode(jsonStr),_bin='';for(var _bi=0;_bi<_bytes.length;_bi++)_bin+=String.fromCharCode(_bytes[_bi]);var encoded=btoa(_bin);
     var body=JSON.stringify({message:'🚩 Flag: '+_flagCompany+' → '+_flagType,content:encoded,sha:sha});
     var w=await fetch(apiBase,{method:'PUT',headers:headers,body:body});
     if(!w.ok) throw new Error('Écriture échouée ('+w.status+')');
