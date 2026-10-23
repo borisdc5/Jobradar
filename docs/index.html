@@ -1221,7 +1221,7 @@ function renderJobs() {
 function sizeBucket(n){
   if(!n) return '';
   n=parseInt(n);
-  if(isNaN(n)||n<=0) return '';
+  if(isNaN(n)||n<=1) return '';  // ≤1 = donnée absente (France Travail default)
   if(n<=10)   return '≤10 pers.';
   if(n<=50)   return '11–50 pers.';
   if(n<=200)  return '51–200 pers.';
