@@ -1280,7 +1280,8 @@ async function submitFlag(){
     var r=await fetch(apiBase,{headers:headers});
     if(!r.ok) throw new Error('Lecture impossible ('+r.status+')');
     var data=await r.json();
-    var content=JSON.parse(atob(data.content.replace(/\n/g,'')));
+    var _raw=data.content?atob(data.content.replace(/\n/g,'')):'';
+    var content=(_raw&&_raw.trim())?JSON.parse(_raw):{esn:[],cabinet:[]};
     var sha=data.sha;
     if(!content.esn) content.esn=[];
     if(!content.cabinet) content.cabinet=[];
