@@ -1,24 +1,24 @@
 {
-  "updated": "2026-10-27T13:16:39.195790+00:00",
+  "updated": "2026-10-28T14:00:31.790528+00:00",
   "sources": {
     "afjv": {
-      "count": 43,
+      "count": 44,
       "error": null
     },
     "ft": {
-      "count": 1487,
+      "count": 1537,
       "error": null
     },
     "sjh": {
-      "count": 37,
-      "error": null
+      "count": 0,
+      "error": "The read operation timed out"
     },
     "makesense": {
-      "count": 195,
+      "count": 198,
       "error": null
     },
     "hw": {
-      "count": 860,
+      "count": 870,
       "error": null
     },
     "lir": {
@@ -34,19 +34,19 @@
       "error": null
     },
     "collective": {
-      "count": 360,
+      "count": 359,
       "error": null
     },
     "lj": {
-      "count": 223,
+      "count": 273,
       "error": null
     },
     "stationf": {
-      "count": 477,
+      "count": 474,
       "error": null
     },
     "elaia": {
-      "count": 80,
+      "count": 83,
       "error": null
     },
     "isai": {
@@ -54,7 +54,7 @@
       "error": null
     },
     "breega": {
-      "count": 2,
+      "count": 3,
       "error": null
     },
     "alven": {
@@ -62,19 +62,19 @@
       "error": null
     },
     "xange": {
-      "count": 286,
+      "count": 320,
       "error": null
     },
     "serena": {
-      "count": 247,
+      "count": 268,
       "error": null
     },
     "360cap": {
-      "count": 170,
+      "count": 172,
       "error": null
     },
     "sequoia": {
-      "count": 262,
+      "count": 259,
       "error": null
     },
     "daphni": {
@@ -82,11 +82,11 @@
       "error": null
     },
     "partech": {
-      "count": 354,
+      "count": 356,
       "error": null
     },
     "indexventures": {
-      "count": 441,
+      "count": 436,
       "error": null
     },
     "wld": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 218,
+      "count": 410,
       "error": null
     },
     "wttj": {
@@ -102,5 +102,7 @@
       "error": null
     }
   },
-  "broken": []
+  "broken": [
+    "sjh"
+  ]
 }
