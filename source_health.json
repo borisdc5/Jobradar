@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-07T13:55:07.533502+00:00",
+  "updated": "2026-11-08T14:15:31.623466+00:00",
   "sources": {
     "afjv": {
       "count": 43,
@@ -10,15 +10,15 @@
       "error": null
     },
     "sjh": {
-      "count": 29,
+      "count": 28,
       "error": null
     },
     "makesense": {
-      "count": 200,
+      "count": 199,
       "error": null
     },
     "hw": {
-      "count": 870,
+      "count": 871,
       "error": null
     },
     "lir": {
@@ -34,15 +34,15 @@
       "error": null
     },
     "collective": {
-      "count": 360,
+      "count": 359,
       "error": null
     },
     "lj": {
-      "count": 242,
+      "count": 235,
       "error": null
     },
     "stationf": {
-      "count": 473,
+      "count": 478,
       "error": null
     },
     "elaia": {
@@ -66,7 +66,7 @@
       "error": null
     },
     "serena": {
-      "count": 299,
+      "count": 286,
       "error": null
     },
     "360cap": {
@@ -74,15 +74,15 @@
       "error": null
     },
     "sequoia": {
-      "count": 288,
+      "count": 286,
       "error": null
     },
     "daphni": {
-      "count": 134,
+      "count": 159,
       "error": null
     },
     "partech": {
-      "count": 384,
+      "count": 389,
       "error": null
     },
     "indexventures": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 409,
+      "count": 357,
       "error": null
     },
     "wttj": {
