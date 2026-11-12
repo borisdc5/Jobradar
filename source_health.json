@@ -1,24 +1,24 @@
 {
-  "updated": "2026-11-10T15:34:20.928357+00:00",
+  "updated": "2026-11-12T15:57:15.280639+00:00",
   "sources": {
     "afjv": {
-      "count": 43,
+      "count": 44,
       "error": null
     },
     "ft": {
-      "count": 1554,
+      "count": 1547,
       "error": null
     },
     "sjh": {
-      "count": 49,
+      "count": 52,
       "error": null
     },
     "makesense": {
-      "count": 189,
+      "count": 182,
       "error": null
     },
     "hw": {
-      "count": 867,
+      "count": 869,
       "error": null
     },
     "lir": {
@@ -34,55 +34,55 @@
       "error": null
     },
     "collective": {
-      "count": 360,
+      "count": 359,
       "error": null
     },
     "lj": {
-      "count": 249,
+      "count": 225,
       "error": null
     },
     "stationf": {
-      "count": 474,
+      "count": 340,
       "error": null
     },
     "elaia": {
-      "count": 79,
+      "count": 78,
       "error": null
     },
     "isai": {
-      "count": 132,
+      "count": 134,
       "error": null
     },
     "breega": {
-      "count": 4,
+      "count": 3,
       "error": null
     },
     "alven": {
-      "count": 209,
+      "count": 206,
       "error": null
     },
     "xange": {
-      "count": 277,
+      "count": 278,
       "error": null
     },
     "serena": {
-      "count": 277,
+      "count": 289,
       "error": null
     },
     "360cap": {
-      "count": 159,
+      "count": 158,
       "error": null
     },
     "sequoia": {
-      "count": 293,
+      "count": 291,
       "error": null
     },
     "daphni": {
-      "count": 140,
+      "count": 147,
       "error": null
     },
     "partech": {
-      "count": 393,
+      "count": 384,
       "error": null
     },
     "indexventures": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 305,
+      "count": 299,
       "error": null
     },
     "wttj": {
