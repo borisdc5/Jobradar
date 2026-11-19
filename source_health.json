@@ -1,28 +1,28 @@
 {
-  "updated": "2026-11-18T16:24:18.623442+00:00",
+  "updated": "2026-11-19T16:33:43.181364+00:00",
   "sources": {
     "afjv": {
-      "count": 38,
+      "count": 43,
       "error": null
     },
     "ft": {
-      "count": 1552,
+      "count": 1538,
       "error": null
     },
     "sjh": {
-      "count": 57,
+      "count": 56,
       "error": null
     },
     "makesense": {
-      "count": 195,
+      "count": 196,
       "error": null
     },
     "hw": {
-      "count": 858,
+      "count": 859,
       "error": null
     },
     "lir": {
-      "count": 116,
+      "count": 119,
       "error": null
     },
     "apec": {
@@ -34,23 +34,23 @@
       "error": null
     },
     "collective": {
-      "count": 357,
+      "count": 358,
       "error": null
     },
     "lj": {
-      "count": 256,
+      "count": 269,
       "error": null
     },
     "stationf": {
-      "count": 469,
+      "count": 465,
       "error": null
     },
     "elaia": {
-      "count": 76,
+      "count": 77,
       "error": null
     },
     "isai": {
-      "count": 121,
+      "count": 122,
       "error": null
     },
     "breega": {
@@ -58,7 +58,7 @@
       "error": null
     },
     "alven": {
-      "count": 204,
+      "count": 201,
       "error": null
     },
     "xange": {
@@ -66,27 +66,27 @@
       "error": null
     },
     "serena": {
-      "count": 287,
+      "count": 285,
       "error": null
     },
     "360cap": {
-      "count": 144,
+      "count": 142,
       "error": null
     },
     "sequoia": {
-      "count": 289,
+      "count": 285,
       "error": null
     },
     "daphni": {
-      "count": 146,
+      "count": 145,
       "error": null
     },
     "partech": {
-      "count": 395,
+      "count": 393,
       "error": null
     },
     "indexventures": {
-      "count": 433,
+      "count": 452,
       "error": null
     },
     "wld": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 282,
+      "count": 296,
       "error": null
     },
     "wttj": {
