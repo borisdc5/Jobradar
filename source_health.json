@@ -1,28 +1,28 @@
 {
-  "updated": "2026-11-27T17:25:06.926130+00:00",
+  "updated": "2026-11-28T16:07:45.815698+00:00",
   "sources": {
     "afjv": {
       "count": 39,
       "error": null
     },
     "ft": {
-      "count": 1514,
+      "count": 1524,
       "error": null
     },
     "sjh": {
-      "count": 48,
+      "count": 44,
       "error": null
     },
     "makesense": {
-      "count": 194,
+      "count": 198,
       "error": null
     },
     "hw": {
-      "count": 869,
+      "count": 859,
       "error": null
     },
     "lir": {
-      "count": 118,
+      "count": 115,
       "error": null
     },
     "apec": {
@@ -34,23 +34,23 @@
       "error": null
     },
     "collective": {
-      "count": 357,
+      "count": 358,
       "error": null
     },
     "lj": {
-      "count": 244,
+      "count": 265,
       "error": null
     },
     "stationf": {
-      "count": 458,
+      "count": 455,
       "error": null
     },
     "elaia": {
-      "count": 91,
+      "count": 90,
       "error": null
     },
     "isai": {
-      "count": 131,
+      "count": 138,
       "error": null
     },
     "breega": {
@@ -58,11 +58,11 @@
       "error": null
     },
     "alven": {
-      "count": 195,
+      "count": 196,
       "error": null
     },
     "xange": {
-      "count": 320,
+      "count": 321,
       "error": null
     },
     "serena": {
@@ -70,19 +70,19 @@
       "error": null
     },
     "360cap": {
-      "count": 135,
+      "count": 136,
       "error": null
     },
     "sequoia": {
-      "count": 290,
+      "count": 287,
       "error": null
     },
     "daphni": {
-      "count": 0,
+      "count": 168,
       "error": null
     },
     "partech": {
-      "count": 474,
+      "count": 479,
       "error": null
     },
     "indexventures": {
@@ -94,7 +94,7 @@
       "error": null
     },
     "li": {
-      "count": 317,
+      "count": 189,
       "error": null
     },
     "wttj": {
@@ -103,7 +103,6 @@
     }
   },
   "broken": [
-    "daphni",
     "indexventures"
   ]
 }
